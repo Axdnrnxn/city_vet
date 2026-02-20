@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; } 
+        .sidebar-transition { transition: all 0.3s ease-in-out; } 
+        .tab-active { border-bottom: 3px solid #00796B; color: #00796B; font-weight: 700; }
+        .tab-inactive { border-bottom: 3px solid transparent; color: #6B7280; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden glass"></div>
+
+<div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none"><i class="fa-solid fa-bars"></i></button>
+                <h2 class="text-xl font-bold text-gray-800">Appointment Manager</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                <span class="hidden md:block text-sm font-medium text-gray-700">Administrator</span>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-6 border-b border-gray-200">
+                <div class="flex gap-6">
+                    <button onclick="filterStatus('Pending')" id="tab-pending" class="tab-active px-2 py-2 text-sm transition">
+                        Pending <span id="count-pending" class="ml-2 bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+                    </button>
+                    <button onclick="filterStatus('Confirmed')" id="tab-confirmed" class="tab-inactive px-2 py-2 text-sm transition">Scheduled</button>
+                    <button onclick="filterStatus('Completed')" id="tab-completed" class="tab-inactive px-2 py-2 text-sm transition">History</button>
+                </div>
+                <div class="mb-2">
+                    <button onclick="openBookingModal()" class="bg-[#00796B] hover:bg-[#004D40] text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Book Appointment
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs text-gray-500 uppercase border-b border-gray-200">
+                                <th class="px-6 py-4 font-bold">Date & Time</th>
+                                <th class="px-6 py-4 font-bold">Client / Patient</th>
+                                <th class="px-6 py-4 font-bold">Service</th>
+                                <th class="px-6 py-4 font-bold">Assigned Vet</th>
+                                <th class="px-6 py-4 font-bold text-center">Status</th>
+                                <th class="px-6 py-4 font-bold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apptTable" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Loading schedule...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="approveModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-teal-700 px-6 py-4 text-white"><h3 class="font-bold text-lg">Confirm Request</h3></div>
+            <div class="p-6">
+                <p class="text-gray-600 text-sm mb-4">Please assign a Veterinarian.</p>
+                <input type="hidden" id="appt_id_approve">
+                <select id="vet_select" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 outline-none"><option value="">Loading Vets...</option></select>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button onclick="document.getElementById('approveModal').classList.add('hidden')" class="px-4 py-2 text-gray-500 font-bold text-sm">Cancel</button>
+                    <button onclick="confirmApproval()" class="px-4 py-2 bg-teal-600 text-white rounded-lg font-bold text-sm">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bookingModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-95 opacity-0" id="bookingContent">
+            <div class="bg-[#00796B] px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg">Book Walk-in Appointment</h3>
+                <button onclick="closeBookingModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Select Pet Owner</label>
+                    <select id="book_owner" onchange="loadPetsForOwner(this.value)" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="" disabled selected>Loading Owners...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Select Patient</label>
+                    <select id="book_pet" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 outline-none disabled:bg-gray-100" disabled>
+                        <option value="" disabled selected>Select an owner first</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Service Type</label>
+                    <select id="book_service" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="" disabled selected>Loading Services...</option>
+                    </select>
+                    <p class="text-xs text-orange-500 mt-1 italic">* Only Spay, Neuter, and Consultations available.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
+                        <input type="date" id="book_date" class="w-full border border-gray-300 p-2 rounded outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Time</label>
+                        <input type="time" id="book_time" class="w-full border border-gray-300 p-2 rounded outline-none">
+                    </div>
+                </div>
+                <button onclick="submitBooking()" class="w-full bg-[#00796B] text-white font-bold py-3 rounded hover:bg-[#004D40] transition">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        function toggleSidebar() { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('../../api/auth/session_status.php');
+                const data = await res.json();
+                if (data.status !== 'logged_in') window.location.href = '../../login.html';
+            } catch (e) { window.location.href = '../../login.html'; }
+        }
+        checkSession();
+
+        // --- 1. Load Main Table ---
+        let allAppointments = [];
+        let currentFilter = 'Pending';
+
+        async function loadAppointments() {
+            try {
+                const res = await fetch('../../api/clinic/appointments.php'); 
+                allAppointments = await res.json();
+                const pendingCount = allAppointments.filter(a => a.Status === 'Pending').length;
+                document.getElementById('count-pending').innerText = pendingCount;
+                if(pendingCount === 0) document.getElementById('count-pending').classList.add('hidden');
+                renderTable();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('apptTable');
+            tbody.innerHTML = '';
+            const filtered = allAppointments.filter(a => {
+                if (currentFilter === 'Completed') return a.Status === 'Completed' || a.Status === 'Cancelled';
+                return a.Status === currentFilter;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-gray-400 italic">No ${currentFilter.toLowerCase()} appointments found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(a => {
+                let badge = 'bg-gray-100 text-gray-600';
+                if(a.Status === 'Confirmed') badge = 'bg-blue-100 text-blue-700';
+                if(a.Status === 'Completed') badge = 'bg-green-100 text-green-700';
+                if(a.Status === 'Pending') badge = 'bg-orange-100 text-orange-700';
+
+                let actions = '';
+                if (a.Status === 'Pending') {
+                    actions = `<button onclick="openApproveModal(${a.Appointment_ID})" class="text-green-600 border border-green-200 px-2 py-1 rounded text-xs font-bold mr-2">Accept</button>
+                               <button onclick="updateStatus(${a.Appointment_ID}, 'Cancelled')" class="text-red-500 text-xs font-bold">Decline</button>`;
+                } else if (a.Status === 'Confirmed') {
+                    actions = `<button onclick="updateStatus(${a.Appointment_ID}, 'Completed')" class="text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs font-bold">Complete</button>`;
+                } else { actions = `<span class="text-gray-400 text-xs">Archived</span>`; }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                        <td class="px-6 py-4"><p class="font-bold text-gray-800">${a.Formatted_Date}</p><p class="text-xs text-gray-500">${a.Formatted_Time}</p></td>
+                        <td class="px-6 py-4"><p class="font-medium text-gray-800">${a.Owner_First} ${a.Owner_Last}</p><p class="text-xs text-gray-500">${a.Pet_Name} (${a.Species_Name})</p></td>
+                        <td class="px-6 py-4 text-gray-600 font-medium">${a.Service_Name}</td>
+                        <td class="px-6 py-4">${a.Vet_First ? `Dr. ${a.Vet_Last}` : '<span class="text-xs text-gray-400 italic">Unassigned</span>'}</td>
+                        <td class="px-6 py-4 text-center"><span class="${badge} px-2.5 py-0.5 rounded-full text-xs font-bold uppercase">${a.Status}</span></td>
+                        <td class="px-6 py-4 text-right">${actions}</td>
+                    </tr>`;
+            });
+        }
+
+        function filterStatus(status) {
+            currentFilter = status;
+            ['Pending', 'Confirmed', 'Completed'].forEach(s => {
+                const btn = document.getElementById(`tab-${s.toLowerCase()}`);
+                if (s === status) { btn.classList.remove('tab-inactive'); btn.classList.add('tab-active'); }
+                else { btn.classList.remove('tab-active'); btn.classList.add('tab-inactive'); }
+            });
+            renderTable();
+        }
+
+        // --- 2. Booking Logic (Walk-in) ---
+        const bookingModal = document.getElementById('bookingModal');
+        const bookingContent = document.getElementById('bookingContent');
+
+        async function openBookingModal() {
+            bookingModal.classList.remove('hidden');
+            setTimeout(() => { bookingContent.classList.remove('scale-95', 'opacity-0'); bookingContent.classList.add('scale-100', 'opacity-100'); }, 10);
+            
+            // Load Owners & Services
+            const res = await fetch('../../api/clinic/appointments.php?type=form_data');
+            const data = await res.json();
+            
+            // Populate Owners
+            const ownerSelect = document.getElementById('book_owner');
+            ownerSelect.innerHTML = '<option value="" disabled selected>Select Owner</option>';
+            data.owners.forEach(o => { ownerSelect.innerHTML += `<option value="${o.Owner_ID}">${o.Last_name}, ${o.First_name}</option>`; });
+
+            // Populate Services (Highlight Spay/Neuter/Consultation)
+            const serviceSelect = document.getElementById('book_service');
+            serviceSelect.innerHTML = '<option value="" disabled selected>Select Service</option>';
+            data.services.forEach(s => {
+                serviceSelect.innerHTML += `<option value="${s.Service_ID}">${s.Service_Name}</option>`;
+            });
+        }
+
+        function closeBookingModal() {
+            bookingContent.classList.remove('scale-100', 'opacity-100'); bookingContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { bookingModal.classList.add('hidden'); }, 300);
+        }
+
+        async function loadPetsForOwner(ownerId) {
+            const petSelect = document.getElementById('book_pet');
+            petSelect.disabled = true; 
+            petSelect.innerHTML = '<option>Loading...</option>';
+            
+            const res = await fetch(`../../api/clinic/appointments.php?owner_id=${ownerId}`);
+            const pets = await res.json();
+            
+            petSelect.innerHTML = '<option value="" disabled selected>Select Patient</option>';
+            pets.forEach(p => { petSelect.innerHTML += `<option value="${p.Pet_ID}">${p.Name} (${p.Species_Name})</option>`; });
+            petSelect.disabled = false;
+        }
+
+        async function submitBooking() {
+            const payload = {
+                action: 'create',
+                owner_id: document.getElementById('book_owner').value,
+                pet_id: document.getElementById('book_pet').value,
+                service_id: document.getElementById('book_service').value,
+                date: document.getElementById('book_date').value,
+                time: document.getElementById('book_time').value
+            };
+
+            if(!payload.owner_id || !payload.pet_id || !payload.service_id || !payload.date) {
+                Swal.fire('Error', 'Please fill all fields', 'warning'); return;
+            }
+
+            const res = await fetch('../../api/clinic/appointments.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            const result = await res.json();
+            if(result.status === 'success') {
+                Swal.fire({icon: 'success', title: 'Booked!', timer: 1000, showConfirmButton: false});
+                closeBookingModal();
+                loadAppointments();
+            } else { Swal.fire('Error', result.message, 'error'); }
+        }
+
+        // --- 3. Approve Logic ---
+        async function openApproveModal(id) {
+            document.getElementById('appt_id_approve').value = id;
+            document.getElementById('approveModal').classList.remove('hidden');
+            const res = await fetch('../../api/records/staff.php'); 
+            const staff = await res.json();
+            const select = document.getElementById('vet_select');
+            select.innerHTML = '<option value="" disabled selected>Choose Vet...</option>';
+            staff.filter(s => s.Role_name === 'Veterinarian').forEach(v => { select.innerHTML += `<option value="${v.Staff_ID}">Dr. ${v.First_name} ${v.Last_name}</option>`; });
+        }
+
+        async function updateStatus(id, newStatus, vetId = null) {
+            const payload = { action: 'update_status', appointment_id: id, status: newStatus };
+            if (vetId) payload.vet_id = vetId;
+            const res = await fetch('../../api/clinic/appointments.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === 'success') { 
+                Swal.fire({ icon: 'success', title: 'Success', text: 'Status updated!', timer: 1000, showConfirmButton: false });
+                document.getElementById('approveModal').classList.add('hidden');
+                loadAppointments();
+            }
+        }
+
+        function confirmApproval() {
+            const id = document.getElementById('appt_id_approve').value;
+            const vetId = document.getElementById('vet_select').value;
+            if (!vetId) { Swal.fire('Wait!', 'Please assign a Veterinarian.', 'warning'); return; }
+            updateStatus(id, 'Confirmed', vetId);
+        }
+
+        function logout() { Swal.fire({ title: 'Logout?', text: "End session?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes' }).then((r) => { if(r.isConfirmed) window.location.href = '../../api/auth/logout.php'; }); }
+
+        loadAppointments();
+    </script>
+</body>
+</html>

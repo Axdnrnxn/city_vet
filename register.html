@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>City Vet - Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 md:p-8">
+
+    <div class="w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
+        
+        <div class="hidden md:flex flex-1 justify-center items-center">
+            <div class="bg-gray-200 rounded-full h-40 w-40 md:h-80 md:w-80 flex items-center justify-center shadow-inner border-4 border-white">
+                <span class="text-2xl md:text-4xl font-bold italic text-gray-400">LOGO</span>
+            </div>
+        </div>
+
+        <div class="flex-1 w-full max-w-md">
+            <div class="bg-[#0e7490] p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-teal-600">
+                
+                <h2 class="text-white text-xl md:text-2xl font-bold italic mb-6 tracking-wider text-center">REGISTRATION FORM</h2>
+                
+                <form id="registerForm" class="space-y-4">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-white text-xs font-bold uppercase ml-1">Last Name</label>
+                            <input type="text" id="lname" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-white text-xs font-bold uppercase ml-1">First Name</label>
+                            <input type="text" id="fname" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-white text-xs font-bold uppercase ml-1">Address</label>
+                        <input type="text" id="address" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-white text-xs font-bold uppercase ml-1">Barangay</label>
+                        <select id="barangay" class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none text-gray-700 font-bold uppercase">
+                            <option value="" disabled selected>Select Barangay</option>
+                            <option value="Carmen">Carmen</option>
+                            <option value="Kauswagan">Kauswagan</option>
+                            <option value="Nazareth">Nazareth</option>
+                            <option value="Poblacion">Poblacion</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-white text-xs font-bold uppercase ml-1">Email Address</label>
+                        <input type="email" id="email" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-white text-xs font-bold uppercase ml-1">Contact No.</label>
+                        <input type="tel" id="phone" placeholder="09*********" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                    </div>
+
+                    <div class="pt-2 border-t border-teal-600/50 space-y-2">
+                        <div>
+                            <label class="text-white text-xs font-bold uppercase ml-1">Create Password</label>
+                            <input type="password" id="pass" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="text-white text-xs font-bold uppercase ml-1">Confirm Password</label>
+                            <input type="password" id="confirm_pass" required class="w-full p-2 rounded bg-gray-100 focus:ring-2 focus:ring-teal-300 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center ml-1 py-1">
+                        <input type="checkbox" id="showPass" onclick="togglePassword()" class="w-5 h-5 text-teal-600 rounded cursor-pointer">
+                        <label for="showPass" class="ml-2 text-white text-sm cursor-pointer select-none">Show Password</label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-white text-[#0e7490] font-extrabold py-3 md:py-4 rounded shadow hover:bg-gray-200 transition uppercase tracking-widest mt-4">
+                        Submit
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <p class="text-white text-xs italic">
+                            ALREADY HAVE AN ACCOUNT? <a href="login.html" class="text-blue-200 font-bold hover:underline">LOG IN</a>
+                        </p>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            var p = document.getElementById("pass");
+            var cp = document.getElementById("confirm_pass");
+            if (p.type === "password") { p.type = "text"; cp.type = "text"; } else { p.type = "password"; cp.type = "password"; }
+        }
+
+        // (The JS Logic remains the same as before)
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // ... (Your existing fetch logic here)
+            // Just for testing display:
+            const formData = {
+                lname: document.getElementById('lname').value,
+                fname: document.getElementById('fname').value,
+                address: document.getElementById('address').value,
+                barangay: document.getElementById('barangay').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('pass').value,
+                confirm_password: document.getElementById('confirm_pass').value
+            };
+
+             try {
+                const res = await fetch('api/auth/register.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formData)
+                });
+                const result = await res.json();
+
+                if(result.status === 'success') {
+                    Swal.fire({icon: 'success', title: 'Success', text: result.message}).then(() => window.location.href = 'login.html');
+                } else {
+                    Swal.fire({icon: 'error', title: 'Error', text: result.message});
+                }
+            } catch (err) {
+                Swal.fire({icon: 'error', title: 'System Error', text: 'Connection failed.'});
+            }
+        });
+    </script>
+</body>
+</html>

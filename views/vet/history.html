@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointment History - City Vet</title>
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <div class="logo-circle"></div>
+            <div>
+                <h2>City Veterinary Clinic</h2>
+                <small>System</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar" style="background-color: #e2e2e2;">
+            <a href="dashboard.html" class="nav-btn"><i class="fas fa-clipboard-list"></i> Pending Requests</a>
+            <a href="#" class="nav-btn active"><i class="fas fa-history"></i> Appointment History</a>
+            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-lock"></i> Log Out</a>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Appointment History</h2>
+                <div class="user-pill">Dr. Veterinarian</div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <button class="btn-primary" onclick="loadHistory()">Refresh List</button>
+            </div>
+
+            <div style="background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+                <table>
+                    <thead>
+                        <tr style="background-color: #2c5e9e; color: white;">
+                            <th>Appt ID</th>
+                            <th>Owner Name</th>
+                            <th>Pet</th>
+                            <th>Service</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Vet Assigned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1. Session Check
+        fetch('../../api/auth/session_status.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'logged_out') window.location.href = '../login.html';
+                else loadHistory();
+            })
+            .catch(() => loadHistory()); // Fallback for demo
+
+        // 2. Load History
+            function loadHistory() {
+            fetch('../../api/clinic/appointments.php')
+                .then(response => {
+                    if (!response.ok) {
+                        // This catches the 500 error and prints the JSON message if available
+                        return response.json().then(err => { throw new Error(err.message); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tbody = document.getElementById('history-table-body');
+                    tbody.innerHTML = '';
+
+                    // Check for PHP logic errors
+                    if (data.status === 'error') {
+                        Swal.fire('Database Error', data.message, 'error');
+                        return;
+                    }
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>No history found.</td></tr>";
+                        return;
+                    }
+
+                    data.forEach(row => {
+                        let color = 'black';
+                        if(row.Status === 'Pending') color = 'orange';
+                        if(row.Status === 'Confirmed') color = 'green';
+                        if(row.Status === 'Cancelled') color = 'red';
+
+                        const htmlRow = `
+                            <tr>
+                                <td>#${row.Appointment_ID}</td>
+                                <td>${row.Owner_First} ${row.Owner_Last}</td>
+                                <td>${row.Pet_Name} <small>(${row.Species_Name})</small></td>
+                                <td>${row.Service_Name}</td>
+                                <td>${row.Formatted_Date} <br> <small>${row.Formatted_Time}</small></td>
+                                <td><span style="color:${color}; font-weight:bold;">${row.Status}</span></td>
+                                <td>${row.Vet_First ? 'Dr. ' + row.Vet_First : '--'}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += htmlRow;
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    // This alert will now tell you the REAL reason (e.g. "File not found at...")
+                    Swal.fire('Error', error.message, 'error');
+                });
+        }
+
+        function logout() {
+            Swal.fire({
+                title: 'Log Out?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                confirmButtonColor: '#2c5e9e'
+            }).then((result) => {
+                if(result.isConfirmed) window.location.href = '../../login.html';
+            });
+        }
+    </script>
+</body>
+</html>

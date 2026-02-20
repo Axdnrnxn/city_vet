@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Profile - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } .sidebar-transition { transition: all 0.3s ease-in-out; } </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+<div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <a href="owners.html" class="text-gray-500 hover:text-[#00796B] text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Back to List</a>
+                <div class="h-6 w-px bg-gray-300"></div>
+                <h2 class="text-xl font-bold text-gray-800">Client Profile</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                <span class="hidden md:block text-sm font-medium text-gray-700">Administrator</span>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-fit">
+                    <div class="text-center border-b border-gray-100 pb-6 mb-6">
+                        <div class="w-24 h-24 bg-teal-100 rounded-full mx-auto flex items-center justify-center text-teal-600 text-3xl font-bold mb-4" id="avatar">...</div>
+                        <h2 class="text-2xl font-bold text-gray-800" id="ownerName">Loading...</h2>
+                        <p class="text-sm text-gray-500" id="ownerIdDisplay">ID: #...</p>
+                        <span class="inline-block mt-3 bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">Active Account</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div><label class="text-xs font-bold text-gray-400 uppercase">Contact Number</label><p class="text-gray-700 font-medium" id="contact">...</p></div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase">Email Address</label><p class="text-gray-700 font-medium" id="email">...</p></div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase">Full Address</label><p class="text-gray-700 font-medium" id="address">...</p></div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase">Member Since</label><p class="text-gray-700 font-medium" id="regDate">...</p></div>
+                    </div>
+                    <button onclick="openEditOwnerModal()" class="w-full mt-8 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded-lg transition text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Details
+                    </button>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-paw text-[#00796B] mr-2"></i> Registered Pets</h3>
+                        <button onclick="openAddPetModal()" class="bg-[#00796B] hover:bg-[#004D40] text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Pet
+                        </button>
+                    </div>
+                    <div id="petsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="addPetModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-[#00796B] px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg">Add New Pet</h3>
+                <button onclick="document.getElementById('addPetModal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="addPetForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Pet Name</label><input type="text" name="name" class="w-full border p-2 rounded" required></div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Gender</label>
+                        <select name="gender" class="w-full border p-2 rounded bg-white"><option>Male</option><option>Female</option><option>Unknown</option></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Species</label>
+                        <select name="species_id" id="p_species" class="w-full border p-2 rounded bg-white" onchange="loadBreeds('add')">
+                            <option value="1">Dog</option><option value="2">Cat</option>
+                        </select>
+                    </div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Breed</label>
+                        <select name="breed_id" id="p_breed" class="w-full border p-2 rounded bg-white"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Birthdate</label><input type="date" name="birthdate" class="w-full border p-2 rounded"></div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Color/Markings</label><input type="text" name="color" class="w-full border p-2 rounded"></div>
+                </div>
+                <div><label class="text-xs font-bold text-gray-500 uppercase">Weight (kg)</label><input type="number" name="weight" step="0.1" class="w-full border p-2 rounded"></div>
+                <button type="submit" class="w-full bg-[#00796B] text-white font-bold py-3 rounded hover:bg-[#004D40] transition">Save Pet</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="editPetModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg">Edit Pet Details</h3>
+                <button onclick="document.getElementById('editPetModal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editPetForm" class="p-6 space-y-4">
+                <input type="hidden" name="pet_id" id="edit_pet_id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Pet Name</label><input type="text" name="name" id="edit_name" class="w-full border p-2 rounded" required></div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Gender</label>
+                        <select name="gender" id="edit_gender" class="w-full border p-2 rounded bg-white"><option>Male</option><option>Female</option><option>Unknown</option></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Species</label>
+                        <select name="species_id" id="edit_p_species" class="w-full border p-2 rounded bg-white" onchange="loadBreeds('edit')">
+                            <option value="1">Dog</option><option value="2">Cat</option>
+                        </select>
+                    </div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Breed</label>
+                        <select name="breed_id" id="edit_p_breed" class="w-full border p-2 rounded bg-white"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Birthdate</label><input type="date" name="birthdate" id="edit_birthdate" class="w-full border p-2 rounded"></div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Color/Markings</label><input type="text" name="color" id="edit_color" class="w-full border p-2 rounded"></div>
+                </div>
+                <div><label class="text-xs font-bold text-gray-500 uppercase">Weight (kg)</label><input type="number" name="weight" id="edit_weight" step="0.1" class="w-full border p-2 rounded"></div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">Update Pet Info</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const ownerId = urlParams.get('id');
+    let breedData = {}; 
+
+    // 1. Updated Breed Loading Function to support both Modals
+    function loadBreeds(mode = 'add') {
+        const speciesId = document.getElementById(mode === 'add' ? 'p_species' : 'edit_p_species').value;
+        const breedSelect = document.getElementById(mode === 'add' ? 'p_breed' : 'edit_p_breed');
+        breedSelect.innerHTML = '';
+        
+        if (breedData[speciesId]) {
+            breedData[speciesId].forEach(breed => {
+                let opt = document.createElement('option');
+                opt.value = breed.id;
+                opt.text = breed.name;
+                breedSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // 2. Fetch Dynamic Breeds from Database
+    async function initializeBreeds() {
+        try {
+            const res = await fetch('../../api/records/get_breeds.php');
+            breedData = await res.json();
+            loadBreeds('add'); 
+        } catch (err) {
+            console.error("Failed to load dynamic breeds:", err);
+        }
+    }
+
+    // 3. Fetch Owner Profile and Pets (with Action Buttons)
+    async function fetchOwnerProfile() {
+        try {
+            const res = await fetch(`../../api/records/get_owner.php?id=${ownerId}`);
+            const data = await res.json();
+            if (data.status === 'error') { window.location.href = 'owners.html'; return; }
+
+            const o = data.owner;
+            document.getElementById('ownerName').innerText = `${o.First_name} ${o.Last_name}`;
+            document.getElementById('ownerIdDisplay').innerText = `ID: #${String(o.Owner_ID).padStart(4, '0')}`;
+            document.getElementById('avatar').innerText = (o.First_name[0] + o.Last_name[0]).toUpperCase();
+            document.getElementById('contact').innerText = o.Contact_number || 'N/A';
+            document.getElementById('email').innerText = o.Email || 'N/A';
+            document.getElementById('address').innerText = o.Address || 'N/A';
+            document.getElementById('regDate').innerText = new Date(o.Registration_Date).toLocaleDateString();
+
+            const petsGrid = document.getElementById('petsGrid');
+            petsGrid.innerHTML = data.pets.length ? '' : '<p class="text-gray-500 italic">No pets found.</p>';
+            data.pets.forEach(pet => {
+                let icon = pet.Species_Name === 'Dog' ? 'fa-dog text-blue-500' : 'fa-cat text-orange-500';
+                // Convert pet object to string safely for the onclick event
+                const petJson = JSON.stringify(pet).replace(/'/g, "\\'");
+
+                petsGrid.innerHTML += `
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 hover:shadow-md transition relative group">
+                        <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick='openEditPetModal(${petJson})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-full"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deletePet(${pet.Pet_ID})" class="p-2 text-red-600 hover:bg-red-50 rounded-full"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-xl text-[#00796B]"><i class="fa-solid ${icon}"></i></div>
+                            <div><h4 class="font-bold text-gray-800">${pet.Name}</h4><p class="text-xs text-gray-500">${pet.Breed_Name} • ${pet.Gender}</p></div>
+                        </div>
+                    </div>`;
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    // Modal and Form Logic
+    function openAddPetModal() { 
+        document.getElementById('addPetModal').classList.remove('hidden'); 
+        loadBreeds('add'); 
+    }
+
+    function openEditPetModal(pet) {
+        document.getElementById('edit_pet_id').value = pet.Pet_ID;
+        document.getElementById('edit_name').value = pet.Name;
+        document.getElementById('edit_gender').value = pet.Gender;
+        document.getElementById('edit_p_species').value = pet.Species_ID;
+        document.getElementById('edit_birthdate').value = pet.Birthdate;
+        document.getElementById('edit_color').value = pet.Color_Markings;
+        document.getElementById('edit_weight').value = pet.Weight;
+        
+        loadBreeds('edit');
+        document.getElementById('edit_p_breed').value = pet.Breed_ID;
+        document.getElementById('editPetModal').classList.remove('hidden');
+    }
+
+    // DELETE Function
+    async function deletePet(petId) {
+        const confirm = await Swal.fire({
+            title: 'Delete Pet?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const res = await fetch(`../../api/owner/delete_pet.php?id=${petId}`);
+                const result = await res.json();
+                if(result.status === 'success') {
+                    Swal.fire('Deleted', 'Pet record removed', 'success');
+                    fetchOwnerProfile();
+                }
+            } catch (err) { Swal.fire('Error', 'Deletion failed', 'error'); }
+        }
+    }
+
+    // Forms Submissions
+    document.getElementById('addPetForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append('owner_id', ownerId); 
+        try {
+            const res = await fetch('../../api/owner/add_pet.php', { method: 'POST', body: formData });
+            const result = await res.json();
+            if(result.status === 'success') {
+                Swal.fire('Success', result.message, 'success');
+                document.getElementById('addPetModal').classList.add('hidden');
+                this.reset();
+                fetchOwnerProfile();
+            } else { Swal.fire('Error', result.message, 'error'); }
+        } catch (err) { Swal.fire('Error', 'Connection failed', 'error'); }
+    });
+
+    document.getElementById('editPetForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        try {
+            const res = await fetch('../../api/owner/update_pet.php', { method: 'POST', body: formData });
+            const result = await res.json();
+            if(result.status === 'success') {
+                Swal.fire('Updated', 'Pet details updated', 'success');
+                document.getElementById('editPetModal').classList.add('hidden');
+                fetchOwnerProfile();
+            } else { Swal.fire('Error', result.message, 'error'); }
+        } catch (err) { Swal.fire('Error', 'Update failed', 'error'); }
+    });
+
+    // STARTUP
+    initializeBreeds();
+    fetchOwnerProfile();
+    </script>
+</body>
+</html>

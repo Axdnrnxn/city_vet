@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>City Vet - Veterinarian Dashboard</title>
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <div class="logo-circle"></div>
+            <div>
+                <h2>City Veterinary Clinic</h2>
+                <small>Veterinarian Portal</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar" style="background-color: #e2e2e2;">
+            <a href="#" class="nav-btn active"><i class="fas fa-clipboard-list"></i> Pending Requests</a>
+            <a href="history.html" class="nav-btn"><i class="fas fa-history"></i> Appointment History</a>
+            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-lock"></i> Log Out</a>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Pending Surgery Requests</h2>
+                <div class="user-pill">Dr. Veterinarian</div>
+            </div>
+
+            <div style="background: #fff; padding: 20px; border: 1px solid #ccc;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Pet ID</th>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointment-table-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        fetch('../../api/auth/session_status.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'logged_out') window.location.href = '../login.html';
+                else loadAppointments();
+            })
+            .catch(() => loadAppointments());
+
+        function loadAppointments() {
+            fetch('../../api/clinic/vet_get_pending.php')
+                .then(res => res.json())
+                .then(appointments => {
+                    const tbody = document.getElementById('appointment-table-body');
+                    tbody.innerHTML = ''; 
+
+                    if (appointments.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>No pending requests.</td></tr>";
+                        return;
+                    }
+
+                    appointments.forEach(appt => {
+                        const row = `
+                            <tr>
+                                <td>${appt.Appointment_ID}</td>
+                                <td>${appt.Pet_ID}</td>
+                                <td>Surgery (Spay/Neuter)</td>
+                                <td>${appt.Appointment_Date}</td>
+                                <td><span style='color:orange; font-weight:bold;'>${appt.Status}</span></td>
+                                <td>
+                                    <button class='btn-primary' style='background:green;' onclick="approveAppt(${appt.Appointment_ID})">Approve</button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                });
+        }
+
+        function approveAppt(id) {
+            Swal.fire({
+                title: 'Approve?',
+                text: "Confirm this appointment request?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                confirmButtonText: 'Yes, Approve'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Approved!', 'Appointment has been confirmed.', 'success');
+                    // In real app: fetch POST to update status
+                }
+            });
+        }
+
+        function logout() {
+            Swal.fire({
+                title: 'Log Out?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                confirmButtonColor: '#2c5e9e'
+            }).then((result) => {
+                if(result.isConfirmed) window.location.href = '../../login.html';
+            });
+        }
+    </script>
+</body>
+</html>

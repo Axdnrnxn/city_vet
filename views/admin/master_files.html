@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Settings - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden glass"></div>
+
+<div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Clinic Settings</h2>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="relative cursor-pointer p-2 rounded-full hover:bg-gray-100">
+                    <i class="fa-regular fa-bell text-gray-600 text-lg"></i>
+                    <span class="absolute top-1 right-1 bg-red-500 w-2.5 h-2.5 rounded-full border-2 border-white"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                    <span class="hidden md:block text-sm font-medium text-gray-700">Administrator</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Services & Fees</h2>
+                    <p class="text-gray-500 text-sm">Manage the services offered by the clinic.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Add New Service</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="newName" placeholder="Service Name (e.g. Deworming)" class="border border-gray-300 p-3 rounded-lg md:col-span-2 focus:ring-2 focus:ring-teal-500 outline-none">
+                    <select id="newCategory" class="border border-gray-300 p-3 rounded-lg bg-white focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="1">Consultation</option>
+                        <option value="2">Surgery</option>
+                        <option value="3">Vaccination</option>
+                    </select>
+                    <input type="number" id="newPrice" placeholder="Price (PHP)" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                    
+                    <button onclick="createService()" class="bg-[#00796B] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#004D40] transition md:col-span-4 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add Service
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs text-gray-500 uppercase border-b">
+                                <th class="px-6 py-4 font-bold">ID</th>
+                                <th class="px-6 py-4 font-bold">Service Name</th>
+                                <th class="px-6 py-4 font-bold">Category</th>
+                                <th class="px-6 py-4 font-bold">Price</th>
+                                <th class="px-6 py-4 font-bold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTable" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // 1. Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // 2. Auth Check
+        async function checkSession() {
+            try {
+                const res = await fetch('../../api/auth/session_status.php');
+                const data = await res.json();
+                if (data.status !== 'logged_in' || data.role_id != 1) {
+                    window.location.href = '../../login.html';
+                }
+            } catch (error) {
+                window.location.href = '../../login.html';
+            }
+        }
+        checkSession();
+
+        // 3. Logout
+        function logout() {
+            Swal.fire({
+                title: 'Logout?',
+                text: "End your session?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Logout'
+            }).then((result) => {
+                if (result.isConfirmed) window.location.href = '../../api/auth/logout.php';
+            });
+        }
+
+        // --- SERVICES CRUD LOGIC ---
+
+        async function loadServices() {
+            const res = await fetch('../../api/master/services.php');
+            const data = await res.json();
+            const tbody = document.getElementById('servicesTable');
+            tbody.innerHTML = '';
+
+            data.forEach(service => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-gray-400">#${service.Service_ID}</td>
+                        <td class="px-6 py-4 font-bold text-gray-800">${service.Service_Name}</td>
+                        <td class="px-6 py-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">${service.Category_Name}</span></td>
+                        <td class="px-6 py-4 text-green-600 font-bold">₱${parseFloat(service.Price).toFixed(2)}</td>
+                        <td class="px-6 py-4 text-right flex justify-end gap-2">
+                            <button onclick="editService(${service.Service_ID}, '${service.Service_Name}', ${service.Price}, ${service.Category_ID})" 
+                                    class="text-blue-500 hover:bg-blue-50 p-2 rounded transition" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="softDelete(${service.Service_ID})" 
+                                    class="text-red-500 hover:bg-red-50 p-2 rounded transition" title="Archive">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function createService() {
+            const name = document.getElementById('newName').value;
+            const price = document.getElementById('newPrice').value;
+            const category = document.getElementById('newCategory').value;
+
+            if(!name) return Swal.fire('Error', 'Service name is required', 'error');
+
+            const res = await fetch('../../api/master/services.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'create', service_name: name, price: price, category_id: category })
+            });
+
+            const result = await res.json();
+            if (result.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'Saved!', timer: 1500, showConfirmButton: false });
+                loadServices();
+                document.getElementById('newName').value = '';
+                document.getElementById('newPrice').value = '';
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        }
+
+        async function editService(id, name, price, categoryId) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Edit Service',
+                html:
+                    `<input id="swal-name" class="swal2-input" placeholder="Name" value="${name}">` +
+                    `<input id="swal-price" type="number" class="swal2-input" placeholder="Price" value="${price}">` +
+                    `<select id="swal-cat" class="swal2-input">
+                        <option value="1" ${categoryId == 1 ? 'selected' : ''}>Consultation</option>
+                        <option value="2" ${categoryId == 2 ? 'selected' : ''}>Surgery</option>
+                        <option value="3" ${categoryId == 3 ? 'selected' : ''}>Vaccination</option>
+                    </select>`,
+                focusConfirm: false,
+                showCancelButton: true,
+                preConfirm: () => {
+                    return {
+                        name: document.getElementById('swal-name').value,
+                        price: document.getElementById('swal-price').value,
+                        cat: document.getElementById('swal-cat').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                const res = await fetch('../../api/master/services.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        action: 'update', 
+                        service_id: id, 
+                        service_name: formValues.name, 
+                        price: formValues.price, 
+                        category_id: formValues.cat 
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    Swal.fire('Updated!', '', 'success');
+                    loadServices();
+                }
+            }
+        }
+
+        async function softDelete(id) {
+            const confirm = await Swal.fire({
+                title: 'Archive Service?',
+                text: "It will be hidden from lists.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Archive'
+            });
+
+            if (confirm.isConfirmed) {
+                const res = await fetch('../../api/master/services.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'delete', service_id: id })
+                });
+                loadServices();
+            }
+        }
+
+        loadServices();
+    </script>
+</body>
+</html>

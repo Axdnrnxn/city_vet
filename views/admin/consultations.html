@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultations - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
+<div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Clinic Transactions</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                    <span class="hidden md:block text-sm font-medium text-gray-700">Administrator</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="bg-gradient-to-r from-[#00796B] to-[#004D40] rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-1">Medical Consultations 🩺</h2>
+                    <p class="text-teal-100 text-sm">Manage daily clinical procedures and update pet medical histories.</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button onclick="openConsultModal()" class="bg-white text-[#00796B] px-6 py-2 rounded-lg font-bold shadow-md hover:bg-teal-50 transition">
+                        <i class="fa-solid fa-notes-medical mr-2"></i> Record New Consultation
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-center">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Consultations Today</p>
+                    <h3 id="todayCount" class="text-2xl font-bold text-gray-800">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Grand Total</p>
+                    <h3 id="totalRecords" class="text-2xl font-bold text-gray-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                    <h3 class="font-bold text-gray-800">Recent Medical History</h3>
+                    <div class="relative w-full md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="historySearch" onkeyup="filterTable()" placeholder="Search..." class="pl-10 w-full border rounded-lg p-2 text-sm focus:outline-none">
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left" id="historyTable">
+                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Pet & Owner</th>
+                                <th class="px-6 py-4">Category</th>
+                                <th class="px-6 py-4">Treatment</th>
+                                <th class="px-6 py-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-list" class="divide-y divide-gray-100 text-sm">
+                            <tr><td colspan="5" class="py-10 text-center text-gray-400">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="consultModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            <div class="bg-[#00796B] px-6 py-4 flex justify-between items-center text-white">
+                <h3 id="modalTitle" class="font-bold text-lg">Consultation Record Form</h3>
+                <button onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="consultForm" onsubmit="saveConsultation(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Search Owner</label>
+                        <input list="ownerList" id="owner_search" class="w-full border p-2 rounded mt-1 bg-white" placeholder="Type Owner Name...">
+                        <span id="owner_status" class="text-[10px] mt-1 block font-medium"></span>
+                        <datalist id="ownerList"></datalist>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Select Pet</label>
+                        <select name="pet_id" id="pet_id" class="w-full border p-2 rounded mt-1 bg-white" disabled required>
+                            <option value="">-- Choose Owner First --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Service Category (Diagnosis)</label>
+                    <select name="diagnosis_id" id="diagnosis_id" class="w-full border p-2 rounded mt-1 bg-white" required>
+                        <option value="">-- Loading Categories... --</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Clinical Notes (Symptoms/Findings)</label>
+                    <textarea name="symptoms" class="w-full border p-2 rounded mt-1 h-20" placeholder="Describe findings..." required></textarea>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Prescribed Treatment</label>
+                    <input type="text" name="treatment" class="w-full border p-2 rounded mt-1" placeholder="Medication, Injection, etc." required>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 border rounded-lg font-bold text-gray-500 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-[2] px-4 py-3 bg-[#00796B] text-white rounded-lg font-bold hover:bg-[#004D40] shadow-lg">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobileOverlay').classList.toggle('hidden');
+        }
+
+        // --- DATA LOADING ---
+        async function loadDiagnosisMaster() {
+            const dropdown = document.getElementById('diagnosis_id');
+            try {
+                const res = await fetch('../../api/clinic/get_diagnosis_master.php');
+                const data = await res.json();
+                dropdown.innerHTML = '<option value="">-- Select Service Type --</option>' + 
+                    data.map(d => `<option value="${d.Diagnosis_ID}">${d.Diagnosis_Name}</option>`).join('');
+            } catch (e) { dropdown.innerHTML = '<option value="">Error loading</option>'; }
+        }
+
+        async function loadOwners() {
+            try {
+                const res = await fetch('../../api/records/get_all_owners.php');
+                const owners = await res.json();
+                document.getElementById('ownerList').innerHTML = owners.map(o => 
+                    `<option data-id="${o.Owner_ID}" value="${o.First_name} ${o.Last_name}">`
+                ).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadPetsByOwner(ownerId) {
+            const petSelect = document.getElementById('pet_id');
+            petSelect.disabled = false;
+            petSelect.innerHTML = '<option>Loading...</option>';
+            try {
+                const res = await fetch(`../../api/records/get_pets_by_owner.php?owner_id=${ownerId}`);
+                const pets = await res.json();
+                petSelect.innerHTML = '<option value="">-- Select Pet --</option>' + 
+                    pets.map(p => `<option value="${p.Pet_ID}">${p.Name}</option>`).join('');
+            } catch (e) { petSelect.innerHTML = '<option>Error</option>'; }
+        }
+
+        async function loadHistory() {
+            const historyList = document.getElementById('history-list');
+            try {
+                const res = await fetch('../../api/clinic/get_consultations.php');
+                const data = await res.json();
+                
+                document.getElementById('todayCount').innerText = data.today || 0;
+                document.getElementById('totalRecords').innerText = data.total || 0;
+
+                if (!data.records || data.records.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400">No records found.</td></tr>';
+                    return;
+                }
+
+                historyList.innerHTML = data.records.map(row => `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 font-medium text-gray-800">${row.Visit_Date}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-[#00796B]">${row.Pet_Name}</div>
+                            <div class="text-xs text-gray-400">${row.Owner_Name}</div>
+                        </td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 bg-teal-50 text-teal-700 rounded text-xs font-bold">${row.Diagnosis_Name || 'General'}</span></td>
+                        <td class="px-6 py-4">${row.Treatment}</td>
+                        <td class="px-6 py-4 flex justify-center gap-2">
+                            <button onclick="editRecord(${row.Consultation_ID})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteRecord(${row.Consultation_ID})" class="p-2 text-red-600 hover:bg-red-50 rounded-full transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { 
+                historyList.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-red-400">Connection error.</td></tr>';
+            }
+        }
+
+        // --- CRUD ACTIONS ---
+        async function saveConsultation(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const editId = form.dataset.editId;
+            const url = editId ? '../../api/clinic/manage_consultations.php?action=update' : '../../api/clinic/manage_consultations.php?action=add';
+            if(editId) formData.append('id', editId);
+
+            try {
+                const res = await fetch(url, { method: 'POST', body: formData });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    Swal.fire('Saved!', result.message, 'success');
+                    closeModal();
+                    loadHistory();
+                } else { Swal.fire('Error', result.message, 'error'); }
+            } catch (err) { Swal.fire('Error', 'Server error.', 'error'); }
+        }
+
+        async function editRecord(id) {
+            const res = await fetch(`../../api/clinic/manage_consultations.php?action=get_single&id=${id}`);
+            const data = await res.json();
+            
+            openConsultModal();
+            document.getElementById('modalTitle').innerText = "Edit Record";
+            const form = document.getElementById('consultForm');
+            document.getElementById('pet_id').disabled = false;
+            document.getElementById('pet_id').innerHTML = `<option value="${data.Pet_ID}" selected>${data.Pet_Name}</option>`;
+            
+            form.diagnosis_id.value = data.Diagnosis_ID;
+            form.symptoms.value = data.Notes;
+            form.treatment.value = data.Treatment;
+            form.dataset.editId = id; 
+        }
+
+        async function deleteRecord(id) {
+            const confirm = await Swal.fire({ title: 'Delete?', text: "Archive this record?", icon: 'warning', showCancelButton: true });
+            if (confirm.isConfirmed) {
+                const fd = new FormData();
+                fd.append('id', id);
+                const res = await fetch('../../api/clinic/manage_consultations.php?action=delete', { method: 'POST', body: fd });
+                if((await res.json()).status === 'success') {
+                    Swal.fire('Deleted!', '', 'success');
+                    loadHistory();
+                }
+            }
+        }
+
+        // --- UI LOGIC ---
+        document.getElementById('owner_search').addEventListener('change', function(e) {
+            const val = e.target.value;
+            const options = document.getElementById('ownerList').options;
+            const petSelect = document.getElementById('pet_id');
+            const status = document.getElementById('owner_status');
+            let foundOwnerId = null;
+
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === val) {
+                    foundOwnerId = options[i].getAttribute('data-id');
+                    break;
+                }
+            }
+
+            if (foundOwnerId) {
+                status.innerText = "✓ Owner Verified";
+                status.className = "text-[10px] mt-1 block font-medium text-green-600";
+                loadPetsByOwner(foundOwnerId);
+            } else {
+                status.innerText = "✗ Owner not found.";
+                status.className = "text-[10px] mt-1 block font-medium text-red-500";
+                petSelect.innerHTML = '<option value="">-- No Pet Available --</option>';
+                petSelect.disabled = true;
+                this.value = "";
+            }
+        });
+
+        function openConsultModal() {
+            const form = document.getElementById('consultForm');
+            form.reset();
+            delete form.dataset.editId;
+            document.getElementById('pet_id').disabled = true;
+            document.getElementById('owner_status').innerText = "";
+            document.getElementById('modalTitle').innerText = "Record New Consultation";
+            document.getElementById('consultModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('consultModal').classList.add('hidden'); }
+
+        function filterTable() {
+            const input = document.getElementById("historySearch").value.toUpperCase();
+            const rows = document.getElementById("history-list").getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+            }
+        }
+
+        function logout() {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOwners();
+            loadHistory();
+            loadDiagnosisMaster();
+        });
+    </script>
+</body>
+</html>

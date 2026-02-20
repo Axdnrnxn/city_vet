@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden glass"></div>
+
+<div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Overview</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="relative cursor-pointer p-2 rounded-full hover:bg-gray-100">
+                    <i class="fa-regular fa-bell text-gray-600 text-lg"></i>
+                    <span class="absolute top-1 right-1 bg-red-500 w-2.5 h-2.5 rounded-full border-2 border-white"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                    <span class="hidden md:block text-sm font-medium text-gray-700">Administrator</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            
+            <div class="bg-gradient-to-r from-[#00796B] to-[#004D40] rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-1">Good Morning, Admin! 👋</h2>
+                    <p class="text-teal-100 text-sm">Here is the daily summary for Cagayan de Oro City Veterinary Clinic.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <button onclick="location.href='owners.html'" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm transition">
+                        <i class="fa-solid fa-plus mr-1"></i> New Walk-in
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Today's Appointments</p>
+                            <h3 id="stat-appointments" class="text-3xl font-bold text-gray-800 mt-2">--</h3>
+                        </div>
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-calendar-day text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Pending Requests</p>
+                            <h3 id="stat-pending" class="text-3xl font-bold text-gray-800 mt-2">--</h3>
+                        </div>
+                        <div class="p-3 bg-orange-50 text-orange-500 rounded-lg"><i class="fa-solid fa-clock text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Patients</p>
+                            <h3 id="stat-patients" class="text-3xl font-bold text-gray-800 mt-2">--</h3>
+                        </div>
+                        <div class="p-3 bg-teal-50 text-teal-600 rounded-lg"><i class="fa-solid fa-paw text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Staff Active</p>
+                            <h3 id="stat-staff" class="text-3xl font-bold text-gray-800 mt-2">--</h3>
+                        </div>
+                        <div class="p-3 bg-purple-50 text-purple-600 rounded-lg"><i class="fa-solid fa-user-nurse text-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">Today's Schedule</h3>
+                        <a href="appointments.html" class="text-sm text-[#00796B] font-bold hover:underline">View All</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-gray-400 uppercase border-b">
+                                    <th class="py-3">Time</th>
+                                    <th class="py-3">Owner</th>
+                                    <th class="py-3">Pet</th>
+                                    <th class="py-3">Service</th>
+                                    <th class="py-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-table" class="text-sm text-gray-600">
+                                <tr><td colspan="5" class="py-4 text-center text-gray-400">Loading schedule...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 text-lg mb-6">New Registrations</h3>
+                    <div id="registrations-list" class="space-y-4">
+                         <p class="text-gray-400 text-sm">Loading...</p>
+                    </div>
+                    <button onclick="location.href='owners.html'" class="w-full mt-6 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-50 transition">
+                        View All Owners
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('../../api/auth/session_status.php');
+                const data = await res.json();
+                if (data.status !== 'logged_in' || data.role_id != 1) {
+                    window.location.href = '../../login.html';
+                }
+            } catch (error) { window.location.href = '../../login.html'; }
+        }
+        checkSession();
+
+        function logout() {
+            Swal.fire({
+                title: 'Logout?',
+                text: "End your session?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Logout'
+            }).then((result) => {
+                if (result.isConfirmed) { window.location.href = '../../api/auth/logout.php'; }
+            });
+        }
+
+        // --- DASHBOARD DATA FETCHER ---
+        async function loadDashboardData() {
+            try {
+                const res = await fetch('../../api/dashboard/stats.php');
+                const data = await res.json();
+
+                // 1. Update Stats Cards
+                document.getElementById('stat-appointments').innerText = data.stats.today_appointments;
+                document.getElementById('stat-pending').innerText = data.stats.pending;
+                document.getElementById('stat-patients').innerText = data.stats.total_patients;
+                document.getElementById('stat-staff').innerText = data.stats.staff_active;
+
+                // 2. Update Schedule Table
+                const scheduleBody = document.getElementById('schedule-table');
+                scheduleBody.innerHTML = '';
+                if (data.schedule.length === 0) {
+                    scheduleBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-400 italic">No appointments scheduled for today.</td></tr>`;
+                } else {
+                    data.schedule.forEach(row => {
+                        // Badge Color Logic
+                        let badgeClass = "bg-gray-100 text-gray-700";
+                        if(row.Status === 'Completed') badgeClass = "bg-green-100 text-green-700";
+                        if(row.Status === 'Pending') badgeClass = "bg-orange-100 text-orange-700";
+                        if(row.Status === 'Confirmed') badgeClass = "bg-blue-100 text-blue-700";
+
+                        scheduleBody.innerHTML += `
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 font-bold">${row.Time}</td>
+                                <td class="py-3">${row.Owner}</td>
+                                <td class="py-3">${row.Pet} <span class="text-xs text-gray-400">(${row.Species || 'Pet'})</span></td>
+                                <td class="py-3">${row.Service_Name || 'General'}</td>
+                                <td class="py-3"><span class="${badgeClass} px-2 py-1 rounded text-xs font-bold">${row.Status}</span></td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // 3. Update Registrations List
+                const regList = document.getElementById('registrations-list');
+                regList.innerHTML = '';
+                if (data.registrations.length === 0) {
+                    regList.innerHTML = `<p class="text-gray-400 text-sm italic">No recent registrations.</p>`;
+                } else {
+                    data.registrations.forEach(reg => {
+                        const timeAgo = getTimeAgo(reg.Registration_Date);
+                        regList.innerHTML += `
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-800">${reg.First_name} ${reg.Last_name}</h4>
+                                    <p class="text-xs text-gray-400">Registered ${timeAgo}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+            } catch (err) {
+                console.error("Dashboard Load Error:", err);
+            }
+        }
+
+        // Helper: Time Ago
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " mins ago";
+            return "Just now";
+        }
+
+        // Load Data on Start
+        loadDashboardData();
+    </script>
+</body>
+</html>

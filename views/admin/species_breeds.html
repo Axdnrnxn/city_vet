@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Species & Breeds - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="flex min-h-screen">
+
+        <div id="sidebar-container"></div>
+
+<script src="../../js/sidebar.js"></script>
+
+        <main class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Pet Masterlist</h2>
+                    <p class="text-gray-600">Manage species and their respective breeds</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openModal('species')" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 shadow-md transition">
+                        <i class="fas fa-plus mr-2"></i> New Species
+                    </button>
+                    <button onclick="openModal('breed')" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 shadow-md transition">
+                        <i class="fas fa-plus mr-2"></i> New Breed
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
+                    <div class="bg-gray-100 p-4 font-bold text-gray-700 border-b">Species List</div>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th class="p-4 border-b">Name</th>
+                                <th class="p-4 border-b text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="speciesTableBody" class="divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
+                        <span class="font-bold text-gray-700">Breed Registry</span>
+                        <input type="text" id="breedSearch" onkeyup="filterBreeds()" placeholder="Search breeds..." class="text-sm p-1 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796B]">
+                    </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th class="p-4 border-b">Breed Name</th>
+                                <th class="p-4 border-b">Species</th>
+                                <th class="p-4 border-b text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breedTableBody" class="divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="masterModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all">
+            <div class="p-6 border-b">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Add Item</h3>
+            </div>
+            <form id="masterForm" class="p-6">
+                <input type="hidden" id="target_type" name="target_type">
+                <input type="hidden" id="item_id" name="item_id">
+
+                <div id="speciesSelectContainer" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Species</label>
+                    <select id="Species_ID_Dropdown" name="Species_ID" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none">
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label id="nameLabel" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="item_name" name="item_name" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none">
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-[#00796B] text-white rounded-lg hover:bg-teal-700 shadow-lg">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const apiPath = '../../api/clinic/manage_species_breeds.php';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        async function loadAllData() {
+            await loadSpecies();
+            await loadBreeds();
+        }
+
+        async function loadSpecies() {
+            try {
+                const res = await fetch(`${apiPath}?action=get_species`);
+                const data = await res.json();
+                const tbody = document.getElementById('speciesTableBody');
+                tbody.innerHTML = data.map(s => `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4">${s.Species_Name}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteItem('species', ${s.Species_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                const dropdown = document.getElementById('Species_ID_Dropdown');
+                dropdown.innerHTML = data.map(s => `<option value="${s.Species_ID}">${s.Species_Name}</option>`).join('');
+            } catch (e) { console.error("Error loading species:", e); }
+        }
+
+        async function loadBreeds() {
+            try {
+                const res = await fetch(`${apiPath}?action=get_breeds`);
+                const data = await res.json();
+                const tbody = document.getElementById('breedTableBody');
+                tbody.innerHTML = data.map(b => `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-medium text-gray-800">${b.Breed_Name}</td>
+                        <td class="p-4"><span class="px-2 py-1 bg-teal-100 text-[#00796B] rounded-md text-xs font-bold uppercase">${b.Species_Name}</span></td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteItem('breed', ${b.Breed_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error("Error loading breeds:", e); }
+        }
+
+        function openModal(type) {
+            document.getElementById('masterModal').classList.remove('hidden');
+            document.getElementById('target_type').value = type;
+            document.getElementById('masterForm').reset();
+            if (type === 'species') {
+                document.getElementById('modalTitle').innerText = 'Add New Species';
+                document.getElementById('nameLabel').innerText = 'Species Name (e.g. Canine)';
+                document.getElementById('speciesSelectContainer').classList.add('hidden');
+            } else {
+                document.getElementById('modalTitle').innerText = 'Add New Breed';
+                document.getElementById('nameLabel').innerText = 'Breed Name (e.g. Golden Retriever)';
+                document.getElementById('speciesSelectContainer').classList.remove('hidden');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('masterModal').classList.add('hidden');
+        }
+
+        document.getElementById('masterForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const type = formData.get('target_type');
+            const action = (type === 'species') ? 'save_species' : 'save_breed';
+            
+            const response = await fetch(`${apiPath}?action=${action}`, { method: 'POST', body: formData });
+            const result = await response.json();
+            if(result.status === 'success') {
+                closeModal();
+                loadAllData();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        };
+
+        async function deleteItem(type, id) {
+            if(!confirm(`Are you sure? Deleting a species might affect breeds linked to it.`)) return;
+            const action = (type === 'species') ? 'delete_species' : 'delete_breed';
+            await fetch(`${apiPath}?action=${action}&id=${id}`);
+            loadAllData();
+        }
+
+        function filterBreeds() {
+            const input = document.getElementById('breedSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#breedTableBody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none';
+            });
+        }
+
+        function logout() {
+            window.location.href = 'logout.php';
+        }
+    </script>
+</body>
+</html>

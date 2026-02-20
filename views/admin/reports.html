@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; } 
+        @media print { 
+            #sidebar-container, .print-hide { display: none !important; } 
+            .main-content { margin: 0 !important; padding: 0 !important; }
+        } 
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex overflow-hidden">
+
+    <div id="sidebar-container" class="print-hide"></div>
+    <script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto main-content">
+        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm sticky top-0 z-10 print-hide">
+            <h2 class="text-xl font-bold text-gray-800">Reports & Analytics</h2>
+            <div class="flex items-center gap-4">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-print"></i> Print Full Report
+                </button>
+            </div>
+        </header>
+
+        <main class="p-8 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Service Audit Value</p>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="totalValue">₱0.00</h3>
+                    <span class="text-teal-500 text-[10px] font-bold uppercase italic">Supply Subsidy Value</span>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">New Clients</p>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="newClients">0</h3>
+                    <span class="text-blue-500 text-[10px] font-bold uppercase">This Month</span>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Services Logged</p>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="totalAppts">0</h3>
+                    <span class="text-purple-500 text-[10px] font-bold uppercase">Activity Count</span>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Pets</p>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="activePets">0</h3>
+                    <span class="text-orange-500 text-[10px] font-bold uppercase">In Records</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-blue-500"></i> Service Value Trend
+                    </h4>
+                    <div class="relative h-[300px] w-full">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-paw text-orange-500"></i> Species Mix
+                    </h4>
+                    <div class="relative h-[300px] w-full flex items-center">
+                        <canvas id="speciesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h4 class="font-bold text-gray-800">Recent Service Logs</h4>
+                    <span class="text-[10px] bg-white px-2 py-1 rounded border font-bold text-gray-400 uppercase">Live Records</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-[11px] uppercase text-gray-400 font-bold border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Owner Name</th>
+                                <th class="px-6 py-4">Treatment/Service</th>
+                                <th class="px-6 py-4 text-right">Audit Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionLog" class="divide-y divide-gray-50">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', fetchReportData);
+
+        // Chart instances for memory management
+        let trendChartInstance = null;
+        let speciesChartInstance = null;
+
+        async function fetchReportData() {
+            try {
+                const response = await fetch('../../api/reports/get_stats.php');
+                const data = await response.json();
+
+                if (data.status === 'error') return;
+
+                document.getElementById('totalValue').innerText = '₱' + data.kpis.value;
+                document.getElementById('newClients').innerText = data.kpis.clients;
+                document.getElementById('totalAppts').innerText = data.kpis.appts;
+                document.getElementById('activePets').innerText = data.kpis.pets;
+
+                const logTable = document.getElementById('transactionLog');
+                if (data.recent && data.recent.length > 0) {
+                    logTable.innerHTML = data.recent.map(item => `
+                        <tr class="hover:bg-blue-50/30 transition-colors">
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                ${new Date(item.Visit_Date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-800">${item.Last_name}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">${item.Treatment || 'General Checkup'}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                                ₱${item.Price ? parseFloat(item.Price).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'}
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    logTable.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">No recent records.</td></tr>`;
+                }
+
+                initCharts(data.trend, data.species);
+            } catch (err) {
+                console.error("Dashboard Error:", err);
+            }
+        }
+
+        function initCharts(trendData, speciesData) {
+            // Trend Line Chart
+            const ctxTrend = document.getElementById('revenueChart').getContext('2d');
+            if(trendChartInstance) trendChartInstance.destroy();
+            
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(d => d.month),
+                    datasets: [{
+                        label: 'Value',
+                        data: trendData.map(d => d.amount),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Species Distribution
+            const ctxSpecies = document.getElementById('speciesChart').getContext('2d');
+            if(speciesChartInstance) speciesChartInstance.destroy();
+
+            speciesChartInstance = new Chart(ctxSpecies, {
+                type: 'doughnut',
+                data: {
+                    labels: speciesData.map(s => s.Species_Name),
+                    datasets: [{
+                        data: speciesData.map(s => s.count),
+                        backgroundColor: ['#3b82f6', '#f97316', '#10b981', '#a855f7'],
+                        borderWidth: 0,
+                        hoverOffset: 12
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } 
+                    },
+                    cutout: '75%'
+                }
+            });
+        }
+    </script>
+</body>
+</html>
