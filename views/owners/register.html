@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Registration - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen w-full flex flex-col items-center justify-center pt-20 pb-10">
+
+    <nav class="fixed top-0 w-full bg-white shadow-md z-50 py-3 px-6 flex items-center">
+        <div class="flex items-center gap-3">
+            <div class="h-12 w-12 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center border border-gray-300">
+                <img src="https://via.placeholder.com/150" alt="City Vet Logo" class="object-cover h-full w-full opacity-50">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-teal-800 leading-tight">City Veterinary Office</h1>
+                <p class="text-xs text-gray-500 font-semibold tracking-wide">CAGAYAN DE ORO CITY</p>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-white w-full max-w-5xl shadow-2xl rounded-xl overflow-hidden flex flex-col md:flex-row mt-4">
+        
+        <div class="hidden md:flex w-1/2 items-center justify-center bg-white p-10">
+            <div class="w-80 h-80 bg-gray-100 rounded-full flex items-center justify-center shadow-inner">
+                <h1 class="text-4xl font-italic font-bold text-gray-400 italic">LOGO</h1>
+            </div>
+        </div>
+
+        <div class="w-full md:w-1/2 bg-[#0d7c74] flex flex-col justify-center px-10 py-12 relative">
+            <h2 class="text-white text-3xl font-bold mb-6 italic tracking-wider">REGISTRATION</h2>
+
+            <form id="registerForm" class="space-y-4">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-white text-xs font-bold mb-1 uppercase">First Name</label>
+                        <input type="text" name="first_name" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-white text-xs font-bold mb-1 uppercase">Last Name</label>
+                        <input type="text" name="last_name" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-white text-xs font-bold mb-1 uppercase">Contact No.</label>
+                    <input type="text" name="contact_number" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm" placeholder="09*********" required>
+                </div>
+
+                <div>
+                    <label class="block text-white text-xs font-bold mb-1 uppercase">Username</label>
+                    <input type="text" name="username" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm" required>
+                </div>
+
+                <div>
+                    <label class="block text-white text-xs font-bold mb-1 uppercase">Email</label>
+                    <input type="email" name="email" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm" required>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-white text-xs font-bold mb-1 uppercase">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm pr-10" required>
+                        <button type="button" onclick="togglePassword('password', 'eye-icon-1')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-teal-700">
+                            <svg id="eye-icon-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-white text-xs font-bold mb-1 uppercase">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirm_password" class="w-full p-2.5 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-800 text-sm pr-10" required>
+                        <button type="button" onclick="togglePassword('confirm_password', 'eye-icon-2')" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-teal-700">
+                            <svg id="eye-icon-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center pt-2">
+                    <p class="text-white text-xs font-bold opacity-80">ALREADY HAVE AN ACCOUNT?</p>
+                    <a href="login.html" class="text-yellow-300 text-xs font-bold underline hover:text-white transition">LOG IN HERE</a>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button type="submit" class="bg-white text-teal-900 font-extrabold text-sm py-3 px-12 rounded-lg shadow-lg hover:bg-gray-100 transform hover:scale-105 transition duration-200 uppercase tracking-widest">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. Toggle Password Visibility
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === "password") {
+                input.type = "text";
+                // Switch to "Slash Eye" icon (Hidden view)
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />'; 
+            } else {
+                input.type = "password";
+                // Switch back to "Normal Eye"
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />';
+            }
+        }
+
+        // 2. Form Submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Client-Side Validation: Password Match
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (password !== confirmPassword) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Password Mismatch',
+                    text: 'Your passwords do not match. Please try again.',
+                    confirmButtonColor: '#d33'
+                });
+                return; // Stop execution
+            }
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = "CREATING...";
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('../../api/auth/register.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Account created! Redirecting...',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = 'login.html';
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Registration Failed',
+                        text: result.message || 'Something went wrong.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Server connection failed.' });
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
