@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Master Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">🏥 Services Master List</h2>
+            <a href="dashboard.html" class="text-blue-500 hover:underline">← Back to Dashboard</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-blue-50 p-4 rounded border border-blue-200">
+            <input type="text" id="newName" placeholder="Service Name (e.g. Deworming)" class="border p-2 rounded md:col-span-2">
+            <input type="number" id="newPrice" placeholder="Price (PHP)" class="border p-2 rounded">
+            <select id="newCategory" class="border p-2 rounded bg-white">
+                <option value="1">Consultation</option>
+                <option value="2">Surgery</option>
+                <option value="3">Vaccination</option>
+            </select>
+            <button onclick="createService()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold md:col-span-4 mt-2 hover:bg-blue-700 transition">
+                + Add New Service
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="p-3 border rounded-tl-lg">ID</th>
+                        <th class="p-3 border">Service Name</th>
+                        <th class="p-3 border">Category</th>
+                        <th class="p-3 border">Price</th>
+                        <th class="p-3 border rounded-tr-lg">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="servicesTable" class="bg-white">
+                    <tr><td colspan="5" class="p-3 text-center text-gray-500">Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- A. SECURITY CHECK (With SweetAlert2) ---
+        async function checkAdminAccess() {
+            try {
+                // Ensure this path points to where you created the session_status.php file
+                const res = await fetch('../../api/auth/session_status.php'); 
+                const data = await res.json();
+
+                // Check if logged in AND Role ID is 1 (Admin)
+                if (data.status !== 'logged_in' || data.role_id != 1) {
+                    // 1. Hide the content immediately so they can't see it
+                    document.body.innerHTML = ''; 
+                    
+                    // 2. Show SweetAlert
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Access Denied',
+                        text: 'Restricted Area: Administrators Only.',
+                        allowOutsideClick: false,
+                        confirmButtonText: 'Go to Login',
+                        confirmButtonColor: '#d33'
+                    });
+
+                    // 3. Redirect
+                    window.location.href = '../../login.html';
+                } else {
+                    // If authorized, load the data
+                    loadServices();
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                window.location.href = '../../login.html';
+            }
+        }
+
+        // --- B. READ: Load Data ---
+        async function loadServices() {
+            try {
+                const res = await fetch('../../api/master/services.php');
+                const data = await res.json();
+                const tbody = document.getElementById('servicesTable');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-gray-500">No active services found.</td></tr>';
+                    return;
+                }
+
+                data.forEach(service => {
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50 transition">
+                            <td class="p-3 text-gray-500">#${service.Service_ID}</td>
+                            <td class="p-3 font-semibold text-gray-800">${service.Service_Name}</td>
+                            <td class="p-3"><span class="bg-gray-100 text-gray-600 py-1 px-2 rounded text-sm">${service.Category_Name}</span></td>
+                            <td class="p-3 text-green-700 font-bold">₱${parseFloat(service.Price).toFixed(2)}</td>
+                            <td class="p-3 flex gap-2">
+                                <button onclick="editService(${service.Service_ID}, '${service.Service_Name}', ${service.Price}, ${service.Category_ID})" 
+                                        class="text-blue-500 hover:text-white hover:bg-blue-500 border border-blue-500 rounded px-3 py-1 text-sm font-bold transition">
+                                    ✏️ Edit
+                                </button>
+                                <button onclick="softDelete(${service.Service_ID})" 
+                                        class="text-red-500 hover:text-white hover:bg-red-500 border border-red-500 rounded px-3 py-1 text-sm font-bold transition">
+                                    🗑 Archive
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                Swal.fire('Error', 'Failed to load services API.', 'error');
+            }
+        }
+
+        // --- C. CREATE: Send Data to Backend ---
+        async function createService() {
+            const name = document.getElementById('newName').value;
+            const price = document.getElementById('newPrice').value;
+            const category = document.getElementById('newCategory').value;
+
+            if(!name || !price) {
+                Swal.fire('Warning', 'Please fill in all fields', 'warning');
+                return;
+            }
+
+            const res = await fetch('../../api/master/services.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: 'create', service_name: name, price: price, category_id: category })
+            });
+
+            const result = await res.json();
+            if (result.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'Saved!', text: result.message, timer: 1500, showConfirmButton: false });
+                loadServices();
+                document.getElementById('newName').value = ''; 
+                document.getElementById('newPrice').value = ''; 
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        }
+
+        // --- D. UPDATE: Popup Logic (SweetAlert2) ---
+        async function editService(id, name, price, categoryId) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Edit Service',
+                html:
+                    `<label class="block text-left mb-1 font-bold text-gray-700">Service Name</label>` +
+                    `<input id="swal-name" class="swal2-input mb-4" placeholder="Name" value="${name}">` +
+                    `<label class="block text-left mb-1 font-bold text-gray-700">Price</label>` +
+                    `<input id="swal-price" type="number" class="swal2-input mb-4" placeholder="Price" value="${price}">` +
+                    `<label class="block text-left mb-1 font-bold text-gray-700">Category</label>` +
+                    `<select id="swal-cat" class="swal2-input">
+                        <option value="1" ${categoryId == 1 ? 'selected' : ''}>Consultation</option>
+                        <option value="2" ${categoryId == 2 ? 'selected' : ''}>Surgery</option>
+                        <option value="3" ${categoryId == 3 ? 'selected' : ''}>Vaccination</option>
+                    </select>`,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Update Service',
+                preConfirm: () => {
+                    return {
+                        name: document.getElementById('swal-name').value,
+                        price: document.getElementById('swal-price').value,
+                        cat: document.getElementById('swal-cat').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                const res = await fetch('../../api/master/services.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        action: 'update', 
+                        service_id: id, 
+                        service_name: formValues.name, 
+                        price: formValues.price, 
+                        category_id: formValues.cat 
+                    })
+                });
+                
+                const result = await res.json();
+                if (result.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'Updated!', text: result.message, timer: 1500, showConfirmButton: false });
+                    loadServices();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            }
+        }
+
+        // --- E. DELETE (Soft): Mark as Inactive ---
+        async function softDelete(id) {
+            const confirm = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This will move the service to the archive. It will no longer appear in selection lists.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, archive it!'
+            });
+
+            if (confirm.isConfirmed) {
+                const res = await fetch('../../api/master/services.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'delete', service_id: id })
+                });
+
+                const result = await res.json();
+                if (result.status === 'success') {
+                    Swal.fire('Archived!', 'The service has been archived.', 'success');
+                    loadServices(); 
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            }
+        }
+
+        // Run Security Check on Load (which then calls loadServices)
+        checkAdminAccess();
+    </script>
+</body>
+</html>
