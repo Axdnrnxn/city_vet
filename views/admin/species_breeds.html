@@ -15,8 +15,7 @@
     <div class="flex min-h-screen">
 
         <div id="sidebar-container"></div>
-
-<script src="../../js/sidebar.js"></script>
+        <script src="../../js/sidebar.js"></script>
 
         <main class="flex-1 p-8">
             <div class="flex justify-between items-center mb-8">
@@ -36,7 +35,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
-                    <div class="bg-gray-100 p-4 font-bold text-gray-700 border-b">Species List</div>
+                    <div class="bg-gray-100 p-4 font-bold text-gray-700 border-b">Species List (Filter)</div>
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 text-xs uppercase text-gray-500">
                             <tr>
@@ -49,9 +48,9 @@
                     </table>
                 </div>
 
-                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
                     <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
-                        <span class="font-bold text-gray-700">Breed Registry</span>
+                        <span id="registryTitle" class="font-bold text-gray-700">All Breeds Registry</span>
                         <input type="text" id="breedSearch" onkeyup="filterBreeds()" placeholder="Search breeds..." class="text-sm p-1 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796B]">
                     </div>
                     <table class="w-full text-left">
@@ -101,6 +100,11 @@
     <script>
         const apiPath = '../../api/clinic/manage_species_breeds.php';
 
+        // Global arrays to store data so we don't have to fetch repeatedly when filtering
+        let allSpecies = [];
+        let allBreeds = [];
+        let currentSpeciesFilter = null; // null means "show all"
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
         });
@@ -113,36 +117,105 @@
         async function loadSpecies() {
             try {
                 const res = await fetch(`${apiPath}?action=get_species`);
-                const data = await res.json();
-                const tbody = document.getElementById('speciesTableBody');
-                tbody.innerHTML = data.map(s => `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4">${s.Species_Name}</td>
-                        <td class="p-4 text-right">
-                            <button onclick="deleteItem('species', ${s.Species_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
+                allSpecies = await res.json();
+                
+                // Populate the dropdown in the Add Modal
                 const dropdown = document.getElementById('Species_ID_Dropdown');
-                dropdown.innerHTML = data.map(s => `<option value="${s.Species_ID}">${s.Species_Name}</option>`).join('');
+                dropdown.innerHTML = allSpecies.map(s => `<option value="${s.Species_ID}">${s.Species_Name}</option>`).join('');
+                
+                // Render the table
+                renderSpeciesList();
             } catch (e) { console.error("Error loading species:", e); }
+        }
+
+        // Renders the left-side Species List
+        function renderSpeciesList() {
+            const tbody = document.getElementById('speciesTableBody');
+            
+            // "Show All" row
+            let html = `
+                <tr class="cursor-pointer transition ${currentSpeciesFilter === null ? 'bg-teal-50 border-l-4 border-[#00796B]' : 'hover:bg-gray-50 border-l-4 border-transparent'}" 
+                    onclick="selectSpeciesFilter(null)">
+                    <td class="p-4 font-bold ${currentSpeciesFilter === null ? 'text-[#00796B]' : 'text-gray-700'}">All Species</td>
+                    <td class="p-4 text-right"></td>
+                </tr>
+            `;
+
+            // Dynamic Species rows
+            html += allSpecies.map(s => {
+                const isActive = currentSpeciesFilter === s.Species_Name;
+                return `
+                <tr class="cursor-pointer transition ${isActive ? 'bg-teal-50 border-l-4 border-[#00796B]' : 'hover:bg-gray-50 border-l-4 border-transparent'}" 
+                    onclick="selectSpeciesFilter('${s.Species_Name}')">
+                    <td class="p-4 ${isActive ? 'font-bold text-[#00796B]' : 'text-gray-700'}">${s.Species_Name}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="event.stopPropagation(); deleteItem('species', ${s.Species_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = html;
         }
 
         async function loadBreeds() {
             try {
                 const res = await fetch(`${apiPath}?action=get_breeds`);
-                const data = await res.json();
-                const tbody = document.getElementById('breedTableBody');
-                tbody.innerHTML = data.map(b => `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4 font-medium text-gray-800">${b.Breed_Name}</td>
-                        <td class="p-4"><span class="px-2 py-1 bg-teal-100 text-[#00796B] rounded-md text-xs font-bold uppercase">${b.Species_Name}</span></td>
-                        <td class="p-4 text-right">
-                            <button onclick="deleteItem('breed', ${b.Breed_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
+                allBreeds = await res.json();
+                renderBreeds();
             } catch (e) { console.error("Error loading breeds:", e); }
+        }
+
+        // Filters and renders the right-side Breeds list
+        function renderBreeds() {
+            const tbody = document.getElementById('breedTableBody');
+            const registryTitle = document.getElementById('registryTitle');
+            const searchInput = document.getElementById('breedSearch').value.toLowerCase();
+            
+            // 1. Filter by selected species
+            let filteredBreeds = allBreeds;
+            if (currentSpeciesFilter !== null) {
+                filteredBreeds = allBreeds.filter(b => b.Species_Name === currentSpeciesFilter);
+                registryTitle.innerText = `${currentSpeciesFilter} Breeds`;
+            } else {
+                registryTitle.innerText = `All Breeds Registry`;
+            }
+
+            // 2. Filter by search box (if typed)
+            if (searchInput) {
+                filteredBreeds = filteredBreeds.filter(b => 
+                    b.Breed_Name.toLowerCase().includes(searchInput) || 
+                    b.Species_Name.toLowerCase().includes(searchInput)
+                );
+            }
+
+            // 3. Render HTML
+            if (filteredBreeds.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic">No breeds found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredBreeds.map(b => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="p-4 font-medium text-gray-800">${b.Breed_Name}</td>
+                    <td class="p-4"><span class="px-2 py-1 bg-teal-100 text-[#00796B] rounded-md text-xs font-bold uppercase">${b.Species_Name}</span></td>
+                    <td class="p-4 text-right">
+                        <button onclick="deleteItem('breed', ${b.Breed_ID})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Triggered when a species row is clicked
+        function selectSpeciesFilter(speciesName) {
+            currentSpeciesFilter = speciesName;
+            renderSpeciesList(); // Re-render to update highlighting
+            renderBreeds();      // Re-render to update the filtered list
+        }
+
+        // Triggered by the search input box
+        function filterBreeds() {
+            renderBreeds();
         }
 
         function openModal(type) {
@@ -184,15 +257,12 @@
             if(!confirm(`Are you sure? Deleting a species might affect breeds linked to it.`)) return;
             const action = (type === 'species') ? 'delete_species' : 'delete_breed';
             await fetch(`${apiPath}?action=${action}&id=${id}`);
+            
+            // If the deleted species was the one currently being filtered, reset filter
+            if (type === 'species') {
+                currentSpeciesFilter = null; 
+            }
             loadAllData();
-        }
-
-        function filterBreeds() {
-            const input = document.getElementById('breedSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('#breedTableBody tr');
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none';
-            });
         }
 
         function logout() {

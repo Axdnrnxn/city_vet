@@ -77,9 +77,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="text-xs font-bold text-gray-500 uppercase">Species</label>
-                        <select name="species_id" id="p_species" class="w-full border p-2 rounded bg-white" onchange="loadBreeds('add')">
-                            <option value="1">Dog</option><option value="2">Cat</option>
-                        </select>
+                        <select name="species_id" id="p_species" class="w-full border p-2 rounded bg-white" onchange="loadBreeds('add')"></select>
                     </div>
                     <div><label class="text-xs font-bold text-gray-500 uppercase">Breed</label>
                         <select name="breed_id" id="p_breed" class="w-full border p-2 rounded bg-white"></select>
@@ -147,6 +145,35 @@
                 opt.text = breed.name;
                 breedSelect.appendChild(opt);
             });
+        }
+    }
+
+    // 1.5 Fetch Dynamic Species from Database
+    async function initializeSpecies() {
+        try {
+            // Using the same API from your species_breed.html
+            const res = await fetch('../../api/clinic/manage_species_breeds.php?action=get_species');
+            const speciesList = await res.json();
+            
+            const addSpeciesSelect = document.getElementById('p_species');
+            const editSpeciesSelect = document.getElementById('edit_p_species');
+            
+            addSpeciesSelect.innerHTML = '';
+            editSpeciesSelect.innerHTML = '';
+            
+            speciesList.forEach(s => {
+                let opt1 = document.createElement('option');
+                opt1.value = s.Species_ID;
+                opt1.text = s.Species_Name;
+                addSpeciesSelect.appendChild(opt1);
+                
+                let opt2 = document.createElement('option');
+                opt2.value = s.Species_ID;
+                opt2.text = s.Species_Name;
+                editSpeciesSelect.appendChild(opt2);
+            });
+        } catch (err) {
+            console.error("Failed to load dynamic species:", err);
         }
     }
 
@@ -274,8 +301,13 @@
     });
 
     // STARTUP
-    initializeBreeds();
-    fetchOwnerProfile();
+    async function runStartup() {
+        await initializeSpecies(); // Wait for species to load first
+        await initializeBreeds();  // Then load breeds based on the first species
+        fetchOwnerProfile();
+    }
+    
+    runStartup();
     </script>
 </body>
 </html>

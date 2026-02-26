@@ -1,54 +1,43 @@
 <?php
-session_start();
-header("Content-Type: application/json");
-// Disable error reporting to browser to prevent HTML tags in JSON output
-error_reporting(0); 
-require_once '../../config/db_connection.php'; 
-
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(["status" => "error", "message" => "Unauthorized"]);
-    exit();
-}
+// api/owner/add_pet.php
+require_once('../../config/db_connection.php');
+header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Priority: use the ID passed from the Admin form
-    $owner_id = isset($_POST['owner_id']) ? intval($_POST['owner_id']) : null;
+    $owner_id = $_POST['owner_id'];
+    $name = $_POST['name'];
+    $species_id = $_POST['species_id'];
+    $breed_id = $_POST['breed_id'] ?? null;
+    $gender = $_POST['gender'];
+    $birthdate = $_POST['birthdate'];
+    $color = $_POST['color'];
+    $weight = $_POST['weight'];
 
-    // Fallback: If no ID in POST, use current session (for Pet Owners)
-    if (!$owner_id) {
-        $user_id = $_SESSION['user_id'];
-        $owner_q = $conn->query("SELECT Owner_ID FROM owners WHERE User_ID = $user_id");
-        if($owner_q && $owner_q->num_rows > 0){
-            $owner = $owner_q->fetch_assoc();
-            $owner_id = $owner['Owner_ID'];
+    // --- IMAGE UPLOAD LOGIC ---
+    $profile_pic = null;
+    if (isset($_FILES['pet_image']) && $_FILES['pet_image']['error'] == 0) {
+        $target_dir = "../../uploads/pets/";
+        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true); // Create folder if missing
+        
+        $file_extension = pathinfo($_FILES["pet_image"]["name"], PATHINFO_EXTENSION);
+        $file_name = uniqid() . "." . $file_extension; // Generate random name like 60a1b...jpg
+        $target_file = $target_dir . $file_name;
+        
+        if (move_uploaded_file($_FILES["pet_image"]["tmp_name"], $target_file)) {
+            $profile_pic = $file_name;
         }
     }
 
-    if (!$owner_id) {
-        echo json_encode(["status" => "error", "message" => "Invalid Owner ID"]);
-        exit();
-    }
-
-    $name = $_POST['name'];
-    $species_id = $_POST['species_id'];
-    $breed_id = $_POST['breed_id'];
-    $gender = $_POST['gender'];
-    $birthdate = $_POST['birthdate'];
-    $weight = $_POST['weight'];
-    $color = $_POST['color'];
-
-    if (empty($name) || empty($species_id)) {
-        echo json_encode(["status" => "error", "message" => "Missing required fields"]);
-        exit();
-    }
-
-    $stmt = $conn->prepare("INSERT INTO pets (Owner_ID, Name, Species_ID, Breed_ID, Gender, Birthdate, Weight, Color_Markings, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')");
-    $stmt->bind_param("isiissss", $owner_id, $name, $species_id, $breed_id, $gender, $birthdate, $weight, $color);
+    $sql = "INSERT INTO pets (Owner_ID, Name, Species_ID, Breed_ID, Gender, Birthdate, Color_Markings, Weight, Profile_Pic, Status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')";
+            
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isiisssds", $owner_id, $name, $species_id, $breed_id, $gender, $birthdate, $color, $weight, $profile_pic);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "Pet registered successfully!"]);
     } else {
-        echo json_encode(["status" => "error", "message" => $stmt->error]);
+        echo json_encode(["status" => "error", "message" => "Database error: " . $conn->error]);
     }
 }
 ?>

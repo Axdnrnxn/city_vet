@@ -51,7 +51,14 @@ if (isset($_GET['id'])) {
             $notes[] = $n;
         }
 
-        echo json_encode(["status" => "success", "mode" => "detail", "owner_name" => $owner['First_name'], "pet" => $pet, "notes" => $notes]);
+        echo json_encode([
+            "status" => "success", 
+            "mode" => "detail", 
+            "owner_name" => $owner['First_name'], 
+            "pet" => $pet, 
+            "notes" => $notes,
+            "all_breeds" => $breeds // FIX: Added this line so the Edit Modal has the breeds list!
+        ]);
     } else {
         echo json_encode(["status" => "error", "message" => "Pet not found"]);
     }
@@ -59,8 +66,10 @@ if (isset($_GET['id'])) {
 } else {
     // --- LIST VIEW ---
     $pets = [];
-    $sql = "SELECT p.Pet_ID, p.Name, p.Status, b.Breed_Name FROM pets p 
+    // FIX: Added p.Gender and p.Profile_Pic to the SELECT statement
+    $sql = "SELECT p.Pet_ID, p.Name, p.Status, p.Gender, p.Profile_Pic, b.Breed_Name, s.Species_Name FROM pets p 
             LEFT JOIN breeds b ON p.Breed_ID = b.Breed_ID 
+            LEFT JOIN species s ON p.Species_ID = s.Species_ID
             WHERE p.Owner_ID = $owner_id";
     $result = $conn->query($sql);
     while ($row = $result->fetch_assoc()) { $pets[] = $row; }

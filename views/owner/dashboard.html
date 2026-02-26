@@ -2,222 +2,292 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>City Vet - Owner Dashboard</title>
-    <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ADDED CALENDAR CSS */
-        .calendar-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .calendar-header { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; color: #2c3e50; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .day-label { font-weight: bold; padding: 10px; background: #f1f1f1; color: #555; }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
         
-        .day { 
-            height: 80px; border: 1px solid #e1e1e1; cursor: pointer; position: relative; background: #fff; padding: 5px;
-            transition: 0.2s;
-        }
-        .day:hover:not(.disabled) { background-color: #e8f4fd; border-color: #3498db; }
-        .day.disabled { background-color: #f9f9f9; color: #ccc; cursor: not-allowed; }
-        .day.selected { background-color: #27ae60; color: white; border-color: #219150; }
-        
-        /* Pet Table */
-        .pet-table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        .pet-table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
-        .pet-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-book { background-color: #27ae60; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-book:hover { background-color: #219150; }
+        /* Custom Calendar Styles */
+        .calendar-day { transition: all 0.2s; }
+        .calendar-day:hover:not(.disabled) { background-color: #E0F2F1; border-color: #00796B; cursor: pointer; }
+        .calendar-day.disabled { background-color: #f9fafb; color: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
 
-    <header>
-        <div class="logo-section">
-            <div class="logo-circle"></div>
-            <div>
-                <h2>City Veterinary Clinic</h2>
-                <small>System</small>
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_owner.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Spay & Neuter Appointment</h2>
             </div>
-        </div>
-    </header>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user"></i></div>
+                    <span id="user-display" class="hidden md:block text-sm font-medium text-gray-700">Loading...</span>
+                </div>
+            </div>
+        </header>
 
-    <div class="dashboard-container">
-    <aside class="sidebar">
-        <a href="mypets.html" class="nav-btn">
-            <i class="fas fa-paw"></i> My Pets
-        </a>
-
-        <a href="dashboard.html" class="nav-btn active">
-            <i class="fas fa-calendar-alt"></i> Spay/Neuter Appointment
-        </a>
-
-        <a href="#" onclick="logout()" class="logout-btn">
-            <i class="fas fa-lock"></i> Log Out
-        </a>
-    </aside>
-
-        <main class="main-content">
-            <div class="content-header">
-                <h2>Spay/Neuter Appointment</h2>
-                <div class="user-pill" id="user-display">Loading...</div>
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-1" id="welcome-text">Welcome to City Vet! 🐾</h2>
+                    <p class="text-blue-100 text-sm">Select an available date below to schedule a Spay/Neuter procedure for your pet.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <button onclick="location.href='mypets.html'" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm transition">
+                        <i class="fa-solid fa-paw mr-1"></i> View My Pets
+                    </button>
+                </div>
             </div>
 
-            <div class="calendar-container">
-                <div class="calendar-header" id="calendar-month-year"></div>
-
-                <div class="calendar-grid" id="calendar-grid">
-                    <div class="day-label">SUN</div><div class="day-label">MON</div><div class="day-label">TUE</div>
-                    <div class="day-label">WED</div><div class="day-label">THU</div><div class="day-label">FRI</div>
-                    <div class="day-label">SAT</div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg"><i class="fa-regular fa-calendar text-[#00796B] mr-2"></i> Select Date</h3>
+                        
+                        <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                            <button onclick="changeMonth(-1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="calendar-month-year" class="font-bold text-gray-700 w-32 text-center uppercase tracking-wide text-sm">Loading...</span>
+                            <button onclick="changeMonth(1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
                     </div>
 
-                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+                    <div>
+                        <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        </div>
+                        <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
+                            </div>
+                    </div>
+                </div>
 
-                <h3>Select Pet for Surgery</h3>
-                <p>Selected Date: <span id="display-date" style="font-weight: bold; color: #e74c3c;">None</span></p>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+                    <h3 class="font-bold text-gray-800 text-lg mb-4"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i> Guidelines</h3>
+                    <div class="space-y-4 text-sm text-gray-600">
+                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <p class="font-bold text-blue-800 mb-1"><i class="fa-solid fa-clock mr-1"></i> Operating Hours</p>
+                            <p>Walk-ins and surgeries are processed from 8:00 AM to 5:00 PM, Monday to Friday.</p>
+                        </div>
+                        <div class="p-4 bg-orange-50 rounded-lg border border-orange-100">
+                            <p class="font-bold text-orange-800 mb-1"><i class="fa-solid fa-bowl-food mr-1"></i> Fasting Required</p>
+                            <p>Ensure your pet has no food or water for 8-10 hours prior to the scheduled surgery.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="font-bold text-gray-800 mb-1"><i class="fa-solid fa-calendar-xmark mr-1"></i> No Shows</p>
+                            <p>If you fail to attend an appointment without prior cancellation, your slot will be forfeited.</p>
+                        </div>
+                    </div>
+                </div>
 
-                <table class="pet-table">
-                    <thead>
-                        <tr>
-                            <th>Pet Name</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pet-list-body">
-                        <tr><td colspan="3">Loading pets...</td></tr>
-                    </tbody>
-                </table>
             </div>
         </main>
     </div>
 
-    <script>
-        let selectedDate = null;
+    <div id="bookingModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all">
+            <div class="p-6 border-b flex justify-between items-center bg-[#00796B] text-white rounded-t-xl">
+                <h3 class="text-lg font-bold"><i class="fa-solid fa-calendar-check mr-2"></i> Book Surgery</h3>
+                <button onclick="closeBookingModal()" class="text-white hover:text-gray-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="bookingForm" class="p-6 space-y-4">
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center mb-4">
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Selected Date</p>
+                    <p id="modal-date-display" class="text-xl font-bold text-[#00796B]">--</p>
+                </div>
 
-        // 1. ON PAGE LOAD: GENERATE CALENDAR & FETCH DATA
-        document.addEventListener('DOMContentLoaded', function() {
-            generateCalendar();
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Select Pet <span class="text-red-500">*</span></label>
+                    <select id="petSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-white">
+                        <option value="">Loading pets...</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeBookingModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
+                    <button type="button" onclick="submitBooking()" class="px-5 py-2 bg-[#00796B] font-bold text-white rounded-lg hover:bg-teal-700 shadow-md transition">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // -- SIDEBAR MOBILE TOGGLE --
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // -- STATE VARIABLES --
+        let ownerPets = [];
+        let selectedDateStr = null;
+        
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        document.addEventListener('DOMContentLoaded', () => {
             fetchUserData();
+            generateCalendar(currentMonth, currentYear);
         });
 
-        // 2. FETCH USER & PETS API
+        // -- FETCH DATA --
         function fetchUserData() {
             fetch('../../api/owner/get_pets.php')
             .then(res => res.json())
             .then(data => {
-                if (data.error) {
-                    window.location.href = '../../login.php'; // Redirect if not logged in
-                    return;
-                }
+                if (data.error) { window.location.href = '../../login.php'; return; }
                 
-                // Update User Name
-                document.getElementById('user-display').innerText = "Hello, " + data.owner_name;
-
-                // Build Pet Table
-                let petHtml = '';
-                if (data.pets.length === 0) {
-                    petHtml = '<tr><td colspan="3">No pets found. Please register a pet first.</td></tr>';
-                } else {
-                    data.pets.forEach(pet => {
-                        petHtml += `
-                        <tr>
-                            <td><strong>${pet.Name}</strong><br><small style="color:#777">ID: ${pet.Pet_ID}</small></td>
-                            <td><span style="padding: 4px 8px; background: #e8f4fd; color: #2980b9; border-radius: 12px; font-size: 12px;">${pet.Status}</span></td>
-                            <td><button class="btn-book" onclick="bookAppointment(${pet.Pet_ID})">Book Appointment</button></td>
-                        </tr>`;
-                    });
-                }
-                document.getElementById('pet-list-body').innerHTML = petHtml;
+                document.getElementById('user-display').innerText = data.owner_name;
+                document.getElementById('welcome-text').innerText = `Hello, ${data.owner_name}! 🐾`;
+                
+                ownerPets = data.pets;
+                populatePetDropdown();
             })
             .catch(err => console.error("API Error:", err));
         }
 
-        // 3. GENERATE CALENDAR (PURE JS)
-        function generateCalendar() {
-            const date = new Date();
-            const year = date.getFullYear();
-            const month = date.getMonth(); // 0-11
-            const today = date.getDate();
-
-            // Set Header
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('calendar-month-year').innerText = monthNames[month] + " " + year;
-
-            const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) - 6 (Sat)
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+        function populatePetDropdown() {
+            const petSelect = document.getElementById('petSelect');
+            petSelect.innerHTML = '<option value="" disabled selected>-- Choose a Pet --</option>';
             
-            let gridHtml = '';
-            
-            // Labels are already static in HTML
-            
-            // Empty Slots
-            for (let i = 0; i < firstDay; i++) {
-                gridHtml += '<div class="day disabled"></div>';
-            }
-
-            // Days
-            for (let day = 1; day <= daysInMonth; day++) {
-                let isPast = (day < today);
-                let dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
-                let dayClass = isPast ? 'day disabled' : 'day';
-                let clickEvent = isPast ? '' : `onclick="selectDate(this, '${dateStr}')"`;
-                let statusText = isPast ? '' : '<div style="font-size:10px; color: #27ae60; margin-top:30px; font-weight:bold;">Available</div>';
-
-                gridHtml += `
-                <div class="${dayClass}" ${clickEvent}>
-                    <strong>${day}</strong>
-                    ${statusText}
-                </div>`;
-            }
-
-            // Append to Grid (Keep labels, append days)
-            const grid = document.getElementById('calendar-grid');
-            // Remove old days if any (keeping labels) - simplified: just append to end or rebuild container
-            // Safest: Clear and Rebuild Labels + Days
-            grid.innerHTML = `
-                <div class="day-label">SUN</div><div class="day-label">MON</div><div class="day-label">TUE</div>
-                <div class="day-label">WED</div><div class="day-label">THU</div><div class="day-label">FRI</div>
-                <div class="day-label">SAT</div>
-                ${gridHtml}
-            `;
-        }
-
-        // 4. HANDLE SELECTION
-        function selectDate(element, dateStr) {
-            // Visual Highlight
-            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-            element.classList.add('selected');
-
-            // Set Data
-            selectedDate = dateStr;
-            document.getElementById('display-date').innerText = dateStr;
-            document.getElementById('display-date').style.color = "#27ae60";
-        }
-
-        // 5. BOOK APPOINTMENT
-        function bookAppointment(petId) {
-            if (!selectedDate) {
-                Swal.fire('Select a Date', 'Please click a date on the calendar first.', 'warning');
+            if (ownerPets.length === 0) {
+                petSelect.innerHTML = '<option value="" disabled>No pets registered. Please add a pet first.</option>';
                 return;
             }
 
+            ownerPets.forEach(pet => {
+                let opt = document.createElement('option');
+                opt.value = pet.Pet_ID;
+                opt.text = `${pet.Name} (${pet.Breed_Name || 'Unknown'})`;
+                petSelect.appendChild(opt);
+            });
+        }
+
+        // -- CALENDAR LOGIC --
+        function changeMonth(dir) {
+            currentMonth += dir;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            generateCalendar(currentMonth, currentYear);
+        }
+
+function generateCalendar(month, year) {
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon... 6=Sat
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const today = new Date();
+            today.setHours(0,0,0,0); // Normalize today for accurate comparison
+
+            const grid = document.getElementById('calendar-grid');
+            let html = '';
+
+            // Empty slots before 1st day of the month
+            for (let i = 0; i < firstDay; i++) {
+                html += `<div class="p-2 h-20 rounded-lg bg-gray-50 border border-gray-100 opacity-50"></div>`;
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                let cellDate = new Date(year, month, day);
+                let dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Check if the date is in the past OR if it is a weekend (0 = Sunday, 6 = Saturday)
+                let isPast = cellDate < today;
+                let dayOfWeek = cellDate.getDay();
+                let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                
+                // A day is disabled if it's in the past OR a weekend
+                let isDisabled = isPast || isWeekend;
+
+                let dayClass = isDisabled ? 'disabled' : 'calendar-day border-[#00796B]/20';
+                let clickEvent = isDisabled ? '' : `onclick="openBookingModal('${dateStr}')"`;
+                
+                // Display logic for the badge
+                let badgeHtml = '';
+                if (isWeekend) {
+                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">Closed</div>`;
+                } else if (!isPast) {
+                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-teal-50 rounded px-1 inline-block">Available</div>`;
+                }
+
+                html += `
+                <div class="relative p-2 h-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
+                    <span class="text-sm font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-700'}">${day}</span>
+                    ${badgeHtml}
+                </div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+        // -- MODAL & BOOKING LOGIC --
+        function openBookingModal(dateStr) {
+            selectedDateStr = dateStr;
+            
+            // Format date for display (e.g. March 15, 2026)
+            const d = new Date(dateStr);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('modal-date-display').innerText = d.toLocaleDateString(undefined, options);
+            
+            document.getElementById('bookingModal').classList.remove('hidden');
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('petSelect').value = ""; // Reset dropdown
+        }
+
+        function submitBooking() {
+            const petId = document.getElementById('petSelect').value;
+            
+            if (!petId) {
+                Swal.fire('Required', 'Please select a pet for the appointment.', 'warning');
+                return;
+            }
+
+            // Using SweetAlert to confirm
             Swal.fire({
-                title: 'Confirm Booking?',
-                text: "Schedule surgery on " + selectedDate + "?",
+                title: 'Confirm Appointment?',
+                text: `Schedule surgery for ${selectedDateStr}?`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#27ae60',
+                confirmButtonColor: '#00796B',
                 confirmButtonText: 'Yes, Book it!'
             }).then((result) => {
                 if (result.isConfirmed) {
                     let formData = new FormData();
                     formData.append('book_surgery', true);
                     formData.append('pet_id', petId);
-                    formData.append('service_id', 2);
-                    formData.append('appointment_date', selectedDate);
+                    formData.append('service_id', 2); // Assuming 2 is Spay/Neuter in DB
+                    formData.append('appointment_date', selectedDateStr);
 
                     fetch('../../api/owner/book_appointment.php', {
                         method: 'POST',
@@ -226,7 +296,10 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            Swal.fire('Success!', data.message, 'success').then(() => location.reload());
+                            Swal.fire('Success!', data.message, 'success').then(() => {
+                                closeBookingModal();
+                                // Optionally reload or fetch appointments here
+                            });
                         } else {
                             Swal.fire('Error', data.message, 'error');
                         }
@@ -237,13 +310,14 @@
 
         function logout() {
             Swal.fire({
-                title: 'Log Out?',
-                icon: 'question',
+                title: 'Logout?',
+                text: "End your session?",
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes',
-                confirmButtonColor: '#2c5e9e'
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Logout'
             }).then((result) => {
-                if(result.isConfirmed) window.location.href = '../../login.html';
+                if (result.isConfirmed) { window.location.href = '../../api/auth/logout.php'; }
             });
         }
     </script>

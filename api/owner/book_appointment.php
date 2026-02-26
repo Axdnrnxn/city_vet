@@ -1,17 +1,23 @@
 <?php
 // File: api/owner/book_appointment.php
+// API endpoint to book an appointment for a pet owner
 session_start();
-ini_set('display_errors', 0);
 header("Content-Type: application/json");
+require_once '../../config/db_connection.php';
 
-// Database Path Check
-$paths = ['../../config/db_connection.php', '../../db_connection.php'];
-foreach ($paths as $path) {
-    if (file_exists($path)) { require_once $path; break; }
+if (!isset($_SESSION['user_id'])) { 
+    echo json_encode(["status" => "error", "message" => "Unauthorized"]); 
+    exit(); 
 }
 
 if (isset($_POST['book_surgery'])) {
-    $owner_id = $_SESSION['owner_id'] ?? 1; // Mock ID
+    $user_id = $_SESSION['user_id'];
+    
+    // Get the actual Owner_ID linked to this logged-in User
+    $owner_q = $conn->query("SELECT Owner_ID FROM owners WHERE User_ID = $user_id");
+    $owner = $owner_q->fetch_assoc();
+    $owner_id = $owner['Owner_ID'];
+    
     $pet_id = $_POST['pet_id'];
     $service_id = $_POST['service_id']; 
     $date = $_POST['appointment_date'];
@@ -25,5 +31,7 @@ if (isset($_POST['book_surgery'])) {
         echo json_encode(["status" => "error", "message" => "Error: " . $stmt->error]);
     }
     exit();
+} else {
+    echo json_encode(["status" => "error", "message" => "Invalid Request"]);
 }
 ?>

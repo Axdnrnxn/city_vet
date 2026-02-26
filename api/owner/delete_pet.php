@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 if (isset($_GET['id'])) {
     $pet_id = $_GET['id'];
 
-    // We change the Status to 'archived' instead of deleting the row
+    // Soft delete by setting status to 'archived'
     $stmt = $conn->prepare("UPDATE pets SET Status = 'archived' WHERE Pet_ID = ?");
     $stmt->bind_param("i", $pet_id);
 
