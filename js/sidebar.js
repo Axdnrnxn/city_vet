@@ -51,3 +51,28 @@ function loadSidebar() {
 
 // Call the function once the script loads
 loadSidebar();
+
+// Global Logout Function
+function logout() {
+    Swal.fire({
+        title: 'Logout Session?',
+        text: "You will need to login again to access your account.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00796B',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Logout',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('../../api/auth/logout.php')
+            .then(res => res.json())
+            .then(data => {
+                window.location.href = '../../login.html'; 
+            })
+            .catch(err => {
+                window.location.href = '../../login.html'; 
+            });
+        }
+    });
+}

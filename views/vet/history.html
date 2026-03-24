@@ -2,119 +2,147 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Appointment History - City Vet</title>
-    <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
 
-    <header>
-        <div class="logo-section">
-            <div class="logo-circle"></div>
-            <div>
-                <h2>City Veterinary Clinic</h2>
-                <small>System</small>
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_vet.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Appointment History</h2>
             </div>
-        </div>
-    </header>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    <i class="fa-solid fa-user-md"></i>
+                </div>
+                <span class="hidden md:block text-sm font-medium text-gray-700">Dr. Veterinarian</span>
+            </div>
+        </header>
 
-    <div class="dashboard-container">
-        <aside class="sidebar" style="background-color: #e2e2e2;">
-            <a href="dashboard.html" class="nav-btn"><i class="fas fa-clipboard-list"></i> Pending Requests</a>
-            <a href="#" class="nav-btn active"><i class="fas fa-history"></i> Appointment History</a>
-            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-lock"></i> Log Out</a>
-        </aside>
-
-        <main class="main-content">
-            <div class="content-header">
-                <h2>Appointment History</h2>
-                <div class="user-pill">Dr. Veterinarian</div>
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">History Log</h2>
+                    <p class="text-gray-500 text-sm">Review past and upcoming confirmed appointments.</p>
+                </div>
+                <button class="bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-bold text-gray-700 shadow-sm transition" onclick="loadHistory()">
+                    <i class="fas fa-sync-alt mr-2 text-blue-500"></i> Refresh List
+                </button>
             </div>
 
-            <div style="margin-bottom: 15px;">
-                <button class="btn-primary" onclick="loadHistory()">Refresh List</button>
-            </div>
-
-            <div style="background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
-                <table>
-                    <thead>
-                        <tr style="background-color: #2c5e9e; color: white;">
-                            <th>Appt ID</th>
-                            <th>Owner Name</th>
-                            <th>Pet</th>
-                            <th>Service</th>
-                            <th>Date & Time</th>
-                            <th>Status</th>
-                            <th>Vet Assigned</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                        <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
-                    </tbody>
-                </table>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#2c5e9e] text-white">
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Appt ID</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Owner Name</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Pet</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Service</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date & Time</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Vet Assigned</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-gray-50 text-sm text-gray-700">
+                            <tr><td colspan="7" class="px-6 py-10 text-center text-gray-400 font-medium">Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
 
     <script>
-        // 1. Session Check
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
         fetch('../../api/auth/session_status.php')
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'logged_out') window.location.href = '../login.html';
                 else loadHistory();
             })
-            .catch(() => loadHistory()); // Fallback for demo
+            .catch(() => loadHistory());
 
-        // 2. Load History
-            function loadHistory() {
+        function loadHistory() {
             fetch('../../api/clinic/appointments.php')
                 .then(response => {
-                    if (!response.ok) {
-                        // This catches the 500 error and prints the JSON message if available
-                        return response.json().then(err => { throw new Error(err.message); });
-                    }
+                    if (!response.ok) return response.json().then(err => { throw new Error(err.message); });
                     return response.json();
                 })
                 .then(data => {
                     const tbody = document.getElementById('history-table-body');
                     tbody.innerHTML = '';
 
-                    // Check for PHP logic errors
                     if (data.status === 'error') {
                         Swal.fire('Database Error', data.message, 'error');
                         return;
                     }
 
                     if (data.length === 0) {
-                        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center'>No history found.</td></tr>";
+                        tbody.innerHTML = "<tr><td colspan='7' class='px-6 py-10 text-center text-gray-400 font-medium'>No history found.</td></tr>";
                         return;
                     }
 
                     data.forEach(row => {
-                        let color = 'black';
-                        if(row.Status === 'Pending') color = 'orange';
-                        if(row.Status === 'Confirmed') color = 'green';
-                        if(row.Status === 'Cancelled') color = 'red';
+                        let statusClass = 'bg-gray-50 text-gray-600';
+                        if(row.Status === 'Pending') statusClass = 'bg-orange-50 text-orange-600';
+                        if(row.Status === 'Confirmed') statusClass = 'bg-green-50 text-green-600';
+                        if(row.Status === 'Cancelled') statusClass = 'bg-red-50 text-red-600';
 
                         const htmlRow = `
-                            <tr>
-                                <td>#${row.Appointment_ID}</td>
-                                <td>${row.Owner_First} ${row.Owner_Last}</td>
-                                <td>${row.Pet_Name} <small>(${row.Species_Name})</small></td>
-                                <td>${row.Service_Name}</td>
-                                <td>${row.Formatted_Date} <br> <small>${row.Formatted_Time}</small></td>
-                                <td><span style="color:${color}; font-weight:bold;">${row.Status}</span></td>
-                                <td>${row.Vet_First ? 'Dr. ' + row.Vet_First : '--'}</td>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 font-bold text-gray-400">#${row.Appointment_ID}</td>
+                                <td class="px-6 py-4 font-semibold text-gray-800">${row.Owner_First} ${row.Owner_Last}</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">${row.Pet_Name}</div>
+                                    <div class="text-[11px] text-gray-500">${row.Species_Name}</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">${row.Service_Name}</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium">${row.Formatted_Date}</div>
+                                    <div class="text-[11px] text-gray-500">${row.Formatted_Time}</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">
+                                        ${row.Status}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-gray-700">${row.Vet_First ? 'Dr. ' + row.Vet_First : '--'}</td>
                             </tr>
                         `;
                         tbody.innerHTML += htmlRow;
                     });
                 })
                 .catch(error => {
-                    console.error('Fetch error:', error);
-                    // This alert will now tell you the REAL reason (e.g. "File not found at...")
                     Swal.fire('Error', error.message, 'error');
                 });
         }

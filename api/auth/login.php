@@ -39,6 +39,7 @@ if ($result->num_rows === 1) {
         if ($user['Role_ID'] == 1) { $redirect = 'views/admin/dashboard.html'; } // Admin
         if ($user['Role_ID'] == 2) { $redirect = 'views/vet/dashboard.html'; }   // Vet
         if ($user['Role_ID'] == 3) { $redirect = 'views/owner/dashboard.html'; }// Owner
+        if ($user['Role_ID'] == 4) { $redirect = 'views/staff/dashboard_staff.html'; }// Staff
 
         echo json_encode([
             "status" => "success", 

@@ -1,0 +1,6 @@
+# Ignore uploaded images
+uploads/pets/*.jpg
+uploads/pets/*.png
+
+# Ignore database dumps
+*.sql

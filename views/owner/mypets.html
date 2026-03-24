@@ -32,23 +32,25 @@
                     <h2 class="text-xl font-bold text-gray-800">My Pet Records</h2>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-6">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user"></i></div>
                     <span id="user-display" class="hidden md:block text-sm font-medium text-gray-700">Loading...</span>
                 </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-colors flex items-center gap-2 text-sm font-bold border-l pl-4 border-gray-200">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden md:inline">Logout</span>
+                </button>
             </div>
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 lg:p-8">
-            
             <div id="loading" class="text-center py-20 text-gray-400">
                 <i class="fa-solid fa-spinner fa-spin text-3xl mb-4 text-[#00796B]"></i>
                 <p>Loading your data...</p>
             </div>
 
             <div id="list-view" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-paw text-[#00796B] mr-2"></i> Registered Pets</h3>
@@ -56,8 +58,7 @@
                             <i class="fa-solid fa-plus"></i> Add Pet
                         </button>
                     </div>
-                    <div id="pets-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-200">
-                        </div>
+                    <div id="pets-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-200"></div>
                 </div>
 
                 <div>
@@ -67,11 +68,10 @@
                             <p class="text-sm text-gray-500 italic text-center py-4">Checking schedule...</p>
                         </div>
                         <button onclick="location.href='dashboard.html'" class="w-full mt-6 py-2 border border-gray-200 text-[#00796B] hover:bg-teal-50 rounded-lg text-sm font-bold transition">
-                            Book New Surgery
+                            Book Appointment
                         </button>
                     </div>
                 </div>
-
             </div>
 
             <div id="detail-view" class="hidden grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -131,7 +131,6 @@
                     </div>
                 </div>
             </div>
-
         </main>
     </div>
 
@@ -142,7 +141,6 @@
                 <button onclick="closeModal('addPetModal')" class="text-white hover:text-gray-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="addPetForm" class="p-6 space-y-4" enctype="multipart/form-data">
-                
                 <div class="flex gap-4 items-center mb-2">
                     <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                         <i class="fa-solid fa-camera text-gray-400 text-2xl"></i>
@@ -164,8 +162,10 @@
                         <select name="species_id" id="speciesSelect" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#00796B] outline-none" onchange="filterBreeds('add')"></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Breed</label>
-                        <select name="breed_id" id="breedSelect" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#00796B] outline-none"></select>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Breed (Searchable)</label>
+                        <input type="text" id="breedSearchAdd" list="breedOptionsAdd" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Type breed..." onchange="handleBreedSelect('add')">
+                        <datalist id="breedOptionsAdd"></datalist>
+                        <input type="hidden" name="breed_id" id="breed_id_add">
                     </div>
                 </div>
 
@@ -185,7 +185,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Birthdate <span class="text-red-500">*</span></label>
-                        <input type="date" name="birthdate" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none" required>
+                        <input type="date" name="birthdate" id="add_birthdate" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none" required>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Color / Markings</label>
@@ -209,14 +209,13 @@
             </div>
             <form id="editPetForm" class="p-6 space-y-4" enctype="multipart/form-data">
                 <input type="hidden" name="pet_id" id="edit_pet_id">
-                
                 <div class="flex gap-4 items-center mb-2">
                     <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden relative">
                         <img id="edit_current_img" src="" class="absolute inset-0 w-full h-full object-cover hidden">
                         <i id="edit_camera_icon" class="fa-solid fa-camera text-gray-400 text-2xl"></i>
                     </div>
                     <div class="flex-1">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Update Photo (Optional)</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Update Photo</label>
                         <input type="file" name="pet_image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
                     </div>
                 </div>
@@ -232,8 +231,10 @@
                         <select name="species_id" id="editSpeciesSelect" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#00796B] outline-none" onchange="filterBreeds('edit')"></select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Breed</label>
-                        <select name="breed_id" id="editBreedSelect" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#00796B] outline-none"></select>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Breed (Searchable)</label>
+                        <input type="text" id="breedSearchEdit" list="breedOptionsEdit" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Type breed..." onchange="handleBreedSelect('edit')">
+                        <datalist id="breedOptionsEdit"></datalist>
+                        <input type="hidden" name="breed_id" id="breed_id_edit">
                     </div>
                 </div>
 
@@ -270,7 +271,34 @@
     </div>
 
     <script>
-        // -- SIDEBAR MOBILE TOGGLE --
+        // --- ADDED LOGOUT FUNCTION HERE ---
+        function logout() {
+    Swal.fire({
+        title: 'Logout Session?',
+        text: "You will need to login again to access your pet records.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00796B',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Logout',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('../../api/auth/logout.php')
+            .then(res => res.json())
+            .then(data => {
+                // Redirects to login.html instead of login.php
+                window.location.href = '../../login.html'; 
+            })
+            .catch(err => {
+                // Fallback redirect also goes to login.html
+                window.location.href = '../../login.html'; 
+            });
+        }
+    });
+}
+        // -----------------------------------
+
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
         function toggleSidebar() {
@@ -289,6 +317,13 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const petId = urlParams.get('id');
+
+            const today = new Date().toISOString().split('T')[0];
+            const addBirthdateInput = document.getElementById('add_birthdate');
+            const editBirthdateInput = document.getElementById('edit_birthdate');
+            
+            if (addBirthdateInput) addBirthdateInput.setAttribute('max', today);
+            if (editBirthdateInput) editBirthdateInput.setAttribute('max', today);
             
             await fetchSpecies();
 
@@ -296,7 +331,6 @@
             else loadPetList();
         });
 
-        // --- FETCH DYNAMIC SPECIES ---
         async function fetchSpecies() {
             try {
                 const res = await fetch('../../api/clinic/manage_species_breeds.php?action=get_species');
@@ -322,7 +356,41 @@
             } catch (err) { console.error("Failed to load species:", err); }
         }
 
-        // --- LIST VIEW (FIGMA STYLE) ---
+        function filterBreeds(type = 'add') {
+            const speciesSelect = document.getElementById(type === 'add' ? 'speciesSelect' : 'editSpeciesSelect');
+            const dataList = document.getElementById(type === 'add' ? 'breedOptionsAdd' : 'breedOptionsEdit');
+            const searchInput = document.getElementById(type === 'add' ? 'breedSearchAdd' : 'breedSearchEdit');
+            const hiddenId = document.getElementById(type === 'add' ? 'breed_id_add' : 'breed_id_edit');
+
+            if (!speciesSelect || !speciesSelect.value) return;
+
+            const speciesId = speciesSelect.value;
+            dataList.innerHTML = ""; 
+            searchInput.value = "";
+            hiddenId.value = "";
+
+            const filtered = allBreeds.filter(b => b.Species_ID == speciesId);
+            filtered.forEach(b => {
+                let option = document.createElement("option");
+                option.value = b.Breed_Name;
+                dataList.appendChild(option);
+            });
+        }
+
+        function handleBreedSelect(type) {
+            const searchInput = document.getElementById(type === 'add' ? 'breedSearchAdd' : 'breedSearchEdit');
+            const hiddenId = document.getElementById(type === 'add' ? 'breed_id_add' : 'breed_id_edit');
+            const speciesSelect = document.getElementById(type === 'add' ? 'speciesSelect' : 'editSpeciesSelect');
+
+            const selectedBreed = allBreeds.find(b => b.Breed_Name === searchInput.value && b.Species_ID == speciesSelect.value);
+            
+            if (selectedBreed) {
+                hiddenId.value = selectedBreed.Breed_ID;
+            } else {
+                hiddenId.value = ""; // Clear if typed something not in list
+            }
+        }
+
         function loadPetList() {
             fetch('../../api/owner/get_pet_data.php')
             .then(res => res.json())
@@ -336,7 +404,6 @@
                 allBreeds = data.all_breeds || []; 
                 filterBreeds('add'); 
 
-                // Populate Pets Grid
                 const gridContainer = document.getElementById('pets-grid-container');
                 let html = '';
                 
@@ -351,7 +418,6 @@
                             <div class="aspect-square w-full bg-gray-100 overflow-hidden relative">
                                 <img src="${imgSource}" class="w-full h-full object-cover" alt="${pet.Name}">
                             </div>
-                            
                             <div class="p-5 flex flex-col flex-1">
                                 <h3 class="text-xl font-bold text-gray-800 mb-3">${pet.Name}</h3>
                                 <ul class="text-sm text-gray-600 mb-6 space-y-1 ml-4 list-disc marker:text-gray-300 flex-1">
@@ -359,7 +425,6 @@
                                     <li>${pet.Breed_Name || 'Unknown Breed'}</li>
                                     <li>${pet.Gender || 'Unknown Gender'}</li>
                                 </ul>
-                                
                                 <div class="flex gap-2 mt-auto">
                                     <button onclick="editFromList(${pet.Pet_ID})" class="w-1/3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold py-2 rounded transition text-center">
                                         <i class="fa-solid fa-pen"></i> Edit
@@ -378,12 +443,10 @@
                             </div>`;
                 }
                 gridContainer.innerHTML = html;
-
                 loadAppointmentsList();
             });
         }
 
-        // Helper to load Edit Modal directly from the list view
         function editFromList(petId) {
             fetch(`../../api/owner/get_pet_data.php?id=${petId}`)
             .then(res => res.json())
@@ -396,61 +459,57 @@
             });
         }
 
-        // --- LOAD APPOINTMENTS FOR SIDE PANEL ---
         function loadAppointmentsList() {
+            const apptContainer = document.getElementById('upcoming-appointments');
+            
             fetch('../../api/dashboard/stats.php') 
             .then(res => res.json())
             .then(data => {
-                const apptContainer = document.getElementById('upcoming-appointments');
-                
-                if (!data.schedule || data.schedule.length === 0) {
-                    apptContainer.innerHTML = `<div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-100"><p class="text-sm text-gray-500">No upcoming appointments.</p></div>`;
+                // We look specifically for the 'schedule' array from your new PHP response
+                const appointments = data.schedule || [];
+
+                if (appointments.length === 0) {
+                    apptContainer.innerHTML = `
+                        <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-100">
+                            <p class="text-sm text-gray-500">No upcoming appointments.</p>
+                        </div>`;
                     return;
                 }
 
                 let html = '';
-                data.schedule.forEach(appt => {
+                appointments.forEach(appt => {
                     let badgeClass = "bg-gray-100 text-gray-700";
-                    if(appt.Status === 'Completed') badgeClass = "bg-green-100 text-green-700";
-                    if(appt.Status === 'Pending') badgeClass = "bg-orange-100 text-orange-700";
-                    if(appt.Status === 'Confirmed') badgeClass = "bg-blue-100 text-blue-700";
+                    const status = (appt.Status || 'Pending');
+                    
+                    // Match badge colors to status
+                    if(status.toLowerCase() === 'completed') badgeClass = "bg-green-100 text-green-700";
+                    else if(status.toLowerCase() === 'pending') badgeClass = "bg-orange-100 text-orange-700";
+                    else if(status.toLowerCase() === 'confirmed' || status.toLowerCase() === 'approved') badgeClass = "bg-blue-100 text-blue-700";
 
                     html += `
                         <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition mb-3">
                             <div class="flex justify-between items-start mb-2">
-                                <span class="${badgeClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${appt.Status}</span>
-                                <span class="text-xs font-bold text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${appt.Time}</span>
+                                <span class="${badgeClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                    ${status}
+                                </span>
+                                <span class="text-xs font-bold text-gray-500 text-right">
+                                    <i class="fa-regular fa-calendar mr-1"></i> ${appt.Date}<br>
+                                    <i class="fa-regular fa-clock mr-1"></i> ${appt.Time}
+                                </span>
                             </div>
-                            <h4 class="font-bold text-gray-800">${appt.Service_Name || 'Surgery'}</h4>
+                            <h4 class="font-bold text-gray-800">${appt.Service_Name || 'General Checkup'}</h4>
                             <p class="text-sm text-gray-500">Patient: <span class="font-medium text-[#00796B]">${appt.Pet}</span></p>
                         </div>
                     `;
                 });
                 apptContainer.innerHTML = html;
             })
-            .catch(err => console.error("Error loading appointments:", err));
-        }
-
-        // --- DYNAMIC BREED DROPDOWN ---
-        function filterBreeds(type = 'add') {
-            const speciesSelect = document.getElementById(type === 'add' ? 'speciesSelect' : 'editSpeciesSelect');
-            const breedSelect = document.getElementById(type === 'add' ? 'breedSelect' : 'editBreedSelect');
-            
-            if (!speciesSelect || !speciesSelect.value) return;
-
-            const speciesId = speciesSelect.value;
-            breedSelect.innerHTML = ""; 
-
-            const filtered = allBreeds.filter(b => b.Species_ID == speciesId);
-            filtered.forEach(b => {
-                let option = document.createElement("option");
-                option.value = b.Breed_ID;
-                option.text = b.Breed_Name;
-                breedSelect.appendChild(option);
+            .catch(err => {
+                console.error("Error loading appointments:", err);
+                apptContainer.innerHTML = `<p class="text-xs text-red-500 text-center">Failed to load schedule.</p>`;
             });
         }
 
-        // --- MODAL LOGIC ---
         function openAddModal() { 
             document.getElementById('addPetForm').reset();
             document.getElementById('addPetModal').classList.remove('hidden'); 
@@ -459,7 +518,6 @@
 
         function openEditModal() {
             if (!currentPetData) return;
-            
             document.getElementById('edit_pet_id').value = currentPetData.Pet_ID;
             document.getElementById('edit_name').value = currentPetData.Name;
             document.getElementById('edit_gender').value = currentPetData.Gender;
@@ -470,7 +528,6 @@
             
             const imgPreview = document.getElementById('edit_current_img');
             const cameraIcon = document.getElementById('edit_camera_icon');
-            
             if (currentPetData.Profile_Pic) {
                 imgPreview.src = `../../uploads/pets/${currentPetData.Profile_Pic}`;
                 imgPreview.classList.remove('hidden');
@@ -481,7 +538,8 @@
             }
 
             filterBreeds('edit');
-            document.getElementById('editBreedSelect').value = currentPetData.Breed_ID;
+            document.getElementById('breedSearchEdit').value = currentPetData.Breed_Name;
+            document.getElementById('breed_id_edit').value = currentPetData.Breed_ID;
 
             document.getElementById('editPetModal').classList.remove('hidden');
         }
@@ -490,7 +548,6 @@
             document.getElementById(modalId).classList.add('hidden'); 
         }
         
-        // --- SUBMIT PET (ADD) ---
         function submitNewPet() {
             const formData = new FormData(document.getElementById('addPetForm'));
             fetch('../../api/owner/add_pet.php', { method: 'POST', body: formData })
@@ -502,7 +559,6 @@
             });
         }
 
-        // --- SUBMIT PET (EDIT) ---
         function submitEditPet() {
             const formData = new FormData(document.getElementById('editPetForm'));
             fetch('../../api/owner/update_pet.php', { method: 'POST', body: formData })
@@ -514,39 +570,30 @@
             });
         }
 
-        // --- DETAIL VIEW & NOTES ---
         function loadPetDetail(id) {
             fetch(`../../api/owner/get_pet_data.php?id=${id}`)
             .then(res => res.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('detail-view').classList.remove('hidden');
-                
                 allBreeds = data.all_breeds || []; 
                 currentPetData = data.pet;
-                
                 document.getElementById('header-breadcrumbs').innerHTML = `
                     <a href="mypets.html" class="text-gray-500 hover:text-[#00796B] text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Back to List</a>
                     <div class="h-6 w-px bg-gray-300 mx-2"></div>
                     <h2 class="text-xl font-bold text-gray-800">${data.pet.Name}</h2>
                 `;
-                
                 const p = data.pet;
                 document.getElementById('p-name').innerText = p.Name;
                 document.getElementById('p-gender').innerText = p.Gender || 'Unknown Gender';
                 document.getElementById('p-breed').innerText = p.Breed_Name || 'Unknown Breed';
-                
-                let imgSource = p.Profile_Pic 
-                            ? `../../uploads/pets/${p.Profile_Pic}` 
-                            : `https://ui-avatars.com/api/?name=${p.Name}&background=random&size=200`;
+                let imgSource = p.Profile_Pic ? `../../uploads/pets/${p.Profile_Pic}` : `https://ui-avatars.com/api/?name=${p.Name}&background=random&size=200`;
                 document.getElementById('p-img').src = imgSource;
-                
                 document.getElementById('d-status').innerText = p.Status;
                 document.getElementById('d-color').innerText = p.Color_Markings || 'N/A';
                 document.getElementById('d-weight').innerText = p.Weight || '0';
                 document.getElementById('d-age').innerText = p.Age_Display;
                 document.getElementById('d-dob').innerText = p.Birthdate_Formatted;
-
                 renderNotes(data.notes);
             });
         }
@@ -575,19 +622,6 @@
             fetch('../../api/owner/add_note.php', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => { if (data.status === 'success') location.reload(); });
-        }
-
-        function logout() {
-            Swal.fire({
-                title: 'Log Out?',
-                text: "End your session?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, Logout'
-            }).then((result) => {
-                if(result.isConfirmed) window.location.href = '../../api/auth/logout.php';
-            });
         }
     </script>
 </body>

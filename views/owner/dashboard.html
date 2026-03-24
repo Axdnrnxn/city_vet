@@ -308,18 +308,31 @@ function generateCalendar(month, year) {
             });
         }
 
-        function logout() {
-            Swal.fire({
-                title: 'Logout?',
-                text: "End your session?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, Logout'
-            }).then((result) => {
-                if (result.isConfirmed) { window.location.href = '../../api/auth/logout.php'; }
+function logout() {
+    Swal.fire({
+        title: 'Logout Session?',
+        text: "You will need to login again to access your pet records.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00796B',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Logout',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('../../api/auth/logout.php')
+            .then(res => res.json())
+            .then(data => {
+                // Redirects to login.html instead of login.php
+                window.location.href = '../../login.html'; 
+            })
+            .catch(err => {
+                // Fallback redirect also goes to login.html
+                window.location.href = '../../login.html'; 
             });
         }
+    });
+}
     </script>
 </body>
 </html>

@@ -2,85 +2,135 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>City Vet - Veterinarian Dashboard</title>
-    <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vet Dashboard - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
 
-    <header>
-        <div class="logo-section">
-            <div class="logo-circle"></div>
-            <div>
-                <h2>City Veterinary Clinic</h2>
-                <small>Veterinarian Portal</small>
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_vet.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Pending Requests</h2>
             </div>
-        </div>
-    </header>
-
-    <div class="dashboard-container">
-        <aside class="sidebar" style="background-color: #e2e2e2;">
-            <a href="#" class="nav-btn active"><i class="fas fa-clipboard-list"></i> Pending Requests</a>
-            <a href="history.html" class="nav-btn"><i class="fas fa-history"></i> Appointment History</a>
-            <a href="#" class="logout-btn" onclick="logout()"><i class="fas fa-lock"></i> Log Out</a>
-        </aside>
-
-        <main class="main-content">
-            <div class="content-header">
-                <h2>Pending Surgery Requests</h2>
-                <div class="user-pill">Dr. Veterinarian</div>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    <i class="fa-solid fa-user-md"></i>
+                </div>
+                <span id="vet-name-display" class="hidden md:block text-sm font-medium text-gray-700">Dr. Veterinarian</span>
             </div>
+        </header>
 
-            <div style="background: #fff; padding: 20px; border: 1px solid #ccc;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Pet ID</th>
-                            <th>Service</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="appointment-table-body"></tbody>
-                </table>
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="px-6 py-4 text-xs font-bold uppercase text-gray-500">Appt ID</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase text-gray-500">Owner</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase text-gray-500">Pet</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase text-gray-500">Date</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase text-gray-500 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointment-table-body" class="divide-y divide-gray-50 text-sm">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
 
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-blue-600 text-white">
+                <h3 class="text-lg font-bold"><i class="fa-solid fa-file-medical mr-2"></i> Appointment Details</h3>
+                <button onclick="closeDetailsModal()" class="text-white hover:text-gray-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Owner Name</p>
+                        <p id="det-owner" class="text-sm font-semibold text-gray-800">--</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Pet Name</p>
+                        <p id="det-pet" class="text-sm font-semibold text-gray-800">--</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Species/Breed</p>
+                        <p id="det-breed" class="text-sm font-semibold text-gray-800">--</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Appt Date</p>
+                        <p id="det-date" class="text-sm font-semibold text-gray-800">--</p>
+                    </div>
+                </div>
+                
+                <div class="pt-4 flex justify-end gap-3 border-t">
+                    <button onclick="closeDetailsModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Close</button>
+                    <button id="approveBtn" class="px-5 py-2 bg-green-600 font-bold text-white rounded-lg hover:bg-green-700 shadow-md transition">Approve Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        fetch('../../api/auth/session_status.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'logged_out') window.location.href = '../login.html';
-                else loadAppointments();
-            })
-            .catch(() => loadAppointments());
+        let currentAppointments = [];
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAppointments);
 
         function loadAppointments() {
             fetch('../../api/clinic/vet_get_pending.php')
                 .then(res => res.json())
-                .then(appointments => {
+                .then(data => {
+                    currentAppointments = data;
                     const tbody = document.getElementById('appointment-table-body');
                     tbody.innerHTML = ''; 
 
-                    if (appointments.length === 0) {
-                        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>No pending requests.</td></tr>";
+                    if (data.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='5' class='px-6 py-10 text-center text-gray-400 font-medium'>No pending requests.</td></tr>";
                         return;
                     }
 
-                    appointments.forEach(appt => {
+                    data.forEach(appt => {
                         const row = `
-                            <tr>
-                                <td>${appt.Appointment_ID}</td>
-                                <td>${appt.Pet_ID}</td>
-                                <td>Surgery (Spay/Neuter)</td>
-                                <td>${appt.Appointment_Date}</td>
-                                <td><span style='color:orange; font-weight:bold;'>${appt.Status}</span></td>
-                                <td>
-                                    <button class='btn-primary' style='background:green;' onclick="approveAppt(${appt.Appointment_ID})">Approve</button>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-bold text-blue-600">#${appt.Appointment_ID}</td>
+                                <td class="px-6 py-4 font-medium">${appt.Owner_First || 'User'} ${appt.Owner_Last || ''}</td>
+                                <td class="px-6 py-4">${appt.Pet_Name || 'Pet'}</td>
+                                <td class="px-6 py-4 font-medium">${appt.Appointment_Date}</td>
+                                <td class="px-6 py-4 flex justify-center gap-2">
+                                    <button onclick="viewDetails(${appt.Appointment_ID})" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-bold transition">
+                                        <i class="fa-solid fa-eye"></i> Details
+                                    </button>
+                                    <button onclick="approveAppt(${appt.Appointment_ID})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm">
+                                        Approve
+                                    </button>
                                 </td>
                             </tr>
                         `;
@@ -89,33 +139,64 @@
                 });
         }
 
-        function approveAppt(id) {
-            Swal.fire({
-                title: 'Approve?',
-                text: "Confirm this appointment request?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                confirmButtonText: 'Yes, Approve'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Approved!', 'Appointment has been confirmed.', 'success');
-                    // In real app: fetch POST to update status
-                }
-            });
+        function viewDetails(id) {
+            const appt = currentAppointments.find(a => a.Appointment_ID == id);
+            if (!appt) return;
+
+            document.getElementById('det-owner').innerText = `${appt.Owner_First || 'Unknown'} ${appt.Owner_Last || ''}`;
+            document.getElementById('det-pet').innerText = appt.Pet_Name || 'Not Specified';
+            const species = appt.Species_Name || 'Unknown';
+            const breed = appt.Breed_Name || 'Unknown';
+            document.getElementById('det-breed').innerText = `${species} / ${breed}`;
+            document.getElementById('det-date').innerText = appt.Appointment_Date;
+
+            document.getElementById('approveBtn').onclick = () => approveAppt(id);
+            document.getElementById('detailsModal').classList.remove('hidden');
         }
 
-        function logout() {
-            Swal.fire({
-                title: 'Log Out?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes',
-                confirmButtonColor: '#2c5e9e'
-            }).then((result) => {
-                if(result.isConfirmed) window.location.href = '../../login.html';
+        // --- THE MISSING FUNCTION ---
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+function approveAppt(id) {
+    Swal.fire({
+        title: 'Approve Request?',
+        text: "Confirm this appointment for surgery?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        confirmButtonText: 'Yes, Approve'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ACTUALLY SEND THE DATA TO PHP
+            fetch('../../api/clinic/vet_approve_appt.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Approved!',
+                        text: 'The status has been updated to Confirmed.',
+                        icon: 'success'
+                    }).then(() => {
+                        closeDetailsModal();
+                        loadAppointments(); // This removes the row from the "Pending" list
+                    });
+                } else {
+                    Swal.fire('Error', 'Could not update database: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                Swal.fire('Error', 'Connection failed.', 'error');
             });
         }
+    });
+}
     </script>
 </body>
 </html>

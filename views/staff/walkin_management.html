@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walk-In Management - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+        .modal-transition { transition: transform 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_staff.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        
+        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Walk-In Management</h2>
+            </div>
+            <button onclick="openAddModal()" class="bg-[#00796B] hover:bg-[#004D40] text-white px-6 py-2.5 rounded-xl font-bold shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Register New User
+            </button>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="mb-6">
+                <div class="relative w-full md:w-96">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search owner name, phone..." class="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-xl focus:outline-none focus:border-[#00796B] focus:ring-1 focus:ring-[#00796B] shadow-sm">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-200 tracking-widest">
+                                <th class="px-6 py-4 font-bold">Client Name</th>
+                                <th class="px-6 py-4 font-bold">Contact Info</th>
+                                <th class="px-6 py-4 font-bold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ownersTable" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+                    <span id="recordCount" class="text-xs text-gray-500 font-medium">Showing 0 records</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="addOwnerModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onclick="closeAddModal()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex">
+            <div id="modalPanel" class="w-screen max-w-md bg-white shadow-2xl transform transition-transform translate-x-full">
+                <div class="h-full flex flex-col bg-white">
+                    <div class="px-6 py-4 bg-[#00796B] text-white flex justify-between items-center shadow-md">
+                        <h2 class="text-lg font-bold">Register Walk-in Client</h2>
+                        <button onclick="closeAddModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                        <p class="text-xs text-gray-500 italic">Enter the client's details to create their account instantly.</p>
+                        <form id="addOwnerForm" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">First Name <span class="text-red-500">*</span></label>
+                                    <input type="text" id="fname" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Last Name <span class="text-red-500">*</span></label>
+                                    <input type="text" id="lname" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">House Address / Street <span class="text-red-500">*</span></label>
+                                <input type="text" id="address" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Barangay <span class="text-red-500">*</span></label>
+                                <select id="barangay" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none bg-white transition">
+                                    <option value="" disabled selected>Select Barangay</option>
+                                    <option value="Carmen">Carmen</option>
+                                    <option value="Kauswagan">Kauswagan</option>
+                                    <option value="Nazareth">Nazareth</option>
+                                    <option value="Poblacion">Poblacion</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="border-t border-gray-200 pt-6 mt-4">
+                                <h3 class="text-xs font-bold text-[#00796B] mb-4 uppercase tracking-widest">Account Credentials</h3>
+                                <div class="space-y-4">
+                                    <input type="text" id="username" placeholder="Username *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                    <input type="tel" id="phone" pattern="09[0-9]{9}" placeholder="Phone (09XXXXXXXXX) *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                    <input type="email" id="email" placeholder="Email Address *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="password" id="password" placeholder="Password *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                        <input type="password" id="confirm_password" placeholder="Confirm *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="showPass" onclick="togglePassVisibility()" class="w-4 h-4 text-teal-600 rounded cursor-pointer">
+                                        <label for="showPass" class="ml-2 text-xs text-gray-600 cursor-pointer font-medium">Show Password</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="p-6 border-t border-gray-200 bg-gray-50">
+                        <button onclick="submitNewOwner()" class="w-full bg-[#00796B] hover:bg-[#004D40] text-white font-bold py-4 rounded-xl shadow transition uppercase tracking-widest text-sm">Create Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="consultModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onclick="closeConsultModal()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex">
+            <div id="consultPanel" class="w-screen max-w-md bg-white shadow-2xl transform transition-transform translate-x-full">
+                <div class="h-full flex flex-col">
+                    <div class="px-6 py-4 bg-teal-800 text-white flex justify-between items-center shadow-md">
+                        <div>
+                            <h2 class="text-lg font-bold">New Consultation</h2>
+                            <p id="owner_name_display" class="text-[10px] opacity-80 uppercase font-bold tracking-widest">Loading Owner...</p>
+                        </div>
+                        <button onclick="closeConsultModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                        <form id="consultForm" class="space-y-4">
+                            <input type="hidden" id="consult_owner_id">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Select Patient (Pet) <span class="text-red-500">*</span></label>
+                                <select id="consult_pet_id" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                                    <option value="">-- Select Pet --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Service Type <span class="text-red-500">*</span></label>
+                                <select id="consult_service_id" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                                    <option value="">Loading services...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Clinical Notes / Symptoms <span class="text-red-500">*</span></label>
+                                <textarea id="consult_symptoms" rows="3" placeholder="Describe current condition..." class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Prescribed Treatment <span class="text-red-500">*</span></label>
+                                <input type="text" id="consult_treatment" placeholder="Medication or procedure..." class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="p-6 bg-gray-50 border-t">
+                        <button onclick="saveConsultationRecord()" class="w-full bg-[#00796B] py-4 text-white font-bold rounded-xl shadow-lg hover:bg-[#004D40] transition active:scale-95 uppercase tracking-widest text-sm">Confirm & Save Record</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('../../api/auth/session_status.php');
+                const data = await res.json();
+                if (data.status !== 'logged_in' || data.role_id != 4) window.location.href = '../../login.html';
+            } catch (error) { window.location.href = '../../login.html'; }
+        }
+        checkSession();
+
+        async function loadOwners() {
+            try {
+                const res = await fetch('../../api/records/owners.php');
+                const data = await res.json();
+                const tbody = document.getElementById('ownersTable');
+                tbody.innerHTML = '';
+                document.getElementById('recordCount').innerText = `Showing ${data.length} records`;
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">No registered clients found.</td></tr>';
+                    return;
+                }
+
+                data.forEach(owner => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs uppercase">${owner.First_name[0]}${owner.Last_name[0]}</div>
+                                    <div>
+                                        <p class="font-bold text-gray-800">${owner.First_name} ${owner.Last_name}</p>
+                                        <p class="text-[10px] text-gray-400">Owner ID: #${owner.Owner_ID}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-xs font-medium text-gray-600">${owner.Contact_Number}</p>
+                                <p class="text-[10px] text-gray-400">${owner.Email}</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="registerConsultation(${owner.Owner_ID}, '${owner.First_name} ${owner.Last_name}')" 
+                                    class="text-[#00796B] border border-[#00796B] hover:bg-[#00796B] hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                                    Register Walk-in Consultation
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function submitNewOwner() {
+            const fields = {
+                fname: document.getElementById('fname'), lname: document.getElementById('lname'),
+                address: document.getElementById('address'), barangay: document.getElementById('barangay'),
+                username: document.getElementById('username'), phone: document.getElementById('phone'),
+                email: document.getElementById('email'), password: document.getElementById('password'),
+                confirm_password: document.getElementById('confirm_password')
+            };
+
+            Object.values(fields).forEach(f => f.classList.remove('border-red-500'));
+
+            for (const [key, field] of Object.entries(fields)) {
+                if (!field.value.trim()) {
+                    field.classList.add('border-red-500');
+                    Swal.fire('Required Field', `The ${key.replace('_', ' ')} is mandatory.`, 'warning');
+                    return;
+                }
+            }
+
+            if (!/^09\d{9}$/.test(fields.phone.value)) {
+                fields.phone.classList.add('border-red-500');
+                Swal.fire('Invalid Phone', 'Use format: 09XXXXXXXXX', 'error');
+                return;
+            }
+
+            if (fields.password.value !== fields.confirm_password.value) {
+                fields.confirm_password.classList.add('border-red-500');
+                Swal.fire('Match Error', 'Passwords do not match.', 'error');
+                return;
+            }
+
+            const formData = {};
+            Object.keys(fields).forEach(key => formData[key] = fields[key].value.trim());
+            formData.role_id = 3;
+
+            try {
+                Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                const res = await fetch('../../api/auth/register.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'Account Created', text: 'Success!', timer: 1500, showConfirmButton: false });
+                    closeAddModal(); loadOwners();
+                } else { Swal.fire('Error', result.message || 'Registration failed.', 'error'); }
+            } catch (err) { Swal.fire('System Error', 'Failed to connect.', 'error'); }
+        }
+
+        // --- CONSULTATION LOGIC ---
+        function openConsultModal() {
+            document.getElementById('consultModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('consultPanel').classList.remove('translate-x-full'), 10);
+        }
+
+        function closeConsultModal() {
+            document.getElementById('consultPanel').classList.add('translate-x-full');
+            setTimeout(() => {
+                document.getElementById('consultModal').classList.add('hidden');
+                document.getElementById('consultForm').reset();
+            }, 300);
+        }
+
+        async function registerConsultation(ownerId, ownerName) {
+            const petSelect = document.getElementById('consult_pet_id');
+            const ownerDisplay = document.getElementById('owner_name_display');
+            
+            document.getElementById('consult_owner_id').value = ownerId;
+            ownerDisplay.innerText = ownerName;
+            petSelect.innerHTML = '<option>Loading pets...</option>';
+
+            openConsultModal();
+
+            try {
+                const petRes = await fetch(`../../api/records/get_pets_by_owners.php?owner_id=${ownerId}`);
+                const pets = await petRes.json();
+                const serviceRes = await fetch('../../api/dashboard/get_services.php');
+                const services = await serviceRes.json();
+
+                if (pets.length > 0) {
+                    petSelect.innerHTML = '<option value="">-- Select Pet --</option>' + 
+                        pets.map(p => `<option value="${p.Pet_ID}">${p.Name} (${p.Species})</option>`).join('');
+                } else {
+                    petSelect.innerHTML = '<option value="">No pets registered</option>';
+                    Swal.fire('No Pets Found', 'This owner has no pets registered. Please add a pet first.', 'info');
+                }
+
+                document.getElementById('consult_service_id').innerHTML = 
+                    services.map(s => `<option value="${s.Service_ID}">${s.Service_Name}</option>`).join('');
+
+            } catch (err) { Swal.fire('Error', 'Failed to load owner data.', 'error'); }
+        }
+
+async function saveConsultationRecord() {
+    // 1. Get the values from the form
+    const petId = document.getElementById('consult_pet_id').value;
+    const treatment = document.getElementById('consult_treatment').value.trim();
+    const symptoms = document.getElementById('consult_symptoms').value.trim();
+
+    // 2. Validation: Only Pet ID is strictly required
+    if (!petId) {
+        Swal.fire('Incomplete', 'Please select a pet for this consultation.', 'warning');
+        return;
+    }
+
+    try {
+        Swal.fire({ title: 'Saving Record...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        // 3. Use FormData so it populates $_POST in your PHP
+        const formData = new FormData();
+        formData.append('pet_id', petId);
+        // If these are empty, they stay empty strings (optional)
+        formData.append('treatment', treatment || "None provided"); 
+        formData.append('symptoms', symptoms || ""); 
+
+        // 4. Send request (Action is 'add')
+        const res = await fetch('../../api/clinic/manage_consultations.php?action=add', {
+            method: 'POST',
+            body: formData // Sending as FormData, not JSON
+        });
+
+        const text = await res.text(); // Get raw text first to catch PHP errors
+        let result;
+        
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            console.error("Server returned non-JSON:", text);
+            throw new Exception("The server returned an invalid response.");
+        }
+
+        if (result.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Record Saved!',
+                text: 'The consultation has been recorded.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            closeConsultModal();
+        } else {
+            Swal.fire('Error', result.message || 'Could not save record.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire('System Error', 'Check console for details.', 'error');
+    }
+}
+        function openAddModal() {
+            document.getElementById('addOwnerModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modalPanel').classList.remove('translate-x-full'), 10);
+        }
+
+        function closeAddModal() {
+            document.getElementById('modalPanel').classList.add('translate-x-full');
+            setTimeout(() => {
+                document.getElementById('addOwnerModal').classList.add('hidden');
+                document.getElementById('addOwnerForm').reset();
+            }, 300);
+        }
+
+        function togglePassVisibility() {
+            const p = document.getElementById('password'), cp = document.getElementById('confirm_password');
+            const type = p.type === 'password' ? 'text' : 'password';
+            p.type = type; cp.type = type;
+        }
+
+        function filterTable() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#ownersTable tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOwners);
+    </script>
+</body>
+</html>
