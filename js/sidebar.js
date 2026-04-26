@@ -39,7 +39,7 @@ function loadSidebar() {
             
             <p class="px-4 text-xs font-bold text-gray-400 uppercase mt-4 mb-2">System</p>
             <a href="reports.html" class="${getLinkClass('reports.html')}"><i class="fa-solid fa-file-invoice mr-3 w-6 text-center"></i> Reports</a>
-            <a href="#" class="${getLinkClass('user_management.html')}"><i class="fa-solid fa-users-gear mr-3 w-6 text-center"></i> User Management</a>
+            <a href="user_management.html" class="${getLinkClass('user_management.html')}"><i class="fa-solid fa-users-gear mr-3 w-6 text-center"></i> User Management</a>
             <a href="master_files.html" class="${getLinkClass('master_files.html')}"><i class="fa-solid fa-sliders mr-3 w-6 text-center"></i> Clinic Settings</a>
         </nav>
 
