@@ -6,9 +6,9 @@ function loadStaffSidebar() {
 
     const getLinkClass = (pageName) => {
         const baseClass = "flex items-center px-4 py-3 rounded-xl transition-all duration-200 mb-1";
-        // ACTIVE: Solid teal background (matching the brand palette) with white text
+        // ACTIVE: Solid brand teal
         const activeClass = "bg-[#00796B] text-white font-semibold shadow-md";
-        // INACTIVE: Transparent background with light teal text and brand teal hover
+        // INACTIVE: Light teal text with subtle hover
         const inactiveClass = "text-teal-50 hover:bg-[#00796B]/20 hover:text-white";
         
         return `${baseClass} ${currentPage === pageName ? activeClass : inactiveClass}`;
@@ -35,17 +35,13 @@ function loadStaffSidebar() {
             <a href="walkin_management.html" class="${getLinkClass('walkin_management.html')}">
                 <i class="fa-solid fa-person-walking mr-3 w-6 text-center"></i> Walk-in
             </a>
-            <!--
-            <a href="consultation.html" class="${getLinkClass('consultation.html')}">
-                <i class="fa-solid fa-notes-medical mr-3 w-6 text-center"></i> Consultations
-            </a> -->
             
             <div class="pt-6 pb-2">
-                <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em]">Patient Records</p>
+                <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-3">Settings</p>
             </div>
-
-            <a href="pets_records.html" class="${getLinkClass('pets_records.html')}">
-                <i class="fa-solid fa-paw mr-3 w-6 text-center"></i> Pet Profiles
+            
+            <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">
+                <i class="fa-solid fa-user-gear mr-3 w-6 text-center"></i> Account Profile
             </a>
         </nav>
 
@@ -56,7 +52,9 @@ function loadStaffSidebar() {
         </div>
     </aside>`;
 }
-loadStaffSidebar();
+
+// Initialize the sidebar
+document.addEventListener('DOMContentLoaded', loadStaffSidebar);
 
 // Global Logout Function
 function logout() {
@@ -65,7 +63,7 @@ function logout() {
         text: "You will need to login again to access your account.",
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#00796B', // Consistent Brand Teal
+        confirmButtonColor: '#00796B',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, Logout',
         cancelButtonText: 'Cancel'
