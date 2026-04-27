@@ -35,9 +35,10 @@ function loadStaffSidebar() {
             <a href="walkin_management.html" class="${getLinkClass('walkin_management.html')}">
                 <i class="fa-solid fa-person-walking mr-3 w-6 text-center"></i> Walk-in
             </a>
+            <!--
             <a href="consultation.html" class="${getLinkClass('consultation.html')}">
                 <i class="fa-solid fa-notes-medical mr-3 w-6 text-center"></i> Consultations
-            </a>
+            </a> -->
             
             <div class="pt-6 pb-2">
                 <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em]">Patient Records</p>

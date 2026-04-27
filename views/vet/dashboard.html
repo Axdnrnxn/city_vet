@@ -16,6 +16,39 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'error') {
+                    window.location.replace('../../login.html');
+                } else {
+                    // Safe UI Updater function
+                    const updateHeaderName = () => {
+                        const nameDisplay = document.getElementById('vet-name-display');
+                        if (nameDisplay && data.user && data.user.name) {
+                            // Automatically add "Dr." and remove the @gmail.com part if it's an email
+                            let displayName = data.user.name.split('@')[0];
+                            // Capitalize first letter
+                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            nameDisplay.innerText = "Dr. " + displayName;
+                        }
+                    };
+
+                    // Check if DOM is already loaded to prevent the race condition
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updateHeaderName);
+                    } else {
+                        updateHeaderName();
+                    }
+                }
+            })
+            .catch(() => {
+                window.location.replace('../../login.html');
+            });
+    </script>
+
+    <script>
+        // Check session IMMEDIATELY before page loads
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') {
                     // If the PHP bouncer says "Access Denied", kick them to login
                     window.location.replace('../../login.html');
                 } else {

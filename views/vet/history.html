@@ -9,6 +9,39 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Check session IMMEDIATELY before page loads
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    window.location.replace('../../login.html');
+                } else {
+                    // Safe UI Updater function
+                    const updateHeaderName = () => {
+                        const nameDisplay = document.getElementById('vet-name-display');
+                        if (nameDisplay && data.user && data.user.name) {
+                            // Automatically add "Dr." and remove the @gmail.com part if it's an email
+                            let displayName = data.user.name.split('@')[0];
+                            // Capitalize first letter
+                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            nameDisplay.innerText = "Dr. " + displayName;
+                        }
+                    };
+
+                    // Check if DOM is already loaded to prevent the race condition
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updateHeaderName);
+                    } else {
+                        updateHeaderName();
+                    }
+                }
+            })
+            .catch(() => {
+                window.location.replace('../../login.html');
+            });
+    </script>
     
     <script>
         // Check session IMMEDIATELY before page loads
@@ -57,7 +90,7 @@
                 <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                     <i class="fa-solid fa-user-md"></i>
                 </div>
-                <span class="hidden md:block text-sm font-medium text-gray-700">Dr. Veterinarian</span>
+                <span id="vet-name-display" class="hidden md:block text-sm font-medium text-gray-700">Dr. Veterinarian</span>
             </div>
         </header>
 
