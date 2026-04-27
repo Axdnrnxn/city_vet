@@ -1,4 +1,4 @@
-// User Management page for City Vet Admin Panel. Allows administrators to view, search, filter, and manage user accounts (staff and pet owners). Features include role-based filtering, alphabetical sorting, and account status toggling.
+<!--User Management page for City Vet Admin Panel. Allows administrators to view, search, filter, and manage user accounts (staff and pet owners). Features include role-based filtering, alphabetical sorting, and account status toggling. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +10,30 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Check session IMMEDIATELY before page loads
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    // If the PHP bouncer says "Access Denied", kick them to login
+                    window.location.replace('../../login.html');
+                } else {
+                    // Optional: If they are allowed, you can set the header name here!
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const nameDisplay = document.getElementById('vet-name-display');
+                        if (nameDisplay && data.user && data.user.name) {
+                            nameDisplay.innerText = data.user.name;
+                        }
+                    });
+                }
+            })
+            .catch(() => {
+                // If the fetch fails entirely (e.g. server error), kick to login
+                window.location.replace('../../login.html');
+            });
+    </script>
     
     <style>
         body { font-family: 'Inter', sans-serif; }

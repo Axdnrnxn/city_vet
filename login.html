@@ -6,42 +6,50 @@
     <title>City Vet - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
-<body class="bg-white h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-[#004D40] to-[#00796B] h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
-    <div class="w-full max-w-sm">
-        <div class="bg-[#0e7490] p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-2xl text-center border border-teal-600">
+    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 2px, transparent 2px); background-size: 30px 30px;"></div>
+
+    <div class="w-full max-w-sm relative z-10">
+        
+        <div class="bg-white/10 backdrop-blur-lg p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-2xl text-center border border-white/20">
             
-            <h2 class="text-white text-2xl font-bold italic mb-8 tracking-wider">LOG IN FORM</h2>
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mx-auto mb-4">
+                <i class="fa-solid fa-house-medical text-[#00796B] text-3xl"></i>
+            </div>
+            
+            <h2 class="text-white text-2xl font-bold mb-8 tracking-wide">City Vet Login</h2>
             
             <form id="loginForm" class="space-y-6">
                 
-                <div class="text-left">
-                    <label class="block text-white text-xs font-bold uppercase mb-1 ml-1">Email</label>
-                    <input type="email" id="email" required class="w-full p-3 rounded bg-gray-100 border-none focus:ring-2 focus:ring-teal-300 outline-none text-gray-800">
+                <div class="text-left relative">
+                    <label class="block text-teal-50 text-xs font-bold uppercase mb-1 ml-1 tracking-wider">Email</label>
+                    <input type="email" id="email" required class="w-full p-3 rounded-lg bg-white/20 border border-white/20 text-white placeholder-teal-100/50 focus:ring-2 focus:ring-teal-300 focus:bg-white/30 outline-none transition">
                 </div>
 
-                <div class="text-left">
-                    <label class="block text-white text-xs font-bold uppercase mb-1 ml-1">Password</label>
-                    <input type="password" id="password" required class="w-full p-3 rounded bg-gray-100 border-none focus:ring-2 focus:ring-teal-300 outline-none text-gray-800">
+                <div class="text-left relative">
+                    <label class="block text-teal-50 text-xs font-bold uppercase mb-1 ml-1 tracking-wider">Password</label>
+                    <input type="password" id="password" required class="w-full p-3 rounded-lg bg-white/20 border border-white/20 text-white placeholder-teal-100/50 focus:ring-2 focus:ring-teal-300 focus:bg-white/30 outline-none transition">
                 </div>
 
                 <div class="flex items-center ml-1 py-1">
-                    <input type="checkbox" id="showPass" onclick="toggleLoginPass()" class="w-5 h-5 text-teal-600 rounded cursor-pointer">
-                    <label for="showPass" class="ml-2 text-white text-sm cursor-pointer select-none">Show Password</label>
+                    <input type="checkbox" id="showPass" onclick="toggleLoginPass()" class="w-4 h-4 text-teal-600 rounded bg-white/20 border-white/30 cursor-pointer focus:ring-0">
+                    <label for="showPass" class="ml-2 text-teal-50 text-sm cursor-pointer select-none">Show Password</label>
                 </div>
 
-                <div class="text-center mt-4">
-                    <p class="text-white text-xs italic mb-2">
+                <div class="text-center mt-2">
+                    <p class="text-teal-100/80 text-xs mb-2">
                         DON'T HAVE AN ACCOUNT YET?
                     </p>
-                    <a href="register.html" class="text-blue-200 font-bold hover:underline uppercase text-sm">Create an Account</a>
+                    <a href="register.html" class="text-white font-bold hover:text-teal-200 hover:underline uppercase text-sm transition">Create an Account</a>
                 </div>
 
                 <div>
-                    <button type="submit" class="w-full bg-white text-[#0e7490] font-extrabold py-3 rounded shadow hover:bg-gray-200 transition duration-200 uppercase text-sm tracking-wider">
+                    <button type="submit" class="w-full bg-white text-[#00796B] font-extrabold py-3.5 rounded-lg shadow-lg hover:bg-gray-100 transition duration-200 uppercase text-sm tracking-wider mt-2">
                         Log In
                     </button>
                 </div>
@@ -56,7 +64,6 @@
             if (x.type === "password") { x.type = "text"; } else { x.type = "password"; }
         }
 
-        // (The JS Logic remains the same)
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;

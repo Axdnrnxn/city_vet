@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - City Vet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex overflow-hidden">
+
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_owner.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl"><i class="fa-solid fa-bars"></i></button>
+                <h2 class="text-xl font-bold text-gray-800">Account Settings</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user"></i></div>
+                    <span id="header-user-display" class="hidden md:block text-sm font-medium text-gray-700">Loading...</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="max-w-4xl mx-auto">
+                
+                <div class="bg-gradient-to-r from-[#004D40] to-[#00796B] rounded-3xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+                    <div class="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                        <div class="w-24 h-24 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
+                            <i class="fa-solid fa-user text-5xl"></i>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <h1 class="text-3xl font-bold" id="profile-name">---</h1>
+                            <p class="text-teal-100 opacity-90" id="profile-email-sub">---</p>
+                            <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                                <span class="bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold border border-white/10"><i class="fa-solid fa-paw mr-2"></i> <span id="pet-count">0</span> Pets Registered</span>
+                                <span class="bg-white/20 px-4 py-1.5 rounded-full text-xs font-bold border border-white/10"><i class="fa-solid fa-calendar-check mr-2"></i> Owner Account</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-1 space-y-2">
+                        <button onclick="switchTab('general')" id="tab-general" class="w-full flex items-center justify-between px-6 py-4 rounded-2xl bg-white shadow-sm border border-transparent text-[#00796B] font-bold transition-all active-tab">
+                            <span><i class="fa-solid fa-id-card mr-3"></i> General</span>
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                        <button onclick="switchTab('security')" id="tab-security" class="w-full flex items-center justify-between px-6 py-4 rounded-2xl bg-transparent hover:bg-white text-gray-500 font-medium transition-all">
+                            <span><i class="fa-solid fa-shield-halved mr-3"></i> Security</span>
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <div id="section-general" class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Personal Information</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Username</label>
+                                    <input type="text" id="edit-username" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Email Address</label>
+                                    <input type="email" id="edit-email" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                </div>
+                            </div>
+                            <div class="pt-6 border-t">
+                                <button onclick="handleUpdate('general')" class="w-full md:w-auto bg-[#00796B] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-[#004D40] transition">Save Changes</button>
+                            </div>
+                        </div>
+
+                        <div id="section-security" class="hidden bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Change Password</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Current Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="old-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                        <button type="button" onclick="toggleEye('old-pass', this)" class="absolute right-4 top-3.5 text-gray-400"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">New Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="new-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                        <button type="button" onclick="toggleEye('new-pass', this)" class="absolute right-4 top-3.5 text-gray-400"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Repeat New Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="confirm-new-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                        <button type="button" onclick="toggleEye('confirm-new-pass', this)" class="absolute right-4 top-3.5 text-gray-400"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-6 border-t">
+                                <button onclick="handleUpdate('password')" class="w-full md:w-auto bg-[#00796B] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-[#004D40] transition">Update Password</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            const sections = ['general', 'security'];
+            sections.forEach(s => {
+                document.getElementById(`section-${s}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${s}`);
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-[#00796B]', 'font-bold');
+                btn.classList.add('text-gray-500', 'font-medium');
+            });
+
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-[#00796B]', 'font-bold');
+            activeBtn.classList.remove('text-gray-500', 'font-medium');
+        }
+
+        function toggleEye(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Fetch User Data
+        async function loadProfile() {
+            try {
+                const res = await fetch('../../api/owner/get_pets.php');
+                const data = await res.json();
+                
+                if (data.error) { window.location.href = '../../login.html'; return; }
+
+                document.getElementById('header-user-display').innerText = data.owner_name;
+                document.getElementById('profile-name').innerText = data.owner_name;
+                document.getElementById('profile-email-sub').innerText = data.email;
+                document.getElementById('pet-count').innerText = data.pets.length;
+                
+                document.getElementById('edit-username').value = data.owner_name;
+                document.getElementById('edit-email').value = data.email;
+            } catch (e) { console.error(e); }
+        }
+
+        async function handleUpdate(type) {
+            let payload = { action: 'update_profile' };
+            
+            if (type === 'general') {
+                payload.username = document.getElementById('edit-username').value;
+                payload.email = document.getElementById('edit-email').value;
+                
+                // For general updates, we still prompt for the current password as security
+                const { value: currentPassword } = await Swal.fire({
+                    title: 'Confirm Changes',
+                    input: 'password',
+                    inputLabel: 'Enter your current password to save changes',
+                    confirmButtonColor: '#00796B',
+                    showCancelButton: true
+                });
+                if (!currentPassword) return;
+                payload.current_password = currentPassword;
+
+            } else if (type === 'password') {
+                const oldPass = document.getElementById('old-pass').value;
+                const newPass = document.getElementById('new-pass').value;
+                const confirmPass = document.getElementById('confirm-new-pass').value;
+
+                if (!oldPass || !newPass) {
+                    Swal.fire('Error', 'Please fill in all password fields', 'error');
+                    return;
+                }
+                if (newPass !== confirmPass) {
+                    Swal.fire('Mismatch', 'New passwords do not match!', 'error');
+                    return;
+                }
+
+                payload.current_password = oldPass;
+                payload.password = newPass;
+                // Re-use existing username/email
+                payload.username = document.getElementById('edit-username').value;
+                payload.email = document.getElementById('edit-email').value;
+            }
+
+            const res = await fetch('../../api/system/all_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'Updated Successfully', timer: 1500, showConfirmButton: false });
+                loadProfile(); // Refresh UI
+                if (type === 'password') {
+                    document.getElementById('old-pass').value = "";
+                    document.getElementById('new-pass').value = "";
+                    document.getElementById('confirm-new-pass').value = "";
+                }
+            } else {
+                Swal.fire('Error', result.message, 'error');
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

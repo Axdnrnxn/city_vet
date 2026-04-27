@@ -13,8 +13,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .sidebar-transition { transition: all 0.3s ease-in-out; }
-        
-        /* Custom Calendar Styles */
         .calendar-day { transition: all 0.2s; }
         .calendar-day:hover:not(.disabled) { background-color: #E0F2F1; border-color: #00796B; cursor: pointer; }
         .calendar-day.disabled { background-color: #f9fafb; color: #cbd5e1; cursor: not-allowed; }
@@ -36,19 +34,18 @@
                 <h2 class="text-xl font-bold text-gray-800">Spay & Neuter Appointment</h2>
             </div>
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user"></i></div>
+                <button onclick="openProfileModal()" class="flex items-center gap-2 hover:bg-gray-50 p-2 rounded-xl transition-all">
+                    <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold"><i class="fa-solid fa-user"></i></div>
                     <span id="user-display" class="hidden md:block text-sm font-medium text-gray-700">Loading...</span>
-                </div>
+                </button>
             </div>
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 lg:p-8">
-            
-            <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+            <div class="bg-gradient-to-r from-[#004D40] to-[#00796B] rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold mb-1" id="welcome-text">Welcome to City Vet! 🐾</h2>
-                    <p class="text-blue-100 text-sm">Select an available date below to schedule a Spay/Neuter procedure for your pet.</p>
+                    <p class="text-teal-50 text-sm">Select an available date below to schedule a Spay/Neuter procedure for your pet.</p>
                 </div>
                 <div class="mt-4 md:mt-0 flex gap-3">
                     <button onclick="location.href='mypets.html'" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm transition">
@@ -58,32 +55,26 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
                 <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-gray-800 text-lg"><i class="fa-regular fa-calendar text-[#00796B] mr-2"></i> Select Date</h3>
-                        
                         <div class="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
                             <button onclick="changeMonth(-1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-left"></i></button>
                             <span id="calendar-month-year" class="font-bold text-gray-700 w-32 text-center uppercase tracking-wide text-sm">Loading...</span>
                             <button onclick="changeMonth(1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
+                    </div> 
+                    <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                     </div>
-
-                    <div>
-                        <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                        </div>
-                        <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
-                            </div>
-                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center"></div>
                 </div>
 
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-                    <h3 class="font-bold text-gray-800 text-lg mb-4"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i> Guidelines</h3>
+                    <h3 class="font-bold text-gray-800 text-lg mb-4"><i class="fa-solid fa-circle-info text-[#00796B] mr-2"></i> Guidelines</h3>
                     <div class="space-y-4 text-sm text-gray-600">
-                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                            <p class="font-bold text-blue-800 mb-1"><i class="fa-solid fa-clock mr-1"></i> Operating Hours</p>
+                        <div class="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                            <p class="font-bold text-[#004D40] mb-1"><i class="fa-solid fa-clock mr-1"></i> Operating Hours</p>
                             <p>Walk-ins and surgeries are processed from 8:00 AM to 5:00 PM, Monday to Friday.</p>
                         </div>
                         <div class="p-4 bg-orange-50 rounded-lg border border-orange-100">
@@ -96,7 +87,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
@@ -108,19 +98,16 @@
                 <button onclick="closeBookingModal()" class="text-white hover:text-gray-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="bookingForm" class="p-6 space-y-4">
-                
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center mb-4">
                     <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Selected Date</p>
                     <p id="modal-date-display" class="text-xl font-bold text-[#00796B]">--</p>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Select Pet <span class="text-red-500">*</span></label>
                     <select id="petSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-white">
                         <option value="">Loading pets...</option>
                     </select>
                 </div>
-
                 <div class="pt-4 flex justify-end gap-3">
                     <button type="button" onclick="closeBookingModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
                     <button type="button" onclick="submitBooking()" class="px-5 py-2 bg-[#00796B] font-bold text-white rounded-lg hover:bg-teal-700 shadow-md transition">Confirm Booking</button>
@@ -129,44 +116,77 @@
         </div>
     </div>
 
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-gradient-to-r from-[#004D40] to-[#00796B] p-6 text-white">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold"><i class="fa-solid fa-user-gear mr-2"></i> Account Profile</h3>
+                    <button onclick="closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+            </div>
+            <form id="profileForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
+                    <input type="text" id="prof-username" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
+                    <input type="email" id="prof-email" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-gray-50">
+                </div>
+                
+                <div class="pt-2 border-t border-gray-100">
+                    <p class="text-[10px] font-bold text-orange-500 uppercase mb-2">Change Password (Leave blank to keep current)</p>
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <input type="password" id="prof-new-password" placeholder="New Password" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-gray-50">
+                            <button type="button" onclick="togglePassVisibility('prof-new-password', this)" class="absolute right-3 top-2.5 text-gray-400 hover:text-[#00796B]"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="prof-confirm-password" placeholder="Repeat New Password" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-gray-50">
+                            <button type="button" onclick="togglePassVisibility('prof-confirm-password', this)" class="absolute right-3 top-2.5 text-gray-400 hover:text-[#00796B]"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeProfileModal()" class="flex-1 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-[#00796B] text-white font-bold rounded-xl shadow-md hover:bg-[#004D40] transition">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // -- SIDEBAR MOBILE TOGGLE --
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
-        function toggleSidebar() {
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // -- STATE VARIABLES --
         let ownerPets = [];
         let selectedDateStr = null;
-        
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
+        let ownerEmail = ""; 
+        let initialUsername = "";
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchUserData();
             generateCalendar(currentMonth, currentYear);
         });
 
-        // -- FETCH DATA --
         function fetchUserData() {
             fetch('../../api/owner/get_pets.php')
             .then(res => res.json())
             .then(data => {
                 if (data.error) { window.location.href = '../../login.php'; return; }
-                
+                initialUsername = data.owner_name;
                 document.getElementById('user-display').innerText = data.owner_name;
                 document.getElementById('welcome-text').innerText = `Hello, ${data.owner_name}! 🐾`;
-                
                 ownerPets = data.pets;
+                ownerEmail = data.email || ""; 
                 populatePetDropdown();
             })
             .catch(err => console.error("API Error:", err));
@@ -175,12 +195,10 @@
         function populatePetDropdown() {
             const petSelect = document.getElementById('petSelect');
             petSelect.innerHTML = '<option value="" disabled selected>-- Choose a Pet --</option>';
-            
             if (ownerPets.length === 0) {
-                petSelect.innerHTML = '<option value="" disabled>No pets registered. Please add a pet first.</option>';
+                petSelect.innerHTML = '<option value="" disabled>No pets registered.</option>';
                 return;
             }
-
             ownerPets.forEach(pet => {
                 let opt = document.createElement('option');
                 opt.value = pet.Pet_ID;
@@ -189,7 +207,6 @@
             });
         }
 
-        // -- CALENDAR LOGIC --
         function changeMonth(dir) {
             currentMonth += dir;
             if (currentMonth > 11) { currentMonth = 0; currentYear++; }
@@ -197,142 +214,171 @@
             generateCalendar(currentMonth, currentYear);
         }
 
-function generateCalendar(month, year) {
+        function generateCalendar(month, year) {
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
-
-            const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon... 6=Sat
+            const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
             const today = new Date();
-            today.setHours(0,0,0,0); // Normalize today for accurate comparison
-
+            today.setHours(0,0,0,0);
             const grid = document.getElementById('calendar-grid');
             let html = '';
-
-            // Empty slots before 1st day of the month
             for (let i = 0; i < firstDay; i++) {
                 html += `<div class="p-2 h-20 rounded-lg bg-gray-50 border border-gray-100 opacity-50"></div>`;
             }
-
-            // Days of the month
             for (let day = 1; day <= daysInMonth; day++) {
                 let cellDate = new Date(year, month, day);
                 let dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
-                // Check if the date is in the past OR if it is a weekend (0 = Sunday, 6 = Saturday)
                 let isPast = cellDate < today;
-                let dayOfWeek = cellDate.getDay();
-                let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                
-                // A day is disabled if it's in the past OR a weekend
+                let isWeekend = (cellDate.getDay() === 0 || cellDate.getDay() === 6);
                 let isDisabled = isPast || isWeekend;
-
                 let dayClass = isDisabled ? 'disabled' : 'calendar-day border-[#00796B]/20';
                 let clickEvent = isDisabled ? '' : `onclick="openBookingModal('${dateStr}')"`;
-                
-                // Display logic for the badge
-                let badgeHtml = '';
-                if (isWeekend) {
-                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">Closed</div>`;
-                } else if (!isPast) {
-                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-teal-50 rounded px-1 inline-block">Available</div>`;
-                }
+                let badgeHtml = isWeekend ? `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">Closed</div>` : 
+                                (!isPast ? `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-teal-50 rounded px-1 inline-block">Available</div>` : '');
 
-                html += `
-                <div class="relative p-2 h-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
+                html += `<div class="relative p-2 h-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
                     <span class="text-sm font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-700'}">${day}</span>
                     ${badgeHtml}
                 </div>`;
             }
-
             grid.innerHTML = html;
         }
-        // -- MODAL & BOOKING LOGIC --
+
         function openBookingModal(dateStr) {
             selectedDateStr = dateStr;
-            
-            // Format date for display (e.g. March 15, 2026)
             const d = new Date(dateStr);
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('modal-date-display').innerText = d.toLocaleDateString(undefined, options);
-            
+            document.getElementById('modal-date-display').innerText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('bookingModal').classList.remove('hidden');
         }
 
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
-            document.getElementById('petSelect').value = ""; // Reset dropdown
+            document.getElementById('petSelect').value = "";
         }
 
         function submitBooking() {
             const petId = document.getElementById('petSelect').value;
-            
-            if (!petId) {
-                Swal.fire('Required', 'Please select a pet for the appointment.', 'warning');
-                return;
-            }
-
-            // Using SweetAlert to confirm
+            if (!petId) { Swal.fire('Required', 'Please select a pet.', 'warning'); return; }
             Swal.fire({
-                title: 'Confirm Appointment?',
+                title: 'Confirm Booking?',
                 text: `Schedule surgery for ${selectedDateStr}?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#00796B',
-                confirmButtonText: 'Yes, Book it!'
+                confirmButtonText: 'Confirm'
             }).then((result) => {
                 if (result.isConfirmed) {
                     let formData = new FormData();
                     formData.append('book_surgery', true);
                     formData.append('pet_id', petId);
-                    formData.append('service_id', 2); // Assuming 2 is Spay/Neuter in DB
+                    formData.append('service_id', 2);
                     formData.append('appointment_date', selectedDateStr);
-
-                    fetch('../../api/owner/book_appointment.php', {
-                        method: 'POST',
-                        body: formData
-                    })
+                    fetch('../../api/owner/book_appointment.php', { method: 'POST', body: formData })
                     .then(res => res.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            Swal.fire('Success!', data.message, 'success').then(() => {
-                                closeBookingModal();
-                                // Optionally reload or fetch appointments here
-                            });
-                        } else {
-                            Swal.fire('Error', data.message, 'error');
-                        }
+                            Swal.fire('Success!', data.message, 'success').then(() => closeBookingModal());
+                        } else { Swal.fire('Error', data.message, 'error'); }
                     });
                 }
             });
         }
 
-function logout() {
-    Swal.fire({
-        title: 'Logout Session?',
-        text: "You will need to login again to access your pet records.",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#00796B',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, Logout',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('../../api/auth/logout.php')
-            .then(res => res.json())
-            .then(data => {
-                // Redirects to login.html instead of login.php
-                window.location.href = '../../login.html'; 
-            })
-            .catch(err => {
-                // Fallback redirect also goes to login.html
-                window.location.href = '../../login.html'; 
+        // --- PASSWORD VISIBILITY ---
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // --- PROFILE LOGIC ---
+        function openProfileModal() {
+            document.getElementById('prof-username').value = initialUsername;
+            document.getElementById('prof-email').value = ownerEmail;
+            document.getElementById('prof-new-password').value = "";
+            document.getElementById('prof-confirm-password').value = "";
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newUsername = document.getElementById('prof-username').value;
+            const newEmail = document.getElementById('prof-email').value;
+            const newPass = document.getElementById('prof-new-password').value;
+            const confirmPass = document.getElementById('prof-confirm-password').value;
+
+            // Password mismatch check
+            if (newPass !== "" && newPass !== confirmPass) {
+                Swal.fire('Mismatch', 'New passwords do not match!', 'error');
+                return;
+            }
+
+            // Prompt for current password as security measure
+            const { value: currentPassword } = await Swal.fire({
+                title: 'Security Verification',
+                input: 'password',
+                inputLabel: 'Enter your current password to confirm changes',
+                inputPlaceholder: 'Current Password',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true,
+                confirmButtonColor: '#00796B'
+            });
+
+            if (currentPassword) {
+                const data = {
+                    action: 'update_profile',
+                    username: newUsername,
+                    email: newEmail,
+                    password: newPass,
+                    current_password: currentPassword
+                };
+
+                fetch('../../api/system/all_users.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        Swal.fire({ icon: 'success', title: 'Profile Updated!', timer: 1500 });
+                        initialUsername = newUsername;
+                        ownerEmail = newEmail;
+                        document.getElementById('user-display').innerText = newUsername;
+                        document.getElementById('welcome-text').innerText = `Hello, ${newUsername}! 🐾`;
+                        closeProfileModal();
+                    } else {
+                        Swal.fire('Verification Failed', result.message || 'Incorrect password.', 'error');
+                    }
+                });
+            }
+        });
+
+        function logout() {
+            Swal.fire({
+                title: 'Logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00796B',
+                confirmButtonText: 'Logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('../../api/auth/logout.php').then(() => window.location.href = '../../login.html');
+                }
             });
         }
-    });
-}
     </script>
 </body>
 </html>

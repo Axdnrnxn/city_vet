@@ -10,24 +10,39 @@ header("Access-Control-Allow-Methods: GET");
 
 session_start();
 
-// 1. Check if logged in
+// 1. Check if logged in at all
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     http_response_code(401); // Unauthorized
     echo json_encode(["status" => "error", "message" => "User not logged in"]);
     exit();
 }
 
-// 2. Check Role (Optional but recommended security)
-// Ensure only Role ID 3 (Pet Owner) can access this specific dashboard endpoint
-if (isset($_SESSION['role_id']) && $_SESSION['role_id'] != 3) {
+// 2. Dynamic Dashboard Security (The Magic Part)
+// We look at the URL of the dashboard making the request
+$referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+
+$required_role = null;
+
+// Determine which role is allowed based on the folder name in the URL
+if (strpos($referer, '/admin/') !== false) {
+    $required_role = 1; // 1 = Administrator
+} elseif (strpos($referer, '/vet/') !== false) {
+    $required_role = 2; // 2 = Veterinarian
+} elseif (strpos($referer, '/owner/') !== false) {
+    $required_role = 3; // 3 = Pet Owner
+} elseif (strpos($referer, '/staff/') !== false) {
+    $required_role = 4; // 4 = Staff
+}
+
+// 3. Kick them out if their role doesn't match the dashboard they are trying to view
+if ($required_role !== null && isset($_SESSION['role_id']) && $_SESSION['role_id'] != $required_role) {
     http_response_code(403); // Forbidden
-    echo json_encode(["status" => "error", "message" => "Access denied for this role"]);
+    echo json_encode(["status" => "error", "message" => "Access denied. You do not have permission for this dashboard."]);
     exit();
 }
 
-// 3. Return User Data (For the Frontend to display)
-// In a real app, you might fetch the latest name from DB here, but Session is faster for now
-$displayName = isset($_SESSION['username']) ? $_SESSION['username'] : "Pet Owner";
+// 4. Return User Data (For the Frontend to display)
+$displayName = isset($_SESSION['username']) ? $_SESSION['username'] : "User";
 
 echo json_encode([
     "status" => "success",

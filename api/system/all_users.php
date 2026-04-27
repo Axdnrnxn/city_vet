@@ -71,5 +71,63 @@ if ($method === 'POST') {
             echo json_encode(["status" => "success"]);
         }
     }
+
+    // Add this inside the if ($method === 'POST') block in api/system/all_users.php
+
+if ($data->action === 'update_profile') {
+    session_start();
+    $userId = $_SESSION['user_id'];
+
+    if (!$userId) {
+        die(json_encode(["status" => "error", "message" => "Unauthorized session."]));
+    }
+
+    // 1. SAFELY GRAB VARIABLES
+    $current_password_input = isset($data->current_password) ? $data->current_password : '';
+    $username = isset($data->username) ? $data->username : '';
+    $email = isset($data->email) ? $data->email : '';
+    $new_password = isset($data->password) ? $data->password : '';
+
+    // 2. VERIFY CURRENT PASSWORD
+    $verify_stmt = $conn->prepare("SELECT Password_Hash FROM users WHERE User_ID = ?");
+    $verify_stmt->bind_param("i", $userId);
+    $verify_stmt->execute();
+    $result = $verify_stmt->get_result();
+    $user_data = $result->fetch_assoc();
+
+    if (!$user_data || !password_verify($current_password_input, $user_data['Password_Hash'])) {
+        die(json_encode(["status" => "error", "message" => "Verification failed. Incorrect current password."]));
+    }
+
+    // 3. BUILD USERS TABLE UPDATE (This updates Username, Email, and optionally Password)
+    if (!empty($new_password)) {
+        $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE users SET Username = ?, Email = ?, Password_Hash = ? WHERE User_ID = ?");
+        $stmt->bind_param("sssi", $username, $email, $new_hash, $userId);
+    } else {
+        $stmt = $conn->prepare("UPDATE users SET Username = ?, Email = ? WHERE User_ID = ?");
+        $stmt->bind_param("ssi", $username, $email, $userId);
+    }
+
+    // 4. EXECUTE AND SYNC TABLES
+    if ($stmt->execute()) {
+        
+        // --- FIXED: SYNCHRONIZE WITH THE OWNERS TABLE ---
+        // We ONLY update First_name here. Email is already updated in the users table above.
+        $update_owner = $conn->prepare("UPDATE owners SET First_name = ? WHERE User_ID = ?");
+        $update_owner->bind_param("si", $username, $userId);
+        $update_owner->execute();
+
+        // Update the active session
+        $_SESSION['username'] = $username; 
+
+        echo json_encode(["status" => "success"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Update failed."]);
+    }
+    
+    // Always exit to ensure no extra HTML is printed
+    exit(); 
+}
 }
 ?>
