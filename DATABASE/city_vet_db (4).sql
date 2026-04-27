@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 24, 2026 at 05:53 AM
+-- Generation Time: Apr 26, 2026 at 07:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,7 +43,8 @@ CREATE TABLE `appointments` (
 --
 
 INSERT INTO `appointments` (`Appointment_ID`, `Owner_ID`, `Pet_ID`, `Service_ID`, `Vet_ID`, `Appointment_Date`, `Status`, `Notes`) VALUES
-(1, 5, 1, 2, NULL, '2026-03-26 00:00:00', 'Pending', NULL);
+(2, 7, 2, 2, NULL, '2026-03-30 00:00:00', 'Confirmed', NULL),
+(3, 7, 2, 7, NULL, '2026-03-25 16:55:00', 'Confirmed', 'Walk-in Booking');
 
 -- --------------------------------------------------------
 
@@ -109,7 +110,8 @@ INSERT INTO `breeds` (`Breed_ID`, `Species_ID`, `Breed_Name`, `Status`) VALUES
 (29, 2, 'Sphynx', 'active'),
 (30, 3, 'Native Rabbit', 'active'),
 (31, 3, 'Guinea Pig', 'active'),
-(32, 3, 'Hamster', 'active');
+(32, 3, 'Hamster', 'active'),
+(33, 4, 'isda', 'active');
 
 -- --------------------------------------------------------
 
@@ -185,6 +187,14 @@ CREATE TABLE `medical_records` (
   `is_deleted` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `medical_records`
+--
+
+INSERT INTO `medical_records` (`Record_ID`, `Pet_ID`, `Vet_ID`, `Diagnosis_ID`, `Treatment`, `Visit_Date`, `Notes`, `is_deleted`) VALUES
+(1, 2, NULL, NULL, 'None provided', '2026-03-29 16:48:00', '', 0),
+(2, 2, NULL, NULL, '5-in-1 vaccine', '2026-03-29 16:49:13', 'vaccine', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -225,7 +235,8 @@ CREATE TABLE `owners` (
 INSERT INTO `owners` (`Owner_ID`, `User_ID`, `First_name`, `Last_name`, `Contact_number`, `Address`, `Status`, `Registration_Date`) VALUES
 (1, 4, 'admin', 'admin', '56952626566', 'lapasan, Carmen', 'active', '2026-02-14 09:42:01'),
 (2, 6, 'John Angelo', 'Manzano', '09867541354', 'phinma coc, Carmen', 'active', '2026-02-14 09:46:56'),
-(5, 9, 'Torion', 'Jezreel', '65995', 'lapasan, Kauswagan', 'active', '2026-02-21 13:10:57');
+(7, 11, 'torion', 'jezreel', '09658254825', 'carmen, Carmen', 'active', '2026-03-29 16:41:39'),
+(8, 12, 'sample', 'sample', '09265856565', 'sample, Carmen', 'active', '2026-03-29 16:46:39');
 
 -- --------------------------------------------------------
 
@@ -252,7 +263,7 @@ CREATE TABLE `pets` (
 --
 
 INSERT INTO `pets` (`Pet_ID`, `Owner_ID`, `Name`, `Species_ID`, `Breed_ID`, `Gender`, `Birthdate`, `Weight`, `Color_Markings`, `Status`, `Profile_Pic`) VALUES
-(1, 5, 'Happy', 1, 17, 'Male', '2026-03-11', 1.00, 'brown', 'active', '69c214a94e2a1.jpg');
+(2, 7, 'Happy', 1, 17, 'Female', '2026-03-03', 1.00, 'Brown', 'active', '69c8e60ed9169.jpg');
 
 -- --------------------------------------------------------
 
@@ -357,7 +368,8 @@ CREATE TABLE `species` (
 INSERT INTO `species` (`Species_ID`, `Species_Name`, `Status`) VALUES
 (1, 'Dog', 'active'),
 (2, 'Cat', 'active'),
-(3, 'Other/Exotic', 'active');
+(3, 'Other/Exotic', 'active'),
+(4, 'fish', 'active');
 
 -- --------------------------------------------------------
 
@@ -379,7 +391,8 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`Staff_ID`, `User_ID`, `First_name`, `Last_name`, `Position`, `Status`) VALUES
-(1, 5, 'Nick Rysher', 'Datu', 'Front Desk', 'active');
+(1, 5, 'Nick Rysher', 'Datu', 'Front Desk', 'active'),
+(2, 13, 'sample', 'vet', 'Assistant Vet', 'active');
 
 -- --------------------------------------------------------
 
@@ -406,7 +419,9 @@ INSERT INTO `users` (`User_ID`, `Role_ID`, `Username`, `Password_Hash`, `Email`,
 (4, 1, 'admin@gmail.com', '$2y$10$NRHk35Q5vvW/3R8U/s0xg.DnW6McDqwyQX8vkx3DLuL/FonhkOIE.', 'admin@gmail.com', '56952626566', 'active', '2026-02-14 09:42:01'),
 (5, 4, 'datu', '$2y$10$8lvjzvX78lUTSiS5DdN6JOdWRAjf8V7bRSAr7YP9azejL6ygDjoiC', 'datu@gmail.com', '0986754135', 'active', '2026-02-14 09:46:17'),
 (6, 2, 'manzano@gmail.com', '$2y$10$.a5bEBHn7b7Pm4hICFc2C.kDGjB8jyJhV4EYsViqiYzeYHj/Bd2L.', 'manzano@gmail.com', '09867541354', 'active', '2026-02-14 09:46:56'),
-(9, 3, 'jezreel@gmail.com', '$2y$10$SXbaOm/E267SgINveMGnTOAs0ycM7BAqspO3x3U.w8.8vCmdhK.Uq', 'jezreel@gmail.com', '65995', 'active', '2026-02-21 13:10:57');
+(11, 3, 'jezreel@gmail.com', '$2y$10$B4Hy4BlVRVcQv3ykKKbyheCaH.jTIzLA58KpGfIWYZHIAivMfkaOq', 'jezreel@gmail.com', '09658254825', 'active', '2026-03-29 16:41:39'),
+(12, 3, 'sample@gmail.com', '$2y$10$cjJcDI6zw3KrTLmQM9Gk3e0S65b6J3GBL0rlk.JKmQlom9O8yiJ8C', 'sampleuser@gmail.com', '09265856565', 'active', '2026-03-29 16:46:39'),
+(13, 2, 'VetSample', '$2y$10$iCVqwBRp0piZBF74xms/TO8anwzvhj4L5oJawHwXoa./Y1PEgFTcS', 'VetSample@gmail.com', '09658546586', 'active', '2026-03-29 16:50:23');
 
 -- --------------------------------------------------------
 
@@ -593,7 +608,7 @@ ALTER TABLE `vet_availability`
 -- AUTO_INCREMENT for table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `Appointment_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `Appointment_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `audit_logs`
@@ -605,7 +620,7 @@ ALTER TABLE `audit_logs`
 -- AUTO_INCREMENT for table `breeds`
 --
 ALTER TABLE `breeds`
-  MODIFY `Breed_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `Breed_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `consultations`
@@ -629,7 +644,7 @@ ALTER TABLE `first_aid_contents`
 -- AUTO_INCREMENT for table `medical_records`
 --
 ALTER TABLE `medical_records`
-  MODIFY `Record_ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Record_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -641,13 +656,13 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `owners`
 --
 ALTER TABLE `owners`
-  MODIFY `Owner_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `Owner_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `pets`
 --
 ALTER TABLE `pets`
-  MODIFY `Pet_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `Pet_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `pet_notes`
@@ -677,19 +692,19 @@ ALTER TABLE `service_categories`
 -- AUTO_INCREMENT for table `species`
 --
 ALTER TABLE `species`
-  MODIFY `Species_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Species_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `Staff_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `Staff_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `User_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `User_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `vaccinations`
