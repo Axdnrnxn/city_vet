@@ -8,6 +8,7 @@ function loadVetSidebar() {
         const baseClass = "flex items-center px-4 py-3 rounded-xl transition-all duration-200 mb-1";
         const activeClass = "bg-[#00796B] text-white font-semibold shadow-md";
         const inactiveClass = "text-teal-50 hover:bg-[#00796B]/20 hover:text-white";
+        // Check if current page matches exactly or is the pet details page
         return `${baseClass} ${currentPage === pageName ? activeClass : inactiveClass}`;
     };
 
@@ -32,6 +33,12 @@ function loadVetSidebar() {
             <a href="dashboard.html" class="${getLinkClass('dashboard.html')}">
                 <i class="fa-solid fa-clipboard-list mr-3 w-6 text-center"></i> Pending Requests
             </a>
+
+            <!-- ✨ NEW: PATIENT RECORDS LINK -->
+            <a href="pet_details.html" class="${getLinkClass('pet_details.html')}">
+                <i class="fa-solid fa-file-medical mr-3 w-6 text-center"></i> Patient Records
+            </a>
+
             <a href="history.html" class="${getLinkClass('history.html')}">
                 <i class="fa-solid fa-history mr-3 w-6 text-center"></i> Appointment History
             </a>

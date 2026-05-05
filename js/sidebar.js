@@ -24,21 +24,42 @@ function loadSidebar() {
         </div>
         
         <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <a href="dashboard.html" class="${getLinkClass('dashboard.html')}"><i class="fa-solid fa-gauge-high mr-3 w-6 text-center"></i> Dashboard</a>
+            <a href="dashboard.html" class="${getLinkClass('dashboard.html')}">
+                <i class="fa-solid fa-gauge-high mr-3 w-6 text-center"></i> Dashboard
+            </a>
             
             <p class="px-4 text-[10px] font-bold text-teal-400 uppercase mt-6 mb-2 tracking-[0.2em]">Records</p>
-            <a href="owners.html" class="${getLinkClass('owners.html')}"><i class="fa-solid fa-users mr-3 w-6 text-center"></i> Pet Owners & Pets</a>
-            <a href="staff.html" class="${getLinkClass('staff.html')}"><i class="fa-solid fa-user-doctor mr-3 w-6 text-center"></i> Employee Records</a>
+            <a href="owners.html" class="${getLinkClass('owners.html')}">
+                <i class="fa-solid fa-users mr-3 w-6 text-center"></i> Pet Owners & Pets
+            </a>
+            <a href="staff.html" class="${getLinkClass('staff.html')}">
+                <i class="fa-solid fa-user-doctor mr-3 w-6 text-center"></i> Employee Records
+            </a>
             
             <p class="px-4 text-[10px] font-bold text-teal-400 uppercase mt-6 mb-2 tracking-[0.2em]">Clinic Ops</p>
-            <a href="appointments.html" class="${getLinkClass('appointments.html')}"><i class="fa-regular fa-calendar-check mr-3 w-6 text-center"></i> Appointments</a>
-            <a href="consultations.html" class="${getLinkClass('consultations.html')}"><i class="fa-solid fa-stethoscope mr-3 w-6 text-center"></i> Consultations</a>
-            <a href="species_breeds.html" class="${getLinkClass('species_breeds.html')}"><i class="fa-solid fa-dog mr-3 w-6 text-center"></i> Species & Breeds</a>
+            <a href="appointments.html" class="${getLinkClass('appointments.html')}">
+                <i class="fa-regular fa-calendar-check mr-3 w-6 text-center"></i> Appointments
+            </a>
+            <a href="consultations.html" class="${getLinkClass('consultations.html')}">
+                <i class="fa-solid fa-stethoscope mr-3 w-6 text-center"></i> Consultations
+            </a>
+            <a href="species_breeds.html" class="${getLinkClass('species_breeds.html')}">
+                <i class="fa-solid fa-dog mr-3 w-6 text-center"></i> Species & Breeds
+            </a>
             
-            <p class="px-4 text-[10px] font-bold text-teal-400 uppercase mt-6 mb-2 tracking-[0.2em]">System</p>
-            <a href="reports.html" class="${getLinkClass('reports.html')}"><i class="fa-solid fa-file-invoice mr-3 w-6 text-center"></i> Reports</a>
-            <a href="user_management.html" class="${getLinkClass('user_management.html')}"><i class="fa-solid fa-users-gear mr-3 w-6 text-center"></i> User Management</a>
-            <a href="master_files.html" class="${getLinkClass('master_files.html')}"><i class="fa-solid fa-sliders mr-3 w-6 text-center"></i> Clinic Settings</a>
+            <p class="px-4 text-[10px] font-bold text-teal-400 uppercase mt-6 mb-2 tracking-[0.2em]">System Control</p>
+            <a href="reports.html" class="${getLinkClass('reports.html')}">
+                <i class="fa-solid fa-file-invoice mr-3 w-6 text-center"></i> Reports & Analytics
+            </a>
+            <a href="audit_logs.html" class="${getLinkClass('audit_logs.html')}">
+                <i class="fa-solid fa-clock-rotate-left mr-3 w-6 text-center"></i> System Audit Logs
+            </a>
+            <a href="user_management.html" class="${getLinkClass('user_management.html')}">
+                <i class="fa-solid fa-users-gear mr-3 w-6 text-center"></i> User Management
+            </a>
+            <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">
+                <i class="fa-solid fa-user-shield mr-3 w-6 text-center"></i> Admin Profile
+            </a>
         </nav>
 
         <div class="p-4 border-t border-[#00332B] flex-shrink-0 mb-2 bg-[#00332B]/30">

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Records - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SECURITY & SESSION CHECK -->
+    <script>
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') window.location.replace('../../login.html');
+            })
+            .catch(() => { window.location.replace('../../login.html'); });
+    </script>
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <!-- MOBILE OVERLAY -->
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_vet.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm border-b z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800 hidden sm:block">Patient Records</h2>
+            </div>
+            
+            <!-- MASTER SEARCH BAR -->
+            <div class="relative w-full max-w-sm sm:w-72 ml-4">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" id="masterSearch" onkeyup="searchPets()" placeholder="Search Owner or Pet Name..." class="pl-10 w-full border border-gray-200 bg-gray-50 rounded-xl p-2 text-sm focus:ring-2 focus:ring-[#00796B] outline-none transition-all">
+                <div id="searchResults" class="absolute w-full mt-1 bg-white shadow-2xl rounded-xl z-50 hidden border border-gray-100 divide-y overflow-hidden max-h-64 overflow-y-auto"></div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            
+            <!-- EMPTY STATE (Shows when no ID is in URL) -->
+            <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-400 animate-pulse">
+                <i class="fa-solid fa-folder-open text-6xl mb-4 text-gray-300"></i>
+                <p class="text-lg font-medium">Search for a patient using the top bar</p>
+                <p class="text-sm">Or select a patient from the Appointment History list.</p>
+            </div>
+
+            <!-- DETAIL VIEW (Shows when an ID is loaded) -->
+            <div id="detailView" class="hidden max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Pet Details Card -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-paw text-6xl text-blue-900"></i></div>
+                        <h3 class="text-blue-900 font-bold uppercase text-[10px] tracking-widest mb-4">Pet Information</h3>
+                        <div class="flex items-center gap-4">
+                            <div id="pet-pic" class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-blue-50 overflow-hidden"><i class="fa-solid fa-dog text-3xl text-gray-300"></i></div>
+                            <div>
+                                <h1 id="pet-name" class="text-3xl font-black text-gray-800">---</h1>
+                                <p id="pet-species" class="text-blue-600 font-medium">---</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-6 text-sm">
+                            <div><span class="text-gray-400 block uppercase text-[10px] font-bold">Gender</span><p id="pet-gender" class="font-semibold text-gray-700">---</p></div>
+                            <div><span class="text-gray-400 block uppercase text-[10px] font-bold">Weight</span><p id="pet-weight" class="font-semibold text-gray-700">--- kg</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Owner Details Card -->
+                    <div class="bg-slate-800 p-6 rounded-2xl shadow-sm text-white">
+                        <h3 class="text-blue-300 font-bold uppercase text-[10px] tracking-widest mb-4">Owner Information</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3"><i class="fa-solid fa-user text-blue-300"></i><span id="owner-name" class="text-lg font-bold">---</span></div>
+                            <div class="flex items-center gap-3 text-sm text-slate-300"><i class="fa-solid fa-phone"></i><span id="owner-contact">---</span></div>
+                            <div class="flex items-center gap-3 text-sm text-slate-300"><i class="fa-solid fa-location-dot"></i><span id="owner-address">---</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-50"><h3 class="font-bold text-gray-800 uppercase text-xs tracking-widest">Medical History & Logs</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-[#2c5e9e] text-white">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Date</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Type</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Treatment/Subject</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Notes/Observations</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body" class="divide-y divide-gray-50 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // UI Helpers
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function logout() {
+            Swal.fire({
+                title: 'Log Out?', icon: 'question', showCancelButton: true, confirmButtonText: 'Yes', confirmButtonColor: '#2c5e9e'
+            }).then((result) => {
+                if(result.isConfirmed) fetch('../../api/auth/logout.php').then(() => window.location.href = '../../login.html');
+            });
+        }
+
+        // Logic
+        const urlParams = new URLSearchParams(window.location.search);
+        const petId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (petId) loadPetData(petId);
+        });
+
+        async function searchPets() {
+            const query = document.getElementById('masterSearch').value;
+            const resDiv = document.getElementById('searchResults');
+            if (query.length < 2) { resDiv.classList.add('hidden'); return; }
+
+            try {
+                const res = await fetch(`../../api/clinic/search_pets.php?query=${query}`);
+                const data = await res.json();
+                
+                if(data.length === 0) {
+                    resDiv.innerHTML = `<div class="p-4 text-center text-gray-400 text-sm">No results found</div>`;
+                } else {
+                    resDiv.innerHTML = data.map(p => `
+                        <div onclick="window.location.href='pet_details.html?id=${p.Pet_ID}'" class="p-3 hover:bg-gray-50 cursor-pointer transition-colors">
+                            <p class="font-bold text-[#00796B]">${p.Pet_Name}</p>
+                            <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Owner: ${p.First_name} ${p.Last_name} • ${p.Species_Name}</p>
+                        </div>
+                    `).join('');
+                }
+                resDiv.classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Hide search results if clicked outside
+        document.addEventListener('click', function(event) {
+            const searchBar = document.getElementById('masterSearch');
+            const searchResults = document.getElementById('searchResults');
+            if (!searchBar.contains(event.target) && !searchResults.contains(event.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        async function loadPetData(id) {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('hidden');
+            
+            try {
+                const res = await fetch(`../../api/clinic/get_pet_info.php?id=${id}`);
+                const data = await res.json();
+
+                if(data.status === 'error') throw new Error(data.message);
+
+                document.getElementById('pet-name').innerText = data.details.Name;
+                document.getElementById('pet-species').innerText = `${data.details.Species_Name} (${data.details.Breed_Name})`;
+                document.getElementById('pet-gender').innerText = data.details.Gender;
+                document.getElementById('pet-weight').innerText = data.details.Weight || 'N/A';
+                document.getElementById('owner-name').innerText = `${data.details.First_name} ${data.details.Last_name}`;
+                document.getElementById('owner-contact').innerText = data.details.Contact_number;
+                document.getElementById('owner-address').innerText = data.details.Address;
+
+                if (data.details.Profile_Pic) {
+                    document.getElementById('pet-pic').innerHTML = `<img src="../../uploads/pets/${data.details.Profile_Pic}" class="w-full h-full object-cover">`;
+                }
+
+                const tbody = document.getElementById('history-body');
+                if(data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">No medical history found.</td></tr>';
+                } else {
+                    tbody.innerHTML = data.history.map(log => {
+                        const typeBadge = log.Type === 'Consultation' ? 'bg-blue-50 text-blue-600' : 'bg-teal-50 text-teal-600';
+                        return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-500">${new Date(log.Date).toLocaleDateString()}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${typeBadge}">${log.Type}</span></td>
+                            <td class="px-6 py-4 font-bold text-gray-800">${log.Treatment}</td>
+                            <td class="px-6 py-4 text-gray-500">${log.Notes || '---'}</td>
+                        </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                Swal.fire('Error', err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

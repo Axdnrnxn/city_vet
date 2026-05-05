@@ -129,5 +129,23 @@ if ($data->action === 'update_profile') {
     // Always exit to ensure no extra HTML is printed
     exit(); 
 }
+
+if ($stmt->execute()) {
+    // ✨ NEW: RECORD THE ACTION IN AUDIT LOGS
+    $log_action = "Update Profile";
+    $table_affected = "users";
+    $record_id = $userId; // The ID of the user being updated
+    $log_user_id = $_SESSION['user_id']; // The person doing the action
+
+    $log_stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
+    $log_stmt->bind_param("issi", $log_user_id, $log_action, $table_affected, $record_id);
+    $log_stmt->execute();
+    $log_stmt->close();
+
+    echo json_encode(["status" => "success", "message" => "Profile updated successfully"]);
+} else {
+    // ... error handling ...
+}
+
 }
 ?>

@@ -10,27 +10,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- SECURITY & SESSION CHECK -->
     <script>
-        // Check session IMMEDIATELY before page loads
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'error') {
                     window.location.replace('../../login.html');
                 } else {
-                    // Safe UI Updater function
                     const updateHeaderName = () => {
                         const nameDisplay = document.getElementById('vet-name-display');
                         if (nameDisplay && data.user && data.user.name) {
-                            // Automatically add "Dr." and remove the @gmail.com part if it's an email
                             let displayName = data.user.name.split('@')[0];
-                            // Capitalize first letter
                             displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
                             nameDisplay.innerText = "Dr. " + displayName;
                         }
                     };
-
-                    // Check if DOM is already loaded to prevent the race condition
                     if (document.readyState === 'loading') {
                         document.addEventListener('DOMContentLoaded', updateHeaderName);
                     } else {
@@ -38,43 +33,16 @@
                     }
                 }
             })
-            .catch(() => {
-                window.location.replace('../../login.html');
-            });
+            .catch(() => { window.location.replace('../../login.html'); });
     </script>
-    
-    <script>
-        // Check session IMMEDIATELY before page loads
-        fetch('../../api/auth/session_check.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'error') {
-                    // If the PHP bouncer says "Access Denied", kick them to login
-                    window.location.replace('../../login.html');
-                } else {
-                    // Optional: If they are allowed, you can set the header name here!
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const nameDisplay = document.getElementById('vet-name-display');
-                        if (nameDisplay && data.user && data.user.name) {
-                            nameDisplay.innerText = data.user.name;
-                        }
-                    });
-                }
-            })
-            .catch(() => {
-                // If the fetch fails entirely (e.g. server error), kick to login
-                window.location.replace('../../login.html');
-            });
-    </script>
-
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-100 h-screen flex overflow-hidden">
 
+    <!-- MOBILE OVERLAY -->
     <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
 
+    <!-- SIDEBAR -->
     <div id="sidebar-container"></div>
     <script src="../../js/sidebar_vet.js"></script>
 
@@ -129,6 +97,7 @@
     </div>
 
     <script>
+        // UI Helpers
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
@@ -141,20 +110,26 @@
             }
         }
 
-        fetch('../../api/auth/session_status.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'logged_out') window.location.href = '../login.html';
-                else loadHistory();
-            })
-            .catch(() => loadHistory());
+        function logout() {
+            Swal.fire({
+                title: 'Log Out?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                confirmButtonColor: '#2c5e9e'
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    fetch('../../api/auth/logout.php').then(() => window.location.href = '../../login.html');
+                }
+            });
+        }
+
+        // Data Fetching
+        document.addEventListener('DOMContentLoaded', loadHistory);
 
         function loadHistory() {
             fetch('../../api/clinic/appointments.php')
-                .then(response => {
-                    if (!response.ok) return response.json().then(err => { throw new Error(err.message); });
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     const tbody = document.getElementById('history-table-body');
                     tbody.innerHTML = '';
@@ -180,7 +155,9 @@
                                 <td class="px-6 py-4 font-bold text-gray-400">#${row.Appointment_ID}</td>
                                 <td class="px-6 py-4 font-semibold text-gray-800">${row.Owner_First} ${row.Owner_Last}</td>
                                 <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-800">${row.Pet_Name}</div>
+                                    <a href="pet_details.html?id=${row.Pet_ID}" class="font-bold text-[#00796B] hover:underline decoration-2">
+                                        ${row.Pet_Name}
+                                    </a>
                                     <div class="text-[11px] text-gray-500">${row.Species_Name}</div>
                                 </td>
                                 <td class="px-6 py-4 text-gray-600">${row.Service_Name}</td>
@@ -200,20 +177,8 @@
                     });
                 })
                 .catch(error => {
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.fire('Error', 'Failed to load data', 'error');
                 });
-        }
-
-        function logout() {
-            Swal.fire({
-                title: 'Log Out?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes',
-                confirmButtonColor: '#2c5e9e'
-            }).then((result) => {
-                if(result.isConfirmed) window.location.href = '../../login.html';
-            });
         }
     </script>
 </body>

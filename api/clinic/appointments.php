@@ -47,8 +47,8 @@ try {
             exit();
         }
 
-        // C. Get Complete History (NOW INCLUDES VET_ID)
-        $sql = "SELECT a.Appointment_ID, a.Appointment_Date, a.Status, a.Notes,
+// C. Get Complete History (NOW INCLUDES VET_ID AND PET_ID)
+        $sql = "SELECT a.Appointment_ID, a.Pet_ID, a.Appointment_Date, a.Status, a.Notes,
                        o.First_name AS Owner_First, o.Last_name AS Owner_Last,
                        p.Name AS Pet_Name, sp.Species_Name,
                        sv.Service_Name,

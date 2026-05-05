@@ -6,11 +6,8 @@ function loadStaffSidebar() {
 
     const getLinkClass = (pageName) => {
         const baseClass = "flex items-center px-4 py-3 rounded-xl transition-all duration-200 mb-1";
-        // ACTIVE: Solid brand teal
         const activeClass = "bg-[#00796B] text-white font-semibold shadow-md";
-        // INACTIVE: Light teal text with subtle hover
         const inactiveClass = "text-teal-50 hover:bg-[#00796B]/20 hover:text-white";
-        
         return `${baseClass} ${currentPage === pageName ? activeClass : inactiveClass}`;
     };
 
@@ -18,31 +15,39 @@ function loadStaffSidebar() {
     <aside id="sidebar" class="bg-[#004D40] text-white w-64 h-screen flex flex-col shadow-2xl fixed lg:static transform -translate-x-full lg:translate-x-0 z-30 sidebar-transition border-r border-[#00332B]">
         
         <div class="h-24 flex-shrink-0 flex items-center justify-center border-b border-[#00332B] bg-gradient-to-r from-[#004D40] to-[#00796B]">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/5">
-                    <i class="fa-solid fa-user-shield text-teal-300 text-xl"></i>
+            <div class="flex items-center gap-3 text-white">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
+                    <i class="fa-solid fa-desktop text-xl"></i>
                 </div>
-                <h1 class="text-lg font-bold tracking-wider uppercase">Staff <span class="text-teal-300">Portal</span></h1>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">FRONT <span class="text-teal-300">DESK</span></h1>
+                    <p class="text-[10px] uppercase opacity-70">City Veterinary Clinic</p>
+                </div>
             </div>
         </div>
 
         <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-3">Main Navigation</p>
+            <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Operations</p>
             
             <a href="dashboard_staff.html" class="${getLinkClass('dashboard_staff.html')}">
-                <i class="fa-solid fa-chart-line mr-3 w-6 text-center"></i> Dashboard
+                <i class="fa-solid fa-list-check mr-3 w-6 text-center"></i> Live Queue
             </a>
+            
             <a href="walkin_management.html" class="${getLinkClass('walkin_management.html')}">
-                <i class="fa-solid fa-person-walking mr-3 w-6 text-center"></i> Walk-in
+                <i class="fa-solid fa-person-walking-arrow-right mr-3 w-6 text-center"></i> Walk-In Registry
             </a>
-            
-            <div class="pt-6 pb-2">
-                <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-3">Settings</p>
+
+            <!-- ✨ NEW: PATIENT DATABASE LINK ✨ -->
+            <a href="patient_records.html" class="${getLinkClass('patient_records.html')}">
+                <i class="fa-solid fa-folder-open mr-3 w-6 text-center"></i> Patient Database
+            </a>
+
+            <div class="pt-6 mt-2 border-t border-[#00332B]">
+                <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Settings</p>
+                <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">
+                    <i class="fa-solid fa-user-gear mr-3 w-6 text-center"></i> Account Profile
+                </a>
             </div>
-            
-            <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">
-                <i class="fa-solid fa-user-gear mr-3 w-6 text-center"></i> Account Profile
-            </a>
         </nav>
 
         <div class="p-4 border-t border-[#00332B] flex-shrink-0 mb-2 bg-[#00332B]/30">
@@ -52,8 +57,6 @@ function loadStaffSidebar() {
         </div>
     </aside>`;
 }
-
-// Initialize the sidebar
 document.addEventListener('DOMContentLoaded', loadStaffSidebar);
 
 // Global Logout Function
@@ -71,12 +74,8 @@ function logout() {
         if (result.isConfirmed) {
             fetch('../../api/auth/logout.php')
             .then(res => res.json())
-            .then(data => {
-                window.location.href = '../../login.html'; 
-            })
-            .catch(err => {
-                window.location.href = '../../login.html'; 
-            });
+            .then(data => { window.location.href = '../../login.html'; })
+            .catch(err => { window.location.href = '../../login.html'; });
         }
     });
 }

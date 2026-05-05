@@ -4,7 +4,10 @@ session_start();
 header("Content-Type: application/json");
 require_once '../../config/db_connection.php'; 
 
-if (!isset($_SESSION['user_id'])) { echo json_encode(["status" => "error", "message" => "Unauthorized"]); exit(); }
+if (!isset($_SESSION['user_id'])) { 
+    echo json_encode(["status" => "error", "message" => "Unauthorized"]); 
+    exit(); 
+}
 
 $user_id = $_SESSION['user_id'];
 
@@ -51,13 +54,38 @@ if (isset($_GET['id'])) {
             $notes[] = $n;
         }
 
+        // ✨ MEDICAL HISTORY QUERY ✨
+        $history_sql = "
+            (SELECT Visit_Date as Date, COALESCE(Treatment, 'General Checkup') as Treatment, Notes, 'Medical Record' as Type 
+             FROM medical_records WHERE Pet_ID = $pet_id AND is_deleted = 0)
+            UNION ALL
+            (SELECT a.Appointment_Date as Date, s.Service_Name as Treatment, a.Notes, 'Consultation' as Type 
+             FROM appointments a
+             LEFT JOIN services s ON a.Service_ID = s.Service_ID
+             WHERE a.Pet_ID = $pet_id AND a.Status = 'Completed')
+            ORDER BY Date DESC";
+
+        $history_result = $conn->query($history_sql);
+        $history = [];
+        $db_error = "";
+
+        if ($history_result) {
+            while ($h = $history_result->fetch_assoc()) {
+                $history[] = $h;
+            }
+        } else {
+            $db_error = $conn->error; // Captures the exact SQL error if it fails
+        }
+
         echo json_encode([
             "status" => "success", 
             "mode" => "detail", 
             "owner_name" => $owner['First_name'], 
             "pet" => $pet, 
             "notes" => $notes,
-            "all_breeds" => $breeds // FIX: Added this line so the Edit Modal has the breeds list!
+            "history" => $history,           // ✨ This will now show up!
+            "database_error" => $db_error,   // ✨ This will tell us if a column name is wrong
+            "all_breeds" => $breeds 
         ]);
     } else {
         echo json_encode(["status" => "error", "message" => "Pet not found"]);
@@ -66,7 +94,6 @@ if (isset($_GET['id'])) {
 } else {
     // --- LIST VIEW ---
     $pets = [];
-    // FIX: Added p.Gender and p.Profile_Pic to the SELECT statement
     $sql = "SELECT p.Pet_ID, p.Name, p.Status, p.Gender, p.Profile_Pic, b.Breed_Name, s.Species_Name FROM pets p 
             LEFT JOIN breeds b ON p.Breed_ID = b.Breed_ID 
             LEFT JOIN species s ON p.Species_ID = s.Species_ID

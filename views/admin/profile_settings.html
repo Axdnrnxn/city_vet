@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Profile - City Vet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    window.location.replace('../../login.html');
+                } else {
+                    const updateHeaderName = () => {
+                        const nameDisplay = document.getElementById('staff-name-display');
+                        if (nameDisplay && data.user && data.user.name) {
+                            let displayName = data.user.name.split('@')[0];
+                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            nameDisplay.innerText = displayName;
+                        }
+                    };
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updateHeaderName);
+                    } else {
+                        updateHeaderName();
+                    }
+                }
+            })
+            .catch(() => { window.location.replace('../../login.html'); });
+    </script>
+
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 h-screen flex overflow-hidden">
+
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm sticky top-0 z-10">
+            <h2 class="text-xl font-bold text-gray-800">Account Settings</h2>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">AD</div>
+                <span id="header-user-display" class="text-sm font-medium text-gray-700">Administrator</span>
+            </div>
+        </header>
+
+        <main class="p-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-gradient-to-r from-slate-900 to-blue-800 rounded-3xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+                    <div class="relative z-10 flex items-center gap-6">
+                        <div class="w-20 h-20 bg-white/10 rounded-2xl backdrop-blur-md flex items-center justify-center border border-white/20">
+                            <i class="fa-solid fa-user-shield text-3xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-black uppercase tracking-tight" id="banner-username">---</h1>
+                            <p class="text-blue-200 text-sm" id="banner-email">---</p>
+                            <span class="inline-block mt-3 bg-blue-500/30 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">System Root</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="space-y-2">
+                        <button onclick="switchTab('general')" id="tab-general" class="w-full text-left px-6 py-4 rounded-2xl bg-white shadow-sm border border-transparent text-blue-600 font-bold transition-all">
+                            <i class="fa-solid fa-id-card mr-3"></i> General
+                        </button>
+                        <button onclick="switchTab('security')" id="tab-security" class="w-full text-left px-6 py-4 rounded-2xl text-gray-500 font-medium hover:bg-white transition-all">
+                            <i class="fa-solid fa-lock mr-3"></i> Security
+                        </button>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <div id="section-general" class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
+                            <h3 class="font-bold text-gray-800">General Information</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Admin Username</label>
+                                    <input type="text" id="edit-username" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Recovery Email</label>
+                                    <input type="email" id="edit-email" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none">
+                                </div>
+                            </div>
+                            <button onclick="saveGeneralInfo()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">Save Changes</button>
+                        </div>
+
+                        <div id="section-security" class="hidden bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
+                            <h3 class="font-bold text-gray-800">Change Root Password</h3>
+                            <div class="space-y-4">
+                                <input type="password" id="sec-old-pass" placeholder="Current Password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                                <input type="password" id="sec-new-pass" placeholder="New Password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                                <input type="password" id="sec-confirm-pass" placeholder="Confirm New Password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <button onclick="savePassword()" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition">Update Password</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById('section-general').classList.toggle('hidden', tab !== 'general');
+            document.getElementById('section-security').classList.toggle('hidden', tab !== 'security');
+            
+            const btnG = document.getElementById('tab-general'), btnS = document.getElementById('tab-security');
+            if(tab === 'general') {
+                btnG.className = "w-full text-left px-6 py-4 rounded-2xl bg-white shadow-sm text-blue-600 font-bold transition-all";
+                btnS.className = "w-full text-left px-6 py-4 rounded-2xl text-gray-500 font-medium hover:bg-white transition-all";
+            } else {
+                btnS.className = "w-full text-left px-6 py-4 rounded-2xl bg-white shadow-sm text-blue-600 font-bold transition-all";
+                btnG.className = "w-full text-left px-6 py-4 rounded-2xl text-gray-500 font-medium hover:bg-white transition-all";
+            }
+        }
+
+        async function loadProfile() {
+            const res = await fetch('../../api/admin/get_profile.php');
+            const data = await res.json();
+            if(data.status === 'success') {
+                document.getElementById('header-user-display').innerText = data.username;
+                document.getElementById('banner-username').innerText = data.username;
+                document.getElementById('banner-email').innerText = data.email;
+                document.getElementById('edit-username').value = data.username;
+                document.getElementById('edit-email').value = data.email;
+            }
+        }
+
+        async function saveGeneralInfo() {
+            const { value: pass } = await Swal.fire({ title: 'Verify Root Password', input: 'password', showCancelButton: true });
+            if (!pass) return;
+
+            const res = await fetch('../../api/system/all_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_profile',
+                    username: document.getElementById('edit-username').value,
+                    email: document.getElementById('edit-email').value,
+                    current_password: pass
+                })
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                Swal.fire('Updated', 'Profile saved.', 'success');
+                loadProfile();
+            } else {
+                Swal.fire('Error', result.message || 'Verification failed.', 'error');
+            }
+        }
+
+        async function savePassword() {
+            const oldP = document.getElementById('sec-old-pass').value;
+            const newP = document.getElementById('sec-new-pass').value;
+            const conf = document.getElementById('sec-confirm-pass').value;
+
+            if(newP !== conf) { Swal.fire('Error', 'New passwords mismatch.', 'error'); return; }
+
+            const res = await fetch('../../api/system/all_users.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_profile',
+                    username: document.getElementById('edit-username').value,
+                    email: document.getElementById('edit-email').value,
+                    password: newP,
+                    current_password: oldP
+                })
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                Swal.fire('Success', 'Password changed.', 'success');
+                ['sec-old-pass','sec-new-pass','sec-confirm-pass'].forEach(id => document.getElementById(id).value = '');
+            } else {
+                Swal.fire('Error', result.message || 'Incorrect old password.', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>

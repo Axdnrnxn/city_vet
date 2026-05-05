@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- SECURITY & SESSION CHECK -->
     <script>
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
@@ -40,17 +41,20 @@
         .sidebar-transition { transition: all 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        /* Custom Scrollbar for Modal */
+        .modal-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex overflow-hidden">
 
-    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
 
     <div id="sidebar-container"></div>
     <script src="../../js/sidebar_staff.js"></script>
 
     <div class="flex-1 flex flex-col h-screen relative">
-        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
             <div class="flex items-center gap-4">
                 <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
                     <i class="fa-solid fa-bars"></i>
@@ -60,67 +64,54 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="text-right hidden sm:block">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Clinic Staff</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Clinic Staff</p>
                         <p id="staff-name-display" class="text-sm font-medium text-gray-700">Loading...</p>
                     </div>
-                    <div class="w-10 h-10 bg-[#00796B] text-white rounded-full flex items-center justify-center font-bold">ST</div>
+                    <div class="w-10 h-10 bg-[#00796B] text-white rounded-full flex items-center justify-center font-bold shadow-sm">ST</div>
                 </div>
             </div>
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 lg:p-8">
-            <div class="bg-gradient-to-br from-[#00796B] to-[#004D40] rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-orange-400">
-                <div>
+            <div class="bg-gradient-to-br from-[#00796B] to-[#004D40] rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-orange-400 relative overflow-hidden">
+                <i class="fa-solid fa-bell-concierge absolute -right-10 -bottom-10 text-9xl opacity-10"></i>
+                <div class="relative z-10">
                     <h2 class="text-3xl font-bold mb-2">Shift Overview ☕</h2>
-                    <p class="text-teal-100 opacity-90 max-w-md">Manage client check-ins, register walk-in patients, and oversee the daily queue in real-time.</p>
+                    <p class="text-teal-100 opacity-90 max-w-md">Manage client check-ins, verify owner concerns, and oversee the daily queue in real-time.</p>
                 </div>
-                <button onclick="window.location.href='walkin_management.html'" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition flex items-center gap-2">
-                    <i class="fa-solid fa-person-walking-arrow-right text-xl"></i>
-                    Register Walk-In
+                <button onclick="window.location.href='walkin_management.html'" class="relative z-10 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-person-walking-arrow-right text-xl"></i> Register Walk-In
                 </button>
             </div>
 
+            <!-- Stats Row -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-teal-50 text-[#00796B] rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-calendar-check"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-400 text-xs font-bold uppercase">Today's Queue</p>
-                        <h3 id="todayCount" class="text-2xl font-bold text-gray-800">0</h3>
-                    </div>
+                    <div class="w-12 h-12 bg-teal-50 text-[#00796B] rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-users-line"></i></div>
+                    <div><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Today's Queue</p><h3 id="todayCount" class="text-2xl font-black text-gray-800">0</h3></div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-paw"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-400 text-xs font-bold uppercase">Total Pets</p>
-                        <h3 id="totalRecords" class="text-2xl font-bold text-gray-800">0</h3>
-                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-paw"></i></div>
+                    <div><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Active Pets</p><h3 id="totalRecords" class="text-2xl font-black text-gray-800">0</h3></div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-user-doctor"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-400 text-xs font-bold uppercase">Active Staff</p>
-                        <h3 id="staff_active" class="text-2xl font-bold text-gray-800">0</h3>
-                    </div>
+                    <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-user-doctor"></i></div>
+                    <div><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Active Staff</p><h3 id="staff_active" class="text-2xl font-black text-gray-800">0</h3></div>
                 </div>
             </div>
 
+            <!-- Live Queue Table -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h3 class="font-bold text-gray-800 text-lg">Live Patient Queue</h3>
+                    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2"><i class="fa-solid fa-list-ul text-[#00796B]"></i> Live Patient Queue</h3>
                     <div class="relative w-full md:w-72">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-300 text-sm"></i>
-                        <input type="text" id="queueSearch" onkeyup="filterQueue()" placeholder="Search patient or owner..." class="pl-10 w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#00796B]">
+                        <input type="text" id="queueSearch" onkeyup="filterQueue()" placeholder="Search patient or owner..." class="pl-10 w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#00796B] outline-none transition">
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                        <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest border-b border-gray-100">
                             <tr>
                                 <th class="px-8 py-4">Time</th>
                                 <th class="px-8 py-4">Patient & Owner</th>
@@ -138,66 +129,208 @@
         </main>
     </div>
 
+    <!-- FRONT DESK MANAGEMENT MODAL -->
+    <div id="staffModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b flex justify-between items-center bg-[#00796B] text-white">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-user text-teal-200"></i> Front Desk Management
+                </h3>
+                <button onclick="closeStaffModal()" class="text-white/70 hover:text-white transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto modal-scroll bg-gray-50">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Left Column: Owner & Pet Info -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <!-- Owner Card -->
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-user"></i></div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Client Name</p>
+                                    <p id="mod-owner" class="text-lg font-black text-gray-800">--</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-phone mr-1"></i> Contact</p>
+                                    <p id="mod-contact" class="font-semibold text-gray-700">--</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-clock mr-1"></i> Arrival Time</p>
+                                    <p id="mod-time" class="font-semibold text-gray-700">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pet & Concern Card -->
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-4 border-b pb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-paw"></i></div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patient Details</p>
+                                        <p id="mod-pet" class="text-lg font-black text-gray-800">--</p>
+                                    </div>
+                                </div>
+                                <span id="mod-service" class="bg-teal-50 text-[#00796B] border border-teal-200 px-3 py-1 rounded-full text-xs font-bold uppercase">--</span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2"><i class="fa-solid fa-circle-exclamation mr-1"></i> Owner's Primary Concern</p>
+                                <p id="mod-notes" class="text-sm text-gray-600 italic bg-orange-50 border border-orange-100 p-3 rounded-lg">"Waiting for owner input..."</p>
+                            </div>
+
+                            <!-- ✨ NEW: Open Patient Record Button ✨ -->
+                            <button id="viewStaffProfileBtn" class="w-full text-xs font-bold text-[#00796B] border border-[#00796B] py-2 rounded-lg hover:bg-teal-50 transition flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-folder-open"></i> Open Patient Record
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Actions -->
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 text-white shadow-sm h-full flex flex-col">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Queue Controls</p>
+                            
+                            <div class="mb-6">
+                                <p class="text-xs text-slate-300 mb-1">Current Status:</p>
+                                <span id="mod-status" class="bg-white/20 px-3 py-1 rounded text-sm font-bold tracking-wider">--</span>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="space-y-3 mt-auto">
+                                <button onclick="updateQueueStatus('Checked In')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center gap-2 shadow-md">
+                                    <i class="fa-solid fa-building-circle-check"></i> Check-In Patient
+                                </button>
+                                <button onclick="updateQueueStatus('In Consultation')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center gap-2 shadow-md">
+                                    <i class="fa-solid fa-user-doctor"></i> Send to Vet
+                                </button>
+                                <button onclick="updateQueueStatus('No Show')" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2.5 rounded-lg transition flex justify-center items-center gap-2 text-sm mt-4">
+                                    <i class="fa-solid fa-user-slash"></i> Mark No-Show
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let autoRefreshInterval;
+        let globalQueueData = []; 
 
         // --- 1. Real-Time Data Fetching ---
         async function fetchDashboard() {
             try {
-                // Fetching from the Staff-specific Global API
                 const res = await fetch('../../api/dashboard/staff_stats.php');
                 const data = await res.json();
                 
                 if(data.status === 'error') return;
 
-                // Update Stats Cards
                 document.getElementById('todayCount').innerText = data.stats.today_appointments || 0;
                 document.getElementById('totalRecords').innerText = data.stats.total_patients || 0;
                 document.getElementById('staff_active').innerText = data.stats.staff_active || 0;
 
-                // Update Queue Table
                 const list = document.getElementById('queue-list');
                 if (!data.schedule || data.schedule.length === 0) {
-                    list.innerHTML = '<tr><td colspan="5" class="py-20 text-center text-gray-400 font-medium">No appointments today.</td></tr>';
+                    list.innerHTML = '<tr><td colspan="5" class="py-20 text-center text-gray-400 font-medium">The queue is currently empty.</td></tr>';
                     return;
                 }
 
-                list.innerHTML = data.schedule.map((row, index) => `
+                globalQueueData = data.schedule;
+
+                list.innerHTML = data.schedule.map((row, index) => {
+                    let badgeColor = 'bg-gray-100 text-gray-600 border-gray-200';
+                    if(row.Status === 'Confirmed' || row.Status === 'Checked In') badgeColor = 'bg-green-50 text-green-600 border-green-200';
+                    if(row.Status === 'Pending') badgeColor = 'bg-orange-50 text-orange-600 border-orange-200';
+                    if(row.Status === 'In Consultation') badgeColor = 'bg-blue-50 text-blue-600 border-blue-200';
+
+                    return `
                     <tr class="hover:bg-gray-50/50 transition-colors animate-fade-in" style="animation-delay: ${index * 0.05}s">
-                        <td class="px-8 py-5 text-gray-400 font-medium">${row.Time}</td>
+                        <td class="px-8 py-5 text-gray-500 font-medium whitespace-nowrap"><i class="fa-regular fa-clock mr-1 opacity-50"></i> ${row.Time}</td>
                         <td class="px-8 py-5">
                             <div class="font-bold text-gray-800">${row.Pet}</div>
-                            <div class="text-[10px] text-teal-600 font-bold uppercase tracking-tighter">
-                                ${row.Species || 'Patient'} • ${row.Owner_F} ${row.Owner_L}
+                            <div class="text-[10px] text-[#00796B] font-bold uppercase tracking-tighter">
+                                Owner: ${row.Owner_F} ${row.Owner_L}
                             </div>
                         </td>
-                        <td class="px-8 py-5 text-gray-600 font-medium">${row.Service_Name}</td>
+                        <td class="px-8 py-5 text-gray-600 font-medium">${row.Service || row.Service_Name || 'Consultation'}</td>
                         <td class="px-8 py-5">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                row.Status === 'Confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
-                            }">
+                            <span class="px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${badgeColor}">
                                 ${row.Status}
                             </span>
                         </td>
                         <td class="px-8 py-5 text-center">
-                            <button class="w-8 h-8 text-gray-300 hover:text-[#00796B] transition"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <button onclick="openStaffModal(${index})" class="bg-gray-100 hover:bg-[#00796B] hover:text-white text-gray-500 px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                Manage
+                            </button>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             } catch (e) { console.error("Real-time sync error", e); }
         }
 
-        // --- 2. Sync Controller ---
-        function startRealTimeSync() {
-            fetchDashboard(); // Run once immediately
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(fetchDashboard, 10000); // 10s intervals
+        // --- 2. Staff Modal Controls ---
+        function openStaffModal(index) {
+            const row = globalQueueData[index];
+            if(!row) return;
+
+            document.getElementById('mod-owner').innerText = `${row.Owner_F} ${row.Owner_L}`;
+            document.getElementById('mod-pet').innerText = row.Pet;
+            document.getElementById('mod-time').innerText = row.Time;
+            document.getElementById('mod-service').innerText = row.Service || row.Service_Name || 'Consultation';
+            document.getElementById('mod-status').innerText = row.Status;
+            
+            document.getElementById('mod-contact').innerText = row.Contact_number || 'Verify at desk';
+            document.getElementById('mod-notes').innerText = row.Notes ? `"${row.Notes}"` : '"No specific concerns noted during booking. Please ask owner at the desk."';
+
+            // ✨ Handle the "Open Patient Record" Button Link ✨
+            const profileBtn = document.getElementById('viewStaffProfileBtn');
+            if (row.Pet_ID) {
+                // If they are Staff, make sure the path to pet_details.html is correct for their folder
+                profileBtn.onclick = () => window.location.href = `pet_details.html?id=${row.Pet_ID}`;
+                profileBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                profileBtn.onclick = null;
+                profileBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            document.getElementById('staffModal').classList.remove('hidden');
         }
 
-        // --- 3. UI Helpers ---
+        function closeStaffModal() {
+            document.getElementById('staffModal').classList.add('hidden');
+        }
+
+        function updateQueueStatus(newStatus) {
+            Swal.fire({
+                title: 'Update Queue?',
+                text: `Change status to "${newStatus}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00796B',
+                confirmButtonText: 'Yes, Update'
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    Swal.fire('Updated!', 'Queue status changed successfully.', 'success').then(() => {
+                        closeStaffModal();
+                        fetchDashboard(); 
+                    });
+                }
+            });
+        }
+
+        // --- 3. UI Helpers & Initialization ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            if(sidebar) sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('-translate-x-full');
             document.getElementById('mobileOverlay').classList.toggle('hidden');
         }
 
@@ -209,18 +342,17 @@
             }
         }
 
-        // --- 4. Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            startRealTimeSync();
-        });
+        function startRealTimeSync() {
+            fetchDashboard(); 
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(fetchDashboard, 10000); 
+        }
 
-        // Pause syncing if tab is inactive to save server load
+        document.addEventListener('DOMContentLoaded', () => { startRealTimeSync(); });
+
         document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-                clearInterval(autoRefreshInterval);
-            } else {
-                startRealTimeSync();
-            }
+            if (document.hidden) clearInterval(autoRefreshInterval);
+            else startRealTimeSync();
         });
     </script>
 </body>
