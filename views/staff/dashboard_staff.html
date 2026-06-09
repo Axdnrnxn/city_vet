@@ -15,7 +15,7 @@
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'error') {
+                if (data.status !== 'success') {
                     window.location.replace('../../login.html');
                 } else {
                     const updateHeaderName = () => {

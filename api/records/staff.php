@@ -1,10 +1,23 @@
 <?php
 // File: api/records/staff.php
+session_start();
 header("Content-Type: application/json");
 require_once '../../config/db_connection.php';
 
+function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
+    if (!$userId) return;
+
+    $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true);
+$actorId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
 // --- GET: Fetch All Staff ---
 if ($method === 'GET') {
@@ -50,8 +63,10 @@ if ($method === 'POST') {
             $stmt2 = $conn->prepare("INSERT INTO staff (User_ID, First_name, Last_name, Position) VALUES (?, ?, ?, ?)");
             $stmt2->bind_param("isss", $user_id, $input['fname'], $input['lname'], $input['position']);
             $stmt2->execute();
+            $staff_id = $conn->insert_id;
 
             $conn->commit();
+            writeAuditLog($conn, $actorId, "Create Staff Account", "staff", $staff_id);
             echo json_encode(["status" => "success", "message" => "Employee added successfully"]);
         } catch (Exception $e) {
             $conn->rollback();
@@ -71,6 +86,8 @@ if ($method === 'POST') {
         $stmt2->bind_param("si", $user_status, $input['staff_id']);
 
         if ($stmt->execute() && $stmt2->execute()) {
+            $log_action = ($new_status === 'active') ? "Reactivate Staff Account" : "Deactivate Staff Account";
+            writeAuditLog($conn, $actorId, $log_action, "staff", (int)$input['staff_id']);
             echo json_encode(["status" => "success", "message" => "Status updated"]);
         } else {
             echo json_encode(["status" => "error", "message" => "Update failed"]);

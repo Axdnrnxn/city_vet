@@ -10,9 +10,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
 }
 
 // Updated query to match your exact columns
-$sql = "SELECT l.Log_ID, l.Action, l.Table_Affected, l.Record_ID, l.Timestamp, u.Username 
+$sql = "SELECT l.Log_ID, l.Action, l.Table_Affected, l.Record_ID, l.Timestamp, COALESCE(u.Username, 'Unknown') AS Username 
         FROM audit_logs l 
-        JOIN users u ON l.User_ID = u.User_ID 
+        LEFT JOIN users u ON l.User_ID = u.User_ID 
         ORDER BY l.Timestamp DESC 
         LIMIT 100";
 

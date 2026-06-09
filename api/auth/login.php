@@ -6,6 +6,15 @@ header("Content-Type: application/json; charset=UTF-8");
 // Adjust this path if your folder structure changed
 require_once '../../config/db_connection.php';
 
+function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
+    $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 if (is_null($data)) { $data = $_POST; }
 
@@ -32,6 +41,9 @@ if ($result->num_rows === 1) {
         $_SESSION['role_id'] = $user['Role_ID'];
         $_SESSION['username'] = $user['Username'];
         $_SESSION['logged_in'] = true;
+        $_SESSION['last_activity'] = time();
+
+        writeAuditLog($conn, (int)$user['User_ID'], "Login", "sessions", 0);
 
         // 3. Set Redirect URL based on Role
         // Note: Adjust these paths to match your actual folder names

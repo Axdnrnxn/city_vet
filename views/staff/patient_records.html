@@ -14,7 +14,7 @@
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'error') window.location.replace('../../login.html');
+                if (data.status !== 'success') window.location.replace('../../login.html');
             })
             .catch(() => { window.location.replace('../../login.html'); });
     </script>
@@ -143,7 +143,7 @@
             Swal.fire({
                 title: 'Log Out?', icon: 'question', showCancelButton: true, confirmButtonText: 'Yes', confirmButtonColor: '#00796B'
             }).then((result) => {
-                if(result.isConfirmed) fetch('../../api/auth/logout.php').then(() => window.location.href = '../../login.html');
+                if(result.isConfirmed) fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } }).then(() => window.location.href = '../../login.html');
             });
         }
 

@@ -15,7 +15,7 @@
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'error') {
+                if (data.status !== 'success') {
                     window.location.replace('../../login.html');
                 } else {
                     const updateHeaderName = () => {
@@ -119,7 +119,7 @@
                 confirmButtonColor: '#2c5e9e'
             }).then((result) => {
                 if(result.isConfirmed) {
-                    fetch('../../api/auth/logout.php').then(() => window.location.href = '../../login.html');
+                    fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } }).then(() => window.location.href = '../../login.html');
                 }
             });
         }

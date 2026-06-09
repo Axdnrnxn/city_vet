@@ -1,6 +1,12 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 require_once '../../config/db_connection.php';
+
+if (!isset($_SESSION['user_id']) || !in_array((int)$_SESSION['role_id'], [1, 2, 4])) {
+    echo json_encode(["status" => "error", "message" => "Access denied."]);
+    exit();
+}
 
 $action = $_GET['action'] ?? '';
 

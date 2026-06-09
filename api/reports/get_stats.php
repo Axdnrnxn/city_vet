@@ -1,6 +1,12 @@
 <?php
+session_start();
 require_once('../../config/db_connection.php');
 header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+    echo json_encode(["status" => "error", "message" => "Access denied. Administrators only."]);
+    exit();
+}
 
 try {
     // 1. Service Audit Value (Sum of prices from appointments marked 'Completed')

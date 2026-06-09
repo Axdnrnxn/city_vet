@@ -16,7 +16,7 @@
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'error') {
+                if (data.status !== 'success') {
                     // If the PHP bouncer says "Access Denied", kick them to login
                     window.location.replace('../../login.html');
                 } else {

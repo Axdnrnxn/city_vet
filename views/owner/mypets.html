@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Pets - City Vet</title>
     
+    <script>
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success' || data.user.role != 3) {
+                    window.location.href = '../../login.html';
+                }
+            })
+            .catch(() => window.location.href = '../../login.html');
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -77,11 +87,16 @@
                         <div class="bg-gradient-to-r from-gray-50 to-white p-8 border-b border-gray-100 flex items-center gap-6 relative">
                             <img id="p-img" src="" class="w-24 h-24 rounded-full shadow-md object-cover border-4 border-white bg-gray-200">
                             <div class="flex-1">
-                                <div class="flex justify-between items-start">
+                                <div class="flex justify-between items-start gap-3">
                                     <h1 id="p-name" class="text-3xl font-bold text-gray-800 mb-1"></h1>
-                                    <button onclick="openEditModal()" class="text-sm bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
-                                        <i class="fa-solid fa-pen"></i> Edit Profile
-                                    </button>
+                                    <div class="flex flex-wrap justify-end gap-2">
+                                        <button onclick="openEditModal()" class="text-sm bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
+                                            <i class="fa-solid fa-pen"></i> Edit Profile
+                                        </button>
+                                        <button onclick="archivePet(currentPetData.Pet_ID, true)" class="text-sm bg-white border border-red-200 hover:bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
+                                            <i class="fa-solid fa-box-archive"></i> Archive
+                                        </button>
+                                    </div>
                                 </div>
                                 <p class="text-gray-500 font-medium mb-3">
                                     <span id="p-gender"></span> &bull; <span id="p-breed"></span>
@@ -306,7 +321,7 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch('../../api/auth/logout.php')
+                    fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } })
                     .then(res => res.json())
                     .then(data => { window.location.href = '../../login.html'; })
                     .catch(err => { window.location.href = '../../login.html'; });
@@ -440,11 +455,14 @@
                                     <li>${pet.Breed_Name || 'Unknown Breed'}</li>
                                     <li>${pet.Gender || 'Unknown Gender'}</li>
                                 </ul>
-                                <div class="flex gap-2 mt-auto">
-                                    <button onclick="editFromList(${pet.Pet_ID})" class="w-1/3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold py-2 rounded transition text-center">
+                                <div class="grid grid-cols-3 gap-2 mt-auto">
+                                    <button onclick="editFromList(${pet.Pet_ID})" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold py-2 rounded transition text-center">
                                         <i class="fa-solid fa-pen"></i> Edit
                                     </button>
-                                    <button onclick="window.location.href='mypets.html?id=${pet.Pet_ID}'" class="w-2/3 bg-[#00796B] hover:bg-teal-700 text-white text-sm font-bold py-2 rounded transition flex items-center justify-center gap-1">
+                                    <button onclick="archivePet(${pet.Pet_ID})" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold py-2 rounded transition text-center">
+                                        <i class="fa-solid fa-box-archive"></i> Archive
+                                    </button>
+                                    <button onclick="window.location.href='mypets.html?id=${pet.Pet_ID}'" class="bg-[#00796B] hover:bg-teal-700 text-white text-sm font-bold py-2 rounded transition flex items-center justify-center gap-1">
                                         History <i class="fa-solid fa-arrow-right ml-1"></i>
                                     </button>
                                 </div>
@@ -583,6 +601,43 @@
             });
         }
 
+        function archivePet(petId, returnToList = false) {
+            if (!petId) return;
+
+            Swal.fire({
+                title: 'Archive this pet?',
+                text: 'This will hide the pet from your active pet list without deleting its records.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, archive',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                fetch(`../../api/owner/delete_pet.php?id=${petId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire('Archived', data.message || 'Pet has been archived.', 'success')
+                        .then(() => {
+                            if (returnToList) {
+                                window.location.href = 'mypets.html';
+                            } else {
+                                loadPetList();
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Unable to archive pet.', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'Failed to connect to archive service.', 'error');
+                });
+            });
+        }
+
         // ✨ UPDATED FUNCTION: LOAD PET DETAILS AND MEDICAL HISTORY ✨
         function loadPetDetail(id) {
             fetch(`../../api/owner/get_pet_data.php?id=${id}`)
@@ -649,14 +704,26 @@
 
         function submitNote() {
             const noteText = document.getElementById('noteInput').value;
-            const urlParams = newSearchParams(window.location.search);
-            if (!noteText.trim()) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!noteText.trim()) {
+                Swal.fire('Required', 'Please enter a note before saving.', 'warning');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('pet_id', urlParams.get('id'));
             formData.append('note_text', noteText);
+
             fetch('../../api/owner/add_note.php', { method: 'POST', body: formData })
             .then(res => res.json())
-            .then(data => { if (data.status === 'success') location.reload(); });
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire('Saved', 'Note added successfully.', 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Unable to add note.', 'error');
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Failed to connect to note service.', 'error'));
         }
     </script>
 </body>

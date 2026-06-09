@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Species & Breeds - City Vet</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script>
@@ -12,7 +13,7 @@
         fetch('../../api/auth/session_check.php')
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'error') {
+                if (data.status !== 'success') {
                     // If the PHP bouncer says "Access Denied", kick them to login
                     window.location.replace('../../login.html');
                 } else {
@@ -291,7 +292,22 @@
         }
 
         function logout() {
-            window.location.href = 'logout.php';
+            Swal.fire({
+                title: 'Logout Session?',
+                text: "You will need to login again to access your account.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00796B',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, Logout',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } })
+                        .then(() => window.location.href = '../../login.html')
+                        .catch(() => window.location.href = '../../login.html');
+                }
+            });
         }
     </script>
 </body>

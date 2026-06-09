@@ -17,6 +17,17 @@ try {
     require_once $db_file;
     if (isset($conn) && $conn instanceof mysqli) $conn->set_charset("utf8mb4");
 
+    function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
+        if (!$userId) return;
+
+        $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
+
     $method = $_SERVER['REQUEST_METHOD'];
 
     // --- GET REQUESTS ---
@@ -91,8 +102,14 @@ try {
             $stmt = $conn->prepare("INSERT INTO appointments (Owner_ID, Pet_ID, Service_ID, Appointment_Date, Status, Notes) VALUES (?, ?, ?, ?, 'Confirmed', 'Walk-in Booking')");
             $stmt->bind_param("iiis", $owner_id, $pet_id, $service_id, $datetime);
             
-            if ($stmt->execute()) echo json_encode(["status" => "success", "message" => "Booked successfully"]);
-            else echo json_encode(["status" => "error", "message" => "DB Error: " . $conn->error]);
+            if ($stmt->execute()) {
+                $appointment_id = $conn->insert_id;
+                $actorId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+                writeAuditLog($conn, $actorId, "Create Appointment", "appointments", $appointment_id);
+                echo json_encode(["status" => "success", "message" => "Booked successfully"]);
+            } else {
+                echo json_encode(["status" => "error", "message" => "DB Error: " . $conn->error]);
+            }
         }
 
         // 2. Update Status (NOW SAVES VET_ID)
@@ -111,8 +128,13 @@ try {
                 $stmt->bind_param("si", $status, $id);
             }
             
-            if ($stmt->execute()) echo json_encode(["status" => "success"]);
-            else echo json_encode(["status" => "error", "message" => "DB Error: " . $conn->error]);
+            if ($stmt->execute()) {
+                $actorId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+                writeAuditLog($conn, $actorId, "Update Appointment Status", "appointments", (int)$id);
+                echo json_encode(["status" => "success"]);
+            } else {
+                echo json_encode(["status" => "error", "message" => "DB Error: " . $conn->error]);
+            }
         }
         exit();
     }

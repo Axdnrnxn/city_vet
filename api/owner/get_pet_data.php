@@ -30,7 +30,7 @@ if (isset($_GET['id'])) {
     $sql = "SELECT p.*, b.Breed_Name, s.Species_Name FROM pets p 
             LEFT JOIN breeds b ON p.Breed_ID = b.Breed_ID
             LEFT JOIN species s ON p.Species_ID = s.Species_ID
-            WHERE p.Pet_ID = $pet_id AND p.Owner_ID = $owner_id";
+            WHERE p.Pet_ID = $pet_id AND p.Owner_ID = $owner_id AND p.Status != 'archived'";
     $result = $conn->query($sql);
     
     if ($result->num_rows > 0) {
@@ -97,7 +97,7 @@ if (isset($_GET['id'])) {
     $sql = "SELECT p.Pet_ID, p.Name, p.Status, p.Gender, p.Profile_Pic, b.Breed_Name, s.Species_Name FROM pets p 
             LEFT JOIN breeds b ON p.Breed_ID = b.Breed_ID 
             LEFT JOIN species s ON p.Species_ID = s.Species_ID
-            WHERE p.Owner_ID = $owner_id";
+            WHERE p.Owner_ID = $owner_id AND p.Status != 'archived'";
     $result = $conn->query($sql);
     while ($row = $result->fetch_assoc()) { $pets[] = $row; }
 

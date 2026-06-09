@@ -10,12 +10,24 @@ header("Access-Control-Allow-Methods: GET");
 
 session_start();
 
+$timeoutSeconds = 3 * 60;
+
 // 1. Check if logged in at all
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     http_response_code(401); // Unauthorized
     echo json_encode(["status" => "error", "message" => "User not logged in"]);
     exit();
 }
+
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeoutSeconds) {
+    session_unset();
+    session_destroy();
+    http_response_code(401);
+    echo json_encode(["status" => "timeout", "message" => "Session expired due to inactivity. Please log in again."]);
+    exit();
+}
+
+$_SESSION['last_activity'] = time();
 
 // 2. Dynamic Dashboard Security (The Magic Part)
 // We look at the URL of the dashboard making the request
@@ -50,6 +62,7 @@ echo json_encode([
         "id" => $_SESSION['user_id'],
         "name" => $displayName,
         "role" => $_SESSION['role_id']
-    ]
+    ],
+    "timeout_minutes" => (int)($timeoutSeconds / 60)
 ]);
 ?>

@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -7,6 +8,12 @@ require_once('../../config/db_connection.php');
 header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
+$readOnlyActions = ['get_species', 'get_breeds'];
+
+if (!in_array($action, $readOnlyActions) && (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1)) {
+    echo json_encode(["status" => "error", "message" => "Access denied. Administrators only."]);
+    exit();
+}
 
 try {
     if (!$conn) {
@@ -55,18 +62,17 @@ try {
         }
     }
 
-    // 5. DELETE ACTIONS (Soft delete or hard delete depending on your preference)
-    // Here we use hard delete to match your previous logic
+    // 5. DELETE ACTIONS (Soft delete)
     elseif ($action == 'delete_species') {
         $id = $_GET['id'];
-        $stmt = $conn->prepare("DELETE FROM species WHERE Species_ID = ?");
+        $stmt = $conn->prepare("UPDATE species SET Status = 'inactive' WHERE Species_ID = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         echo json_encode(["status" => "success"]);
     }
     elseif ($action == 'delete_breed') {
         $id = $_GET['id'];
-        $stmt = $conn->prepare("DELETE FROM breeds WHERE Breed_ID = ?");
+        $stmt = $conn->prepare("UPDATE breeds SET Status = 'inactive' WHERE Breed_ID = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         echo json_encode(["status" => "success"]);

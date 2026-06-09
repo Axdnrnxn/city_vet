@@ -59,6 +59,48 @@ function loadStaffSidebar() {
 }
 document.addEventListener('DOMContentLoaded', loadStaffSidebar);
 
+function startSessionTimeoutWatcher() {
+    if (window.cityVetSessionWatcherStarted) return;
+    window.cityVetSessionWatcherStarted = true;
+
+    const checkSessionTimeout = () => {
+        fetch('../../api/auth/session_status.php?touch=0', { headers: { 'Accept': 'application/json' } })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'logged_in') {
+                    window.location.href = '../../login.html';
+                }
+            })
+            .catch(() => {
+                window.location.href = '../../login.html';
+            });
+    };
+
+    let lastClientTouch = 0;
+    const touchSession = () => {
+        const now = Date.now();
+        if (now - lastClientTouch < 30000) return;
+        lastClientTouch = now;
+
+        fetch('../../api/auth/session_status.php', { headers: { 'Accept': 'application/json' } })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'logged_in') {
+                    window.location.href = '../../login.html';
+                }
+            })
+            .catch(() => {});
+    };
+
+    ['click', 'keydown', 'change', 'scroll'].forEach(eventName => {
+        document.addEventListener(eventName, touchSession, { passive: true });
+    });
+
+    setInterval(checkSessionTimeout, 15000);
+    checkSessionTimeout();
+}
+startSessionTimeoutWatcher();
+
 // Global Logout Function
 function logout() {
     Swal.fire({
@@ -72,7 +114,7 @@ function logout() {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch('../../api/auth/logout.php')
+            fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(data => { window.location.href = '../../login.html'; })
             .catch(err => { window.location.href = '../../login.html'; });

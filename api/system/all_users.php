@@ -1,151 +1,188 @@
 <?php
+session_start();
 header("Content-Type: application/json");
 
-// 1. Include the connection file
-include_once '../../config/db_connection.php'; 
+include_once '../../config/db_connection.php';
 
-// 2. Check if $conn exists (this variable comes from db_connection.php)
 if (!$conn) {
     die(json_encode(["error" => "Database connection variable not found"]));
 }
 
+function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
+    if (!$userId) return;
+
+    $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
-// --- GET: Fetch All Users ---
 if ($method === 'GET') {
-    // We join the 'users' table with a 'roles' table to get the name of the role
-    $query = "SELECT 
-                u.User_ID, 
-                u.Username, 
-                u.Email, 
-                u.Phone_number, 
-                u.Status, 
+    if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+        echo json_encode(["status" => "error", "message" => "Access denied. Administrators only."]);
+        exit();
+    }
+
+    $query = "SELECT
+                u.User_ID,
+                u.Username,
+                u.Email,
+                u.Phone_number,
+                u.Status,
                 u.Role_ID
-              FROM users u 
+              FROM users u
               ORDER BY u.Created_At DESC";
 
     $result = $conn->query($query);
-    
     $users = [];
-    if ($result->num_rows > 0) {
-        while($row = $result->fetch_assoc()) {
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
             $users[] = $row;
         }
     }
 
     echo json_encode($users);
+    exit();
 }
 
-// --- POST: Update or Toggle Status ---
-if ($method === 'POST') {
-    $data = json_decode(file_get_contents("php://input"));
+if ($method !== 'POST') {
+    echo json_encode(["status" => "error", "message" => "Invalid request method."]);
+    exit();
+}
 
-    if ($data->action === 'update_credentials') {
-        $email = $data->email;
-        $id = $data->staff_id; // Using staff_id from your JS
-        
-        if (!empty($data->password)) {
-            // Update Email and Password
-            $pass_hash = password_hash($data->password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users SET Email = ?, Password_Hash = ? WHERE User_ID = ?");
-            $stmt->bind_param("ssi", $email, $pass_hash, $id);
-        } else {
-            // Update Email only
-            $stmt = $conn->prepare("UPDATE users SET Email = ? WHERE User_ID = ?");
-            $stmt->bind_param("si", $email, $id);
-        }
-        
-        if ($stmt->execute()) {
-            echo json_encode(["status" => "success"]);
-        } else {
-            echo json_encode(["status" => "error", "message" => $conn->error]);
-        }
+$data = json_decode(file_get_contents("php://input"));
+$action = $data->action ?? '';
+$actorId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+
+if ($action === 'update_credentials') {
+    if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+        echo json_encode(["status" => "error", "message" => "Access denied. Administrators only."]);
+        exit();
     }
 
-    if ($data->action === 'toggle_status') {
-        $newStatus = ($data->current_status === 'active') ? 'inactive' : 'active';
-        $stmt = $conn->prepare("UPDATE users SET Status = ? WHERE User_ID = ?");
-        $stmt->bind_param("si", $newStatus, $data->staff_id);
-        
-        if ($stmt->execute()) {
-            echo json_encode(["status" => "success"]);
-        }
+    $email = $data->email ?? '';
+    $id = (int)($data->staff_id ?? 0);
+
+    if (!$id || empty($email)) {
+        echo json_encode(["status" => "error", "message" => "Missing user details."]);
+        exit();
     }
 
-    // Add this inside the if ($method === 'POST') block in api/system/all_users.php
+    if (!empty($data->password)) {
+        $pass_hash = password_hash($data->password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE users SET Email = ?, Password_Hash = ? WHERE User_ID = ?");
+        $stmt->bind_param("ssi", $email, $pass_hash, $id);
+        $logAction = "Update User Email and Password";
+    } else {
+        $stmt = $conn->prepare("UPDATE users SET Email = ? WHERE User_ID = ?");
+        $stmt->bind_param("si", $email, $id);
+        $logAction = "Update User Email";
+    }
 
-if ($data->action === 'update_profile') {
-    session_start();
-    $userId = $_SESSION['user_id'];
+    if ($stmt->execute()) {
+        writeAuditLog($conn, $actorId, $logAction, "users", $id);
+        echo json_encode(["status" => "success"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => $conn->error]);
+    }
+    exit();
+}
+
+if ($action === 'toggle_status') {
+    if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+        echo json_encode(["status" => "error", "message" => "Access denied. Administrators only."]);
+        exit();
+    }
+
+    $id = (int)($data->staff_id ?? 0);
+    $currentStatus = $data->current_status ?? '';
+    $newStatus = ($currentStatus === 'active') ? 'inactive' : 'active';
+
+    if (!$id) {
+        echo json_encode(["status" => "error", "message" => "Missing user ID."]);
+        exit();
+    }
+
+    $stmt = $conn->prepare("UPDATE users SET Status = ? WHERE User_ID = ?");
+    $stmt->bind_param("si", $newStatus, $id);
+
+    if ($stmt->execute()) {
+        $logAction = ($newStatus === 'active') ? "Activate User Account" : "Deactivate User Account";
+        writeAuditLog($conn, $actorId, $logAction, "users", $id);
+        echo json_encode(["status" => "success"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => $conn->error]);
+    }
+    exit();
+}
+
+if ($action === 'update_profile') {
+    $userId = $actorId;
 
     if (!$userId) {
-        die(json_encode(["status" => "error", "message" => "Unauthorized session."]));
+        echo json_encode(["status" => "error", "message" => "Unauthorized session."]);
+        exit();
     }
 
-    // 1. SAFELY GRAB VARIABLES
-    $current_password_input = isset($data->current_password) ? $data->current_password : '';
-    $username = isset($data->username) ? $data->username : '';
-    $email = isset($data->email) ? $data->email : '';
-    $new_password = isset($data->password) ? $data->password : '';
+    $currentPasswordInput = $data->current_password ?? '';
+    $username = $data->username ?? '';
+    $email = $data->email ?? '';
+    $newPassword = $data->password ?? '';
 
-    // 2. VERIFY CURRENT PASSWORD
     $verify_stmt = $conn->prepare("SELECT Password_Hash FROM users WHERE User_ID = ?");
     $verify_stmt->bind_param("i", $userId);
     $verify_stmt->execute();
     $result = $verify_stmt->get_result();
     $user_data = $result->fetch_assoc();
 
-    if (!$user_data || !password_verify($current_password_input, $user_data['Password_Hash'])) {
-        die(json_encode(["status" => "error", "message" => "Verification failed. Incorrect current password."]));
+    if (!$user_data || !password_verify($currentPasswordInput, $user_data['Password_Hash'])) {
+        echo json_encode(["status" => "error", "message" => "Verification failed. Incorrect current password."]);
+        exit();
     }
 
-    // 3. BUILD USERS TABLE UPDATE (This updates Username, Email, and optionally Password)
-    if (!empty($new_password)) {
-        $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+    if (!empty($newPassword)) {
+        $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $conn->prepare("UPDATE users SET Username = ?, Email = ?, Password_Hash = ? WHERE User_ID = ?");
-        $stmt->bind_param("sssi", $username, $email, $new_hash, $userId);
+        $stmt->bind_param("sssi", $username, $email, $newHash, $userId);
+        $logAction = "Update Profile and Password";
     } else {
         $stmt = $conn->prepare("UPDATE users SET Username = ?, Email = ? WHERE User_ID = ?");
         $stmt->bind_param("ssi", $username, $email, $userId);
+        $logAction = "Update Profile";
     }
 
-    // 4. EXECUTE AND SYNC TABLES
-    if ($stmt->execute()) {
-        
-        // --- FIXED: SYNCHRONIZE WITH THE OWNERS TABLE ---
-        // We ONLY update First_name here. Email is already updated in the users table above.
+    $conn->begin_transaction();
+
+    try {
+        if (!$stmt->execute()) {
+            throw new Exception("Update failed.");
+        }
+
         $update_owner = $conn->prepare("UPDATE owners SET First_name = ? WHERE User_ID = ?");
-        $update_owner->bind_param("si", $username, $userId);
-        $update_owner->execute();
+        if ($update_owner) {
+            $update_owner->bind_param("si", $username, $userId);
+            if (!$update_owner->execute()) {
+                throw new Exception("Owner profile sync failed.");
+            }
+            $update_owner->close();
+        }
 
-        // Update the active session
-        $_SESSION['username'] = $username; 
+        writeAuditLog($conn, $userId, $logAction, "users", $userId);
+        $conn->commit();
 
-        echo json_encode(["status" => "success"]);
-    } else {
+        $_SESSION['username'] = $username;
+        echo json_encode(["status" => "success", "message" => "Profile updated successfully"]);
+    } catch (Exception $e) {
+        $conn->rollback();
         echo json_encode(["status" => "error", "message" => "Update failed."]);
     }
-    
-    // Always exit to ensure no extra HTML is printed
-    exit(); 
+    exit();
 }
 
-if ($stmt->execute()) {
-    // ✨ NEW: RECORD THE ACTION IN AUDIT LOGS
-    $log_action = "Update Profile";
-    $table_affected = "users";
-    $record_id = $userId; // The ID of the user being updated
-    $log_user_id = $_SESSION['user_id']; // The person doing the action
-
-    $log_stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
-    $log_stmt->bind_param("issi", $log_user_id, $log_action, $table_affected, $record_id);
-    $log_stmt->execute();
-    $log_stmt->close();
-
-    echo json_encode(["status" => "success", "message" => "Profile updated successfully"]);
-} else {
-    // ... error handling ...
-}
-
-}
+echo json_encode(["status" => "error", "message" => "Unknown action."]);
 ?>
