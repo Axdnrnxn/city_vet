@@ -96,6 +96,21 @@
                 </div>
             </div>
 
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h3 class="font-bold text-gray-800 text-lg"><i class="fa-regular fa-calendar text-[#00796B] mr-2"></i> Global Spay/Neuter Calendar</h3>
+                    <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                        <button onclick="CityVetSpayCalendar.changeMonth(-1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="admin-spay-month" class="font-bold text-gray-700 w-36 text-center uppercase tracking-wide text-sm">Loading...</span>
+                        <button onclick="CityVetSpayCalendar.changeMonth(1)" class="text-gray-500 hover:text-[#00796B]"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="admin-spay-grid" class="grid grid-cols-7 gap-2 text-center"></div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -134,6 +149,7 @@
         </main>
     </div>
 
+    <script src="../../js/global_spay_calendar.js"></script>
     <script>
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
@@ -257,6 +273,7 @@
 
         // Load Data on Start
         loadDashboardData();
+        CityVetSpayCalendar.init({ gridId: 'admin-spay-grid', monthId: 'admin-spay-month' });
     </script>
 </body>
 </html>

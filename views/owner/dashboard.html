@@ -109,14 +109,16 @@
             </div>
             <form id="bookingForm" class="p-6 space-y-4">
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center mb-4">
-                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Selected Date</p>
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Selected Event</p>
+                    <p id="modal-event-title" class="text-lg font-bold text-gray-800">--</p>
                     <p id="modal-date-display" class="text-xl font-bold text-[#00796B]">--</p>
+                    <p id="modal-slots-display" class="text-xs font-bold text-orange-600 mt-1">-- slots left</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Select Pet <span class="text-red-500">*</span></label>
-                    <select id="petSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00796B] outline-none bg-white">
-                        <option value="">Loading pets...</option>
-                    </select>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Select Pet(s) <span class="text-red-500">*</span></label>
+                    <div id="petCheckboxes" class="space-y-2 max-h-52 overflow-y-auto rounded-lg border border-gray-200 p-3 bg-white">
+                        <p class="text-sm text-gray-400">Loading pets...</p>
+                    </div>
                 </div>
                 <div class="pt-4 flex justify-end gap-3">
                     <button type="button" onclick="closeBookingModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
@@ -170,7 +172,8 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobileOverlay');
         let ownerPets = [];
-        let selectedDateStr = null;
+        let selectedEvent = null;
+        let calendarEvents = [];
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
@@ -184,8 +187,34 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchUserData();
-            generateCalendar(currentMonth, currentYear);
+            loadCalendarEvents();
         });
+
+        function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function formatLongDate(dateStr) {
+            return parseLocalDate(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function eventByDate(dateStr) {
+            return calendarEvents.find(event => event.Event_Date === dateStr);
+        }
+
+        function loadCalendarEvents() {
+            fetch('../../api/calendar/events.php')
+                .then(res => res.json())
+                .then(data => {
+                    calendarEvents = data.status === 'success' ? data.events : [];
+                    generateCalendar(currentMonth, currentYear);
+                })
+                .catch(() => {
+                    calendarEvents = [];
+                    generateCalendar(currentMonth, currentYear);
+                });
+        }
 
         function fetchUserData() {
             fetch('../../api/owner/get_pets.php')
@@ -195,26 +224,25 @@
                 initialUsername = data.owner_name;
                 document.getElementById('user-display').innerText = data.owner_name;
                 document.getElementById('welcome-text').innerText = `Hello, ${data.owner_name}! 🐾`;
-                ownerPets = data.pets;
+                ownerPets = (data.pets || []).filter(pet => pet.Status === 'active');
                 ownerEmail = data.email || ""; 
-                populatePetDropdown();
+                renderPetCheckboxes();
             })
             .catch(err => console.error("API Error:", err));
         }
 
-        function populatePetDropdown() {
-            const petSelect = document.getElementById('petSelect');
-            petSelect.innerHTML = '<option value="" disabled selected>-- Choose a Pet --</option>';
+        function renderPetCheckboxes() {
+            const container = document.getElementById('petCheckboxes');
             if (ownerPets.length === 0) {
-                petSelect.innerHTML = '<option value="" disabled>No pets registered.</option>';
+                container.innerHTML = '<p class="text-sm text-gray-400">No active pets registered.</p>';
                 return;
             }
-            ownerPets.forEach(pet => {
-                let opt = document.createElement('option');
-                opt.value = pet.Pet_ID;
-                opt.text = `${pet.Name} (${pet.Breed_Name || 'Unknown'})`;
-                petSelect.appendChild(opt);
-            });
+            container.innerHTML = ownerPets.map(pet => `
+                <label class="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2 hover:bg-teal-50 cursor-pointer">
+                    <input type="checkbox" value="${pet.Pet_ID}" class="pet-checkbox w-4 h-4 accent-[#00796B]">
+                    <span class="text-sm font-semibold text-gray-700">${pet.Name}</span>
+                </label>
+            `).join('');
         }
 
         function changeMonth(dir) {
@@ -240,55 +268,88 @@
                 let cellDate = new Date(year, month, day);
                 let dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 let isPast = cellDate < today;
-                let isWeekend = (cellDate.getDay() === 0 || cellDate.getDay() === 6);
-                let isDisabled = isPast || isWeekend;
-                let dayClass = isDisabled ? 'disabled' : 'calendar-day border-[#00796B]/20';
-                let clickEvent = isDisabled ? '' : `onclick="openBookingModal('${dateStr}')"`;
-                let badgeHtml = isWeekend ? `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">Closed</div>` : 
-                                (!isPast ? `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-teal-50 rounded px-1 inline-block">Available</div>` : '');
+                const event = eventByDate(dateStr);
+                const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
+                let isDisabled = isPast || !event || isFull;
+                let dayClass = isDisabled ? 'disabled' : 'calendar-day border-[#00796B]/20 bg-teal-50';
+                let clickEvent = '';
+                if (!isPast && event && !isFull) {
+                    clickEvent = `onclick="openBookingModal(${event.Event_ID})"`;
+                } else if (!isPast && event && isFull) {
+                    clickEvent = `onclick="showFullyBooked()"`;
+                } else if (!isPast && !event) {
+                    clickEvent = `onclick="showNoScheduleMessage()"`;
+                }
+                let badgeHtml = '';
+                if (event && isFull) {
+                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-red-600 bg-red-50 rounded px-1 inline-block">Fully Booked</div>`;
+                } else if (event) {
+                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-white rounded px-1 inline-block">${event.Remaining_Slots} slots</div>`;
+                } else if (!isPast) {
+                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">No Schedule</div>`;
+                }
 
                 html += `<div class="relative p-2 h-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
                     <span class="text-sm font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-700'}">${day}</span>
+                    ${event ? `<span class="text-[10px] font-bold text-gray-700 leading-tight mt-1">${event.Title}</span>` : ''}
                     ${badgeHtml}
                 </div>`;
             }
             grid.innerHTML = html;
         }
 
-        function openBookingModal(dateStr) {
-            selectedDateStr = dateStr;
-            const d = new Date(dateStr);
-            document.getElementById('modal-date-display').innerText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        function showNoScheduleMessage() {
+            Swal.fire('No Schedule Yet', 'Please wait for an available Spay and Neuter schedule to be posted.', 'info');
+        }
+
+        function showFullyBooked() {
+            Swal.fire('Fully Booked', 'This Spay and Neuter schedule has no remaining slots.', 'warning');
+        }
+
+        function openBookingModal(eventId) {
+            selectedEvent = calendarEvents.find(event => parseInt(event.Event_ID, 10) === parseInt(eventId, 10));
+            if (!selectedEvent) return;
+            document.getElementById('modal-event-title').innerText = selectedEvent.Title;
+            document.getElementById('modal-date-display').innerText = formatLongDate(selectedEvent.Event_Date);
+            document.getElementById('modal-slots-display').innerText = `${selectedEvent.Remaining_Slots} slots left`;
             document.getElementById('bookingModal').classList.remove('hidden');
         }
 
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
-            document.getElementById('petSelect').value = "";
+            selectedEvent = null;
+            document.querySelectorAll('.pet-checkbox').forEach(checkbox => checkbox.checked = false);
         }
 
         function submitBooking() {
-            const petId = document.getElementById('petSelect').value;
-            if (!petId) { Swal.fire('Required', 'Please select a pet.', 'warning'); return; }
+            const petIds = Array.from(document.querySelectorAll('.pet-checkbox:checked')).map(input => input.value);
+            if (!selectedEvent) { Swal.fire('Required', 'Please select an event.', 'warning'); return; }
+            if (petIds.length === 0) { Swal.fire('Required', 'Please select at least one pet.', 'warning'); return; }
             Swal.fire({
                 title: 'Confirm Booking?',
-                text: `Schedule surgery for ${selectedDateStr}?`,
+                text: `Submit ${petIds.length} pet(s) for ${selectedEvent.Title} on ${selectedEvent.Event_Date}?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#00796B',
                 confirmButtonText: 'Confirm'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    let formData = new FormData();
-                    formData.append('book_surgery', true);
-                    formData.append('pet_id', petId);
-                    formData.append('service_id', 2);
-                    formData.append('appointment_date', selectedDateStr);
-                    fetch('../../api/owner/book_appointment.php', { method: 'POST', body: formData })
+                    fetch('../../api/calendar/events.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'book_event',
+                            event_id: selectedEvent.Event_ID,
+                            pet_ids: petIds
+                        })
+                    })
                     .then(res => res.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            Swal.fire('Success!', data.message, 'success').then(() => closeBookingModal());
+                            Swal.fire('Success!', data.message, 'success').then(() => {
+                                closeBookingModal();
+                                loadCalendarEvents();
+                            });
                         } else { Swal.fire('Error', data.message, 'error'); }
                     });
                 }
