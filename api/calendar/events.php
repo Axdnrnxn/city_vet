@@ -73,7 +73,6 @@ function approvedPetCount($conn, $eventId) {
     return (int)$stmt->get_result()->fetch_assoc()['used_slots'];
 }
 
-requireLogin();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {

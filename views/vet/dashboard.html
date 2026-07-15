@@ -51,7 +51,7 @@
                 <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <h2 class="text-xl font-bold text-gray-800">Pending Requests</h2>
+                <h2 class="text-xl font-bold text-gray-800">Live Consultation Queue</h2>
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-[#00796B] text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -63,8 +63,8 @@
 
         <main class="flex-1 overflow-y-auto p-4 lg:p-8">
             <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Needs Approval</h2>
-                <p class="text-gray-500 text-sm">Review patient details and symptoms before confirming appointments.</p>
+                <h2 class="text-2xl font-bold text-gray-800">Vet Dashboard</h2>
+                <p class="text-gray-500 text-sm">Manage patients sent by Staff and review Spay/Neuter rosters.</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
@@ -82,25 +82,100 @@
                 <div id="vet-spay-grid" class="grid grid-cols-7 gap-2 text-center"></div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                <div class="p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2"><i class="fa-solid fa-stethoscope text-[#00796B]"></i> Live Consultation Queue</h3>
+                        <p class="text-sm text-gray-500 mt-1">Patients sent by Staff using the waiting-room pipeline.</p>
+                    </div>
+                    <button onclick="loadVetQueue()" class="text-sm text-[#00796B] font-bold hover:underline">Refresh</button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-[#004D40] text-white">
-                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Appt ID</th>
-                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Service</th>
-                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Patient & Owner</th>
-                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date & Time</th>
-                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Action</th>
+                        <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">Time</th>
+                                <th class="px-6 py-4">Patient & Owner</th>
+                                <th class="px-6 py-4">Service</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="appointment-table-body" class="divide-y divide-gray-50 text-sm">
-                            <tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 font-medium">Loading requests...</td></tr>
+                        <tbody id="vet-queue-body" class="divide-y divide-gray-50 text-sm text-gray-700">
+                            <tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 font-medium">Loading queue...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </main>
+    </div>
+
+    <div id="rosterModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-[#004D40] text-white flex items-center justify-between">
+                <div>
+                    <h3 id="roster-title" class="text-lg font-bold">Spay/Neuter Roster</h3>
+                    <p id="roster-date" class="text-xs text-teal-100 font-medium">--</p>
+                </div>
+                <button onclick="closeRosterModal()" class="text-white/80 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="overflow-y-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4">Owner</th>
+                            <th class="px-6 py-4">Pets</th>
+                            <th class="px-6 py-4">Contact</th>
+                            <th class="px-6 py-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roster-body" class="divide-y divide-gray-50 text-sm text-gray-700">
+                        <tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Loading roster...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="consultModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-[#00796B] text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold"><i class="fa-solid fa-notes-medical mr-2"></i> Medical Consultation</h3>
+                    <p id="consult-subtitle" class="text-xs text-teal-50">--</p>
+                </div>
+                <button onclick="closeConsultModal()" class="text-white/80 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="consultForm" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="consult-appointment-id">
+                <input type="hidden" id="consult-pet-id">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Patient</p>
+                    <p id="consult-patient" class="font-black text-gray-800">--</p>
+                    <p id="consult-owner" class="text-sm text-gray-500">--</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Treatment / Procedure <span class="text-red-500">*</span></label>
+                    <input id="consult-treatment" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="e.g. Administer 5-in-1 Vaccine">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vet Notes</label>
+                    <textarea id="consult-notes" rows="5" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Clinical findings, dosage, observations, owner instructions..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Follow-up Appointment Date</label>
+                    <input id="consult-follow-up" type="date" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                    <p class="text-xs text-gray-400 mt-1">Optional. If set, the owner will see it in upcoming appointments.</p>
+                </div>
+                <div class="pt-2 flex justify-end gap-3 border-t border-gray-100">
+                    <button type="button" onclick="closeConsultModal()" class="px-5 py-2.5 text-sm text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 text-sm bg-[#00796B] font-bold text-white rounded-lg hover:bg-teal-700 shadow-md transition">
+                        Save Consultation
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- REFURBISHED MODAL -->
@@ -195,7 +270,8 @@
 
     <script src="../../js/global_spay_calendar.js"></script>
     <script>
-        let currentAppointments = [];
+        let currentVetQueue = [];
+        let vetQueueTimer = null;
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -205,9 +281,140 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadAppointments();
-            CityVetSpayCalendar.init({ gridId: 'vet-spay-grid', monthId: 'vet-spay-month' });
+            startVetQueueSync();
+            document.getElementById('consult-follow-up').min = new Date().toISOString().split('T')[0];
+            CityVetSpayCalendar.init({
+                gridId: 'vet-spay-grid',
+                monthId: 'vet-spay-month',
+                onEventClick: openRosterModal
+            });
         });
+
+        function startVetQueueSync() {
+            loadVetQueue();
+            if (vetQueueTimer) clearInterval(vetQueueTimer);
+            vetQueueTimer = setInterval(loadVetQueue, 10000);
+        }
+
+        function loadVetQueue() {
+            fetch('../../api/clinic/vet_queue.php')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('vet-queue-body');
+                    if (data.status !== 'success') {
+                        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-400">${data.message || 'Unable to load queue.'}</td></tr>`;
+                        return;
+                    }
+                    currentVetQueue = data.queue || [];
+                    if (currentVetQueue.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 font-medium">No patients currently in consultation.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = currentVetQueue.map(row => `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 text-gray-500 font-medium whitespace-nowrap">${row.Time}</td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-800">${row.Pet_Name}</div>
+                                <div class="text-[10px] text-[#00796B] font-bold uppercase tracking-wider">Owner: ${row.Owner_First} ${row.Owner_Last}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">${row.Service_Name || 'General Consultation'}</td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 rounded-full border text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border-blue-200">${row.Status}</span></td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="openConsultModal(${row.Appointment_ID})" class="bg-[#00796B] hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                                    Manage
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(() => {
+                    document.getElementById('vet-queue-body').innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-red-400">Connection error.</td></tr>';
+                });
+        }
+
+        function openConsultModal(appointmentId) {
+            const row = currentVetQueue.find(item => parseInt(item.Appointment_ID, 10) === parseInt(appointmentId, 10));
+            if (!row) return;
+
+            document.getElementById('consult-appointment-id').value = row.Appointment_ID;
+            document.getElementById('consult-pet-id').value = row.Pet_ID;
+            document.getElementById('consult-subtitle').innerText = `${row.Service_Name || 'General Consultation'} • ${row.Time}`;
+            document.getElementById('consult-patient').innerText = `${row.Pet_Name} (${row.Species_Name || 'Pet'} / ${row.Breed_Name || 'Unknown Breed'})`;
+            document.getElementById('consult-owner').innerText = `Owner: ${row.Owner_First} ${row.Owner_Last} • ${row.Contact_number || 'No contact'}`;
+            document.getElementById('consult-treatment').value = '';
+            document.getElementById('consult-notes').value = row.Notes || '';
+            document.getElementById('consult-follow-up').value = '';
+            document.getElementById('consultModal').classList.remove('hidden');
+        }
+
+        function closeConsultModal() {
+            document.getElementById('consultModal').classList.add('hidden');
+            document.getElementById('consultForm').reset();
+        }
+
+        document.getElementById('consultForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const payload = {
+                action: 'save_consultation',
+                appointment_id: document.getElementById('consult-appointment-id').value,
+                pet_id: document.getElementById('consult-pet-id').value,
+                treatment: document.getElementById('consult-treatment').value.trim(),
+                notes: document.getElementById('consult-notes').value.trim(),
+                follow_up_date: document.getElementById('consult-follow-up').value
+            };
+
+            fetch('../../api/clinic/vet_queue.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const followText = data.follow_up_id ? ' Follow-up appointment was also scheduled.' : '';
+                    Swal.fire('Saved', `Medical record saved.${followText}`, 'success').then(() => {
+                        closeConsultModal();
+                        loadVetQueue();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Unable to save consultation.', 'error');
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Connection failed.', 'error'));
+        });
+
+        function openRosterModal(event) {
+            document.getElementById('roster-title').innerText = event.Title;
+            document.getElementById('roster-date').innerText = `${event.Event_Date} • ${event.Remaining_Slots} slot(s) remaining`;
+            document.getElementById('roster-body').innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Loading roster...</td></tr>';
+            document.getElementById('rosterModal').classList.remove('hidden');
+
+            fetch(`../../api/clinic/vet_queue.php?mode=roster&event_id=${event.Event_ID}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('roster-body');
+                    if (data.status !== 'success' || !data.roster || data.roster.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">No bookings for this event yet.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.roster.map(row => `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 font-bold text-gray-800">${row.First_name || ''} ${row.Last_name || ''}</td>
+                            <td class="px-6 py-4 text-gray-600">${row.Pets || '--'} <span class="text-xs text-gray-400">(${row.Pet_Count || 0})</span></td>
+                            <td class="px-6 py-4 text-gray-600">${row.Contact_number || 'No contact'}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-teal-50 text-[#00796B]">${row.Status}</span></td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(() => {
+                    document.getElementById('roster-body').innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-red-400">Unable to load roster.</td></tr>';
+                });
+        }
+
+        function closeRosterModal() {
+            document.getElementById('rosterModal').classList.add('hidden');
+        }
 
         function loadAppointments() {
             fetch('../../api/clinic/vet_get_pending.php')

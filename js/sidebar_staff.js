@@ -42,6 +42,10 @@ function loadStaffSidebar() {
                 <i class="fa-solid fa-folder-open mr-3 w-6 text-center"></i> Patient Database
             </a>
 
+            <a href="carousel_management.html" class="${getLinkClass('carousel_management.html')}">
+                <i class="fa-solid fa-images mr-3 w-6 text-center"></i> Homepage Carousel
+            </a>
+
             <div class="pt-6 mt-2 border-t border-[#00332B]">
                 <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Settings</p>
                 <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">

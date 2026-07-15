@@ -202,7 +202,7 @@
                     </div>
 
                     <div class="p-6 bg-gray-50 border-t">
-                        <button onclick="saveConsultationRecord()" class="w-full bg-[#00796B] py-4 text-white font-bold rounded-xl shadow-lg hover:bg-[#004D40] transition active:scale-95 uppercase tracking-widest text-sm">Confirm & Save Record</button>
+                        <button onclick="saveConsultationRecord()" class="w-full bg-[#00796B] py-4 text-white font-bold rounded-xl shadow-lg hover:bg-[#004D40] transition active:scale-95 uppercase tracking-widest text-sm">Add to Queue</button>
                     </div>
                 </div>
             </div>
@@ -367,54 +367,50 @@
         }
 
 async function saveConsultationRecord() {
-    // 1. Get the values from the form
+    const ownerId = document.getElementById('consult_owner_id').value;
     const petId = document.getElementById('consult_pet_id').value;
+    const serviceId = document.getElementById('consult_service_id').value;
     const treatment = document.getElementById('consult_treatment').value.trim();
     const symptoms = document.getElementById('consult_symptoms').value.trim();
 
-    // 2. Validation: Only Pet ID is strictly required
-    if (!petId) {
-        Swal.fire('Incomplete', 'Please select a pet for this consultation.', 'warning');
+    if (!ownerId || !petId || !serviceId) {
+        Swal.fire('Incomplete', 'Please select an owner, pet, and service first.', 'warning');
         return;
     }
 
+    const notes = [
+        symptoms || 'Walk-in consultation',
+        treatment ? `Staff intake note: ${treatment}` : ''
+    ].filter(Boolean).join('\n');
+
     try {
-        Swal.fire({ title: 'Saving Record...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ title: 'Adding to Queue...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 
-        // 3. Use FormData so it populates $_POST in your PHP
-        const formData = new FormData();
-        formData.append('pet_id', petId);
-        // If these are empty, they stay empty strings (optional)
-        formData.append('treatment', treatment || "None provided"); 
-        formData.append('symptoms', symptoms || ""); 
-
-        // 4. Send request (Action is 'add')
-        const res = await fetch('../../api/clinic/manage_consultations.php?action=add', {
+        const res = await fetch('../../api/clinic/vet_queue.php', {
             method: 'POST',
-            body: formData // Sending as FormData, not JSON
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'create_walkin_queue',
+                owner_id: ownerId,
+                pet_id: petId,
+                service_id: serviceId,
+                notes
+            })
         });
-
-        const text = await res.text(); // Get raw text first to catch PHP errors
-        let result;
-        
-        try {
-            result = JSON.parse(text);
-        } catch (e) {
-            console.error("Server returned non-JSON:", text);
-            throw new Exception("The server returned an invalid response.");
-        }
+        const result = await res.json();
 
         if (result.status === 'success') {
             Swal.fire({
                 icon: 'success',
-                title: 'Record Saved!',
-                text: 'The consultation has been recorded.',
-                timer: 2000,
+                title: 'Added to Queue!',
+                text: 'This walk-in is ready to be sent to the vet.',
+                timer: 1800,
                 showConfirmButton: false
             });
             closeConsultModal();
+            loadOwners();
         } else {
-            Swal.fire('Error', result.message || 'Could not save record.', 'error');
+            Swal.fire('Error', result.message || 'Could not add walk-in to queue.', 'error');
         }
     } catch (err) {
         console.error(err);

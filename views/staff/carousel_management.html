@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage Carousel - City Vet</title>
+    <script>
+        fetch('../../api/auth/session_check.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success' || data.user.role != 4) window.location.replace('../../login.html');
+            })
+            .catch(() => window.location.replace('../../login.html'));
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+    <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
+    <div id="sidebar-container"></div>
+    <script src="../../js/sidebar_staff.js"></script>
+
+    <div class="flex-1 flex flex-col h-screen relative">
+        <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-xl font-bold text-gray-800">Homepage Carousel CMS</h2>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-fit">
+                    <h3 class="font-bold text-gray-800 text-lg mb-5 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-[#00796B]"></i> Upload Carousel Image
+                    </h3>
+                    <form id="carouselForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Title</label>
+                            <input name="title" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Rabies-Free Community">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtitle</label>
+                            <textarea name="subtitle" rows="3" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Short caption for the homepage carousel"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sort Order</label>
+                            <input name="sort_order" type="number" value="0" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Image</label>
+                            <input name="image" type="file" accept="image/jpeg,image/png,image/webp" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-teal-50 file:text-[#00796B] hover:file:bg-teal-100">
+                            <p class="text-xs text-gray-400 mt-2">JPG, PNG, or WEBP. Max 5MB.</p>
+                        </div>
+                        <button class="w-full bg-[#00796B] hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-sm transition">
+                            Upload Image
+                        </button>
+                    </form>
+                </section>
+
+                <section class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-images text-[#00796B]"></i> Carousel Items
+                        </h3>
+                        <button onclick="loadCarousel()" class="text-sm font-bold text-[#00796B] hover:underline">Refresh</button>
+                    </div>
+                    <div id="carouselList" class="grid grid-cols-1 md:grid-cols-2 gap-5 p-6">
+                        <p class="text-gray-400">Loading...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobileOverlay').classList.toggle('hidden');
+        }
+
+        document.getElementById('carouselForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('action', 'upload');
+
+            try {
+                Swal.fire({ title: 'Uploading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    Swal.fire('Uploaded', data.message, 'success');
+                    this.reset();
+                    loadCarousel();
+                } else {
+                    Swal.fire('Error', data.message || 'Upload failed.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Connection failed.', 'error');
+            }
+        });
+
+        async function loadCarousel() {
+            const list = document.getElementById('carouselList');
+            list.innerHTML = '<p class="text-gray-400">Loading...</p>';
+
+            try {
+                const res = await fetch('../../api/cms/carousel.php');
+                const data = await res.json();
+                if (data.status !== 'success' || data.items.length === 0) {
+                    list.innerHTML = '<p class="text-gray-400 md:col-span-2 text-center py-12">No carousel images uploaded yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(item => `
+                    <article class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50">
+                        <div class="aspect-video bg-gray-200 overflow-hidden">
+                            <img src="../../${item.Image_Path}" alt="${item.Title}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <div>
+                                    <h4 class="font-black text-gray-800">${item.Title}</h4>
+                                    <p class="text-sm text-gray-500 line-clamp-2">${item.Subtitle || ''}</p>
+                                </div>
+                                <span class="text-[10px] font-bold rounded-full px-2 py-1 ${item.Status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">${item.Status}</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mb-4">Sort: ${item.Sort_Order}</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="toggleItem(${item.Carousel_ID}, '${item.Status === 'active' ? 'inactive' : 'active'}')" class="rounded-lg border border-gray-200 py-2 text-sm font-bold text-gray-700 hover:bg-white">
+                                    ${item.Status === 'active' ? 'Hide' : 'Show'}
+                                </button>
+                                <button onclick="deleteItem(${item.Carousel_ID})" class="rounded-lg border border-red-200 py-2 text-sm font-bold text-red-600 hover:bg-red-50">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            } catch (error) {
+                list.innerHTML = '<p class="text-red-500">Failed to load carousel items.</p>';
+            }
+        }
+
+        async function toggleItem(id, status) {
+            const fd = new FormData();
+            fd.append('action', 'toggle');
+            fd.append('id', id);
+            fd.append('status', status);
+            const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') loadCarousel();
+            else Swal.fire('Error', data.message || 'Unable to update item.', 'error');
+        }
+
+        async function deleteItem(id) {
+            const confirm = await Swal.fire({ title: 'Delete image?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626' });
+            if (!confirm.isConfirmed) return;
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+            const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') loadCarousel();
+            else Swal.fire('Error', data.message || 'Unable to delete item.', 'error');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCarousel);
+    </script>
+</body>
+</html>

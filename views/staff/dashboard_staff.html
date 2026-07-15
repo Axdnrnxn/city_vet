@@ -276,6 +276,7 @@
     <script>
         let autoRefreshInterval;
         let globalQueueData = []; 
+        let selectedQueueRow = null;
         let eventCalendarDate = new Date();
         let eventCalendarMonth = eventCalendarDate.getMonth();
         let eventCalendarYear = eventCalendarDate.getFullYear();
@@ -504,6 +505,7 @@
         function openStaffModal(index) {
             const row = globalQueueData[index];
             if(!row) return;
+            selectedQueueRow = row;
 
             document.getElementById('mod-owner').innerText = `${row.Owner_F} ${row.Owner_L}`;
             document.getElementById('mod-pet').innerText = row.Pet;
@@ -530,9 +532,14 @@
 
         function closeStaffModal() {
             document.getElementById('staffModal').classList.add('hidden');
+            selectedQueueRow = null;
         }
 
         function updateQueueStatus(newStatus) {
+            if (!selectedQueueRow || !selectedQueueRow.Appointment_ID) {
+                Swal.fire('Unavailable', 'No queue record selected.', 'warning');
+                return;
+            }
             Swal.fire({
                 title: 'Update Queue?',
                 text: `Change status to "${newStatus}"?`,
@@ -542,10 +549,27 @@
                 confirmButtonText: 'Yes, Update'
             }).then((result) => {
                 if(result.isConfirmed) {
-                    Swal.fire('Updated!', 'Queue status changed successfully.', 'success').then(() => {
-                        closeStaffModal();
-                        fetchDashboard(); 
-                    });
+                    fetch('../../api/clinic/vet_queue.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'update_status',
+                            appointment_id: selectedQueueRow.Appointment_ID,
+                            status: newStatus
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            Swal.fire('Updated!', 'Queue status changed successfully.', 'success').then(() => {
+                                closeStaffModal();
+                                fetchDashboard(); 
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Unable to update queue.', 'error');
+                        }
+                    })
+                    .catch(() => Swal.fire('Error', 'Connection failed.', 'error'));
                 }
             });
         }

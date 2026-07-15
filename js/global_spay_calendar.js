@@ -29,6 +29,7 @@
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const event = eventByDate(dateStr);
             const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
+            const canClick = event && typeof config.onEventClick === 'function';
             const cellClass = event
                 ? (isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]')
                 : 'bg-white border-gray-200 text-gray-400';
@@ -37,7 +38,7 @@
                 : '';
 
             html += `
-                <div class="h-20 rounded-lg border p-2 flex flex-col items-center justify-center ${cellClass}">
+                <div class="h-20 rounded-lg border p-2 flex flex-col items-center justify-center ${cellClass} ${canClick ? 'cursor-pointer hover:shadow-sm transition' : ''}" ${canClick ? `onclick="CityVetSpayCalendar.openEvent(${event.Event_ID})"` : ''}>
                     <span class="text-sm font-black">${day}</span>
                     ${event ? `<span class="mt-1 text-[10px] font-bold leading-tight">${event.Title}</span>` : ''}
                     ${badge}
@@ -67,6 +68,12 @@
         changeMonth(dir) {
             viewDate.setMonth(viewDate.getMonth() + dir);
             render();
+        },
+        openEvent(eventId) {
+            const event = events.find(item => parseInt(item.Event_ID, 10) === parseInt(eventId, 10));
+            if (event && typeof config.onEventClick === 'function') {
+                config.onEventClick(event);
+            }
         }
     };
 })();
