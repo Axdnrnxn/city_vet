@@ -78,8 +78,11 @@ try {
         $appointments = [];
         while ($row = $result->fetch_assoc()) {
             $phpdate = strtotime($row['Appointment_Date']);
-            $row['Formatted_Date'] = date('M d, Y', $phpdate);
-            $row['Formatted_Time'] = date('h:i A', $phpdate);
+            $row['Formatted_Date'] = date('M j, Y', $phpdate);
+            $row['Formatted_Time'] = date('g:i A', $phpdate);
+            if (empty($row['Service_Name']) && !empty($row['Appointment_ID'])) {
+                $row['Service_Name'] = 'General Consultation';
+            }
             $appointments[] = $row;
         }
 

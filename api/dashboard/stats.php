@@ -57,15 +57,20 @@ $response['stats']['staff_active'] = $conn->query($sql)->fetch_assoc()['count'];
 // 2. UPCOMING SCHEDULE (Changed from CURDATE() to >= CURDATE())
 $sql = "SELECT 
             DATE_FORMAT(a.Appointment_Date, '%M %d, %Y') as Date,
-            TIME_FORMAT(a.Appointment_Date, '%h:%i %p') as Time,
+            DATE_FORMAT(a.Appointment_Date, '%l:%i %p') as Time,
             p.Name as Pet,
             sp.Species_Name as Species,
-            s.Service_Name,
+            CASE
+                WHEN a.Event_ID IS NOT NULL AND (LOWER(ce.Title) LIKE '%spay%' OR LOWER(ce.Title) LIKE '%neuter%') THEN 'Spay/Neuter'
+                WHEN s.Service_Name IS NOT NULL THEN s.Service_Name
+                ELSE 'General Consultation'
+            END AS Service_Name,
             a.Status
         FROM appointments a
         JOIN pets p ON a.Pet_ID = p.Pet_ID
         LEFT JOIN species sp ON p.Species_ID = sp.Species_ID
         LEFT JOIN services s ON a.Service_ID = s.Service_ID
+        LEFT JOIN calendar_events ce ON ce.Event_ID = a.Event_ID
         WHERE a.Owner_ID = ? 
         AND a.Appointment_Date >= CURDATE() 
         AND a.Status != 'Cancelled'

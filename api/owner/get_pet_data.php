@@ -59,9 +59,16 @@ if (isset($_GET['id'])) {
             (SELECT Visit_Date as Date, COALESCE(Treatment, 'General Checkup') as Treatment, Notes, 'Medical Record' as Type 
              FROM medical_records WHERE Pet_ID = $pet_id AND is_deleted = 0)
             UNION ALL
-            (SELECT a.Appointment_Date as Date, s.Service_Name as Treatment, a.Notes, 'Consultation' as Type 
+            (SELECT a.Appointment_Date as Date,
+                    CASE
+                        WHEN a.Event_ID IS NOT NULL AND (LOWER(ce.Title) LIKE '%spay%' OR LOWER(ce.Title) LIKE '%neuter%') THEN 'Spay/Neuter'
+                        WHEN s.Service_Name IS NOT NULL THEN s.Service_Name
+                        ELSE 'General Consultation'
+                    END AS Treatment,
+                    a.Notes, 'Consultation' as Type
              FROM appointments a
              LEFT JOIN services s ON a.Service_ID = s.Service_ID
+             LEFT JOIN calendar_events ce ON ce.Event_ID = a.Event_ID
              WHERE a.Pet_ID = $pet_id AND a.Status = 'Completed')
             ORDER BY Date DESC";
 

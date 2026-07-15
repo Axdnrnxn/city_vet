@@ -389,7 +389,7 @@
             document.getElementById('roster-body').innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Loading roster...</td></tr>';
             document.getElementById('rosterModal').classList.remove('hidden');
 
-            fetch(`../../api/clinic/vet_queue.php?mode=roster&event_id=${event.Event_ID}`)
+            fetch(`../../api/calendar/get_event_roster.php?event_id=${event.Event_ID}`)
                 .then(res => res.json())
                 .then(data => {
                     const tbody = document.getElementById('roster-body');
@@ -400,10 +400,10 @@
 
                     tbody.innerHTML = data.roster.map(row => `
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 font-bold text-gray-800">${row.First_name || ''} ${row.Last_name || ''}</td>
-                            <td class="px-6 py-4 text-gray-600">${row.Pets || '--'} <span class="text-xs text-gray-400">(${row.Pet_Count || 0})</span></td>
+                            <td class="px-6 py-4 font-bold text-gray-800">${row.Owner_Name || '--'}</td>
+                            <td class="px-6 py-4 text-gray-600">${row.Pet_Names || '--'} <span class="text-xs text-gray-400">(${row.Pet_Count || 0})</span></td>
                             <td class="px-6 py-4 text-gray-600">${row.Contact_number || 'No contact'}</td>
-                            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-teal-50 text-[#00796B]">${row.Status}</span></td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-teal-50 text-[#00796B]">${row.Status || 'Pending'}</span></td>
                         </tr>
                     `).join('');
                 })

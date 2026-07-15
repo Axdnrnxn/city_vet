@@ -50,7 +50,10 @@ if ($result) {
         // Optional: Make the date look nicer before sending it to the frontend
         if (!empty($row['Appointment_Date'])) {
             $phpdate = strtotime($row['Appointment_Date']);
-            $row['Appointment_Date'] = date('M d, Y - h:i A', $phpdate);
+            $row['Appointment_Date'] = date('M j, Y - g:i A', $phpdate);
+        }
+        if (empty($row['Service_Name'])) {
+            $row['Service_Name'] = 'Spay/Neuter';
         }
         $appointments[] = $row;
     }

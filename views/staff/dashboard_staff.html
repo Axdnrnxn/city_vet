@@ -326,7 +326,7 @@
                 const isPast = cellDate < today;
                 const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
                 const clickable = !isPast && !event;
-                const clickEvent = clickable ? `onclick="openEventModal('${dateStr}')"` : '';
+                const clickEvent = clickable ? `onclick="openEventModal('${dateStr}')"` : (event ? `onclick="deleteEvent(${event.Event_ID})"` : '');
                 const cellClass = event
                     ? (isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]')
                     : (clickable ? 'bg-white hover:bg-teal-50 cursor-pointer border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-300');
@@ -352,6 +352,37 @@
 
         function closeEventModal() {
             document.getElementById('eventModal').classList.add('hidden');
+        }
+
+        function deleteEvent(eventId) {
+            Swal.fire({
+                title: 'Delete this event?',
+                text: 'This action cannot be undone. Any linked appointments will also be removed.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                fetch('../../api/calendar/events.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete_event', event_id: eventId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire('Deleted', data.message, 'success').then(() => {
+                            loadSpayEvents();
+                            loadSpayPendingBookings();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Unable to delete event.', 'error');
+                    }
+                })
+                .catch(() => Swal.fire('Error', 'Connection failed.', 'error'));
+            });
         }
 
         document.getElementById('eventForm').addEventListener('submit', function(e) {

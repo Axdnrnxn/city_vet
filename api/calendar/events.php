@@ -78,6 +78,24 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $mode = $_GET['mode'] ?? 'events';
 
+    if ($mode === 'event_details') {
+        requireRole([1, 2, 4]);
+        $eventId = (int)($_GET['event_id'] ?? 0);
+        if (!$eventId) {
+            jsonResponse(["status" => "error", "message" => "Missing event ID"], 422);
+        }
+
+        $stmt = $conn->prepare("SELECT Event_ID, Title, Event_Date, Max_Slots, Status FROM calendar_events WHERE Event_ID = ?");
+        $stmt->bind_param("i", $eventId);
+        $stmt->execute();
+        $event = $stmt->get_result()->fetch_assoc();
+        if (!$event) {
+            jsonResponse(["status" => "error", "message" => "Event not found"], 404);
+        }
+
+        jsonResponse(["status" => "success", "event" => $event]);
+    }
+
     if ($mode === 'pending') {
         requireRole([1, 4]);
 
@@ -283,6 +301,62 @@ if ($action === 'book_event') {
 
         $conn->commit();
         jsonResponse(["status" => "success", "message" => "Booking request submitted. Please wait for staff confirmation."]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        jsonResponse(["status" => "error", "message" => $e->getMessage()], 400);
+    }
+}
+
+if ($action === 'delete_event') {
+    requireRole([1, 4]);
+
+    $eventId = (int)($input['event_id'] ?? 0);
+    if (!$eventId) {
+        jsonResponse(["status" => "error", "message" => "Missing event ID."], 422);
+    }
+
+    $conn->begin_transaction();
+    try {
+        $checkStmt = $conn->prepare("SELECT Event_ID, Title FROM calendar_events WHERE Event_ID = ? FOR UPDATE");
+        $checkStmt->bind_param("i", $eventId);
+        $checkStmt->execute();
+        $event = $checkStmt->get_result()->fetch_assoc();
+
+        if (!$event) {
+            throw new Exception("Event not found.");
+        }
+
+        $appointmentStmt = $conn->prepare("SELECT Appointment_ID FROM appointments WHERE Event_ID = ?");
+        $appointmentStmt->bind_param("i", $eventId);
+        $appointmentStmt->execute();
+        $appointmentIds = [];
+        $appResult = $appointmentStmt->get_result();
+        while ($row = $appResult->fetch_assoc()) {
+            $appointmentIds[] = (int)$row['Appointment_ID'];
+        }
+
+        if (!empty($appointmentIds)) {
+            $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
+            $petDelete = $conn->prepare("DELETE FROM appointment_pets WHERE Appointment_ID IN ($placeholders)");
+            $types = str_repeat('i', count($appointmentIds));
+            $petDelete->bind_param($types, ...$appointmentIds);
+            $petDelete->execute();
+            $petDelete->close();
+
+            $apptDelete = $conn->prepare("DELETE FROM appointments WHERE Appointment_ID IN ($placeholders)");
+            $apptDelete->bind_param($types, ...$appointmentIds);
+            $apptDelete->execute();
+            $apptDelete->close();
+        }
+
+        $deleteStmt = $conn->prepare("DELETE FROM calendar_events WHERE Event_ID = ?");
+        $deleteStmt->bind_param("i", $eventId);
+        $deleteStmt->execute();
+        $deleteStmt->close();
+
+        writeAuditLog($conn, (int)$_SESSION['user_id'], "Delete Spay/Neuter Event", "calendar_events", $eventId);
+        $conn->commit();
+        jsonResponse(["status" => "success", "message" => "Event deleted successfully."]);
     } catch (Exception $e) {
         $conn->rollback();
         jsonResponse(["status" => "error", "message" => $e->getMessage()], 400);

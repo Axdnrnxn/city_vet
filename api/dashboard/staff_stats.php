@@ -25,11 +25,15 @@ $sql = "
         p.Pet_ID,
         a.Notes,
         o.Contact_number,
-        TIME_FORMAT(a.Appointment_Date, '%h:%i %p') as Time,
+        DATE_FORMAT(a.Appointment_Date, '%l:%i %p') as Time,
         p.Name as Pet,
         o.First_name as Owner_F,
         o.Last_name as Owner_L,
-        s.Service_Name as Service,
+        CASE
+            WHEN a.Event_ID IS NOT NULL AND (LOWER(ce.Title) LIKE '%spay%' OR LOWER(ce.Title) LIKE '%neuter%') THEN 'Spay/Neuter'
+            WHEN s.Service_Name IS NOT NULL THEN s.Service_Name
+            ELSE 'General Consultation'
+        END AS Service,
         sp.Species_Name as Species,
         a.Status as Status,
         a.Appointment_Date as SortDate
@@ -38,6 +42,7 @@ $sql = "
     JOIN owners o ON p.Owner_ID = o.Owner_ID
     LEFT JOIN species sp ON p.Species_ID = sp.Species_ID
     LEFT JOIN services s ON a.Service_ID = s.Service_ID
+    LEFT JOIN calendar_events ce ON ce.Event_ID = a.Event_ID
     WHERE DATE(a.Appointment_Date) = CURDATE()
       AND a.Status != 'Cancelled'
     ORDER BY SortDate ASC";
