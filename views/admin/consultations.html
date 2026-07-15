@@ -194,10 +194,10 @@
             petSelect.disabled = false;
             petSelect.innerHTML = '<option>Loading...</option>';
             try {
-                const res = await fetch(`../../api/records/get_pets_by_owner.php?owner_id=${ownerId}`);
+                const res = await fetch(`../../api/records/get_pets_by_owners.php?owner_id=${ownerId}`);
                 const pets = await res.json();
                 petSelect.innerHTML = '<option value="">-- Select Pet --</option>' + 
-                    pets.map(p => `<option value="${p.Pet_ID}">${p.Name}</option>`).join('');
+                    pets.map(p => `<option value="${p.Pet_ID}">${p.Name}${p.Breed_Name ? ` (${p.Breed_Name})` : ''}</option>`).join('');
             } catch (e) { petSelect.innerHTML = '<option>Error</option>'; }
         }
 

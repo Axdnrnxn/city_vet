@@ -128,13 +128,8 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Barangay</label>
-                                <select id="barangay" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none bg-white">
+                                <select id="barangay" data-cdo-barangays class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none bg-white">
                                     <option value="" disabled selected>Select Barangay</option>
-                                    <option value="Carmen">Carmen</option>
-                                    <option value="Kauswagan">Kauswagan</option>
-                                    <option value="Nazareth">Nazareth</option>
-                                    <option value="Poblacion">Poblacion</option>
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
 
@@ -181,6 +176,7 @@
         </div>
     </div>
 
+    <script src="../../js/cdo_barangays.js"></script>
     <script>
         // 1. Sidebar Toggle
         const sidebar = document.getElementById('sidebar');
@@ -333,7 +329,12 @@
                 const result = await res.json();
 
                 if(result.status === 'success') {
-                    Swal.fire({icon: 'success', title: 'Success', text: 'Owner registered successfully!', timer: 1500, showConfirmButton: false});
+                    const deliveryText = `Owner registered successfully. ${result.email_sent ? 'Email sent via Resend.' : 'Email not sent. Configure Resend API key.'} ${result.sms_sent ? 'SMS sent via Semaphore.' : 'SMS not sent. Configure Semaphore API key.'}`;
+                    const details = [
+                        !result.email_sent && result.email_message ? `Email: ${result.email_message}` : '',
+                        !result.sms_sent && result.sms_message ? `SMS: ${result.sms_message}` : ''
+                    ].filter(Boolean).join('\n');
+                    Swal.fire({icon: result.email_sent || result.sms_sent ? 'success' : 'info', title: 'Success', text: details ? `${deliveryText}\n${details}` : deliveryText});
                     closeAddModal();
                     loadOwners(); // Refresh table
                 } else {

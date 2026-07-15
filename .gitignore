@@ -4,3 +4,6 @@ uploads/pets/*.png
 
 # Ignore database dumps
 *.sql
+
+# Ignore local notification provider credentials
+config/notification_config.local.php

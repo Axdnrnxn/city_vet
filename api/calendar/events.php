@@ -2,6 +2,7 @@
 session_start();
 header("Content-Type: application/json; charset=UTF-8");
 require_once '../../config/db_connection.php';
+require_once '../notifications/notify.php';
 
 if (isset($conn) && $conn instanceof mysqli) {
     $conn->set_charset("utf8mb4");
@@ -70,17 +71,6 @@ function approvedPetCount($conn, $eventId) {
     $stmt->bind_param("i", $eventId);
     $stmt->execute();
     return (int)$stmt->get_result()->fetch_assoc()['used_slots'];
-}
-
-function sendOwnerEmail($email, $subject, $message) {
-    if (!$email) return false;
-    $headers = "From: City Veterinary Clinic <no-reply@cityvet.local>\r\n";
-    return @mail($email, $subject, $message, $headers);
-}
-
-function sendOwnerSms($phone, $message) {
-    // Replace this with Semaphore/Twilio/iTexMo integration credentials for production SMS.
-    return !empty($phone) && !empty($message);
 }
 
 requireLogin();
@@ -369,8 +359,8 @@ if ($action === 'confirm_booking') {
 
         $message = "Your Spay/Neuter appointment for {$appt['Title']} on {$appt['Event_Date']} has been confirmed. Please reply or contact the clinic to confirm attendance.";
         notifyUser($conn, (int)$appt['User_ID'], "Confirm Your Attendance", $message);
-        $emailSent = sendOwnerEmail($appt['Email'], "City Vet Spay/Neuter Attendance Confirmation", $message);
-        $smsQueued = sendOwnerSms($appt['Contact_number'], $message);
+        $emailResult = sendResendEmail($appt['Email'], "City Vet Spay/Neuter Attendance Confirmation", $message);
+        $smsResult = sendSemaphoreSms($appt['Contact_number'], $message);
         writeAuditLog($conn, (int)$_SESSION['user_id'], "Confirm Spay/Neuter Booking", "appointments", $appointmentId);
 
         $conn->commit();
@@ -378,8 +368,10 @@ if ($action === 'confirm_booking') {
             "status" => "success",
             "message" => "Booking confirmed. Owner notification was created.",
             "remaining_slots" => $remaining,
-            "email_sent" => $emailSent,
-            "sms_queued" => $smsQueued
+            "email_sent" => $emailResult["sent"],
+            "email_message" => $emailResult["message"],
+            "sms_sent" => $smsResult["sent"],
+            "sms_message" => $smsResult["message"]
         ]);
     } catch (Exception $e) {
         $conn->rollback();

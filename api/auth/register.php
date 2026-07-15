@@ -2,6 +2,7 @@
 // File: api/auth/register.php
 header("Content-Type: application/json; charset=UTF-8");
 require_once '../../config/db_connection.php';
+require_once '../notifications/notify.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 if (is_null($data)) { $data = $_POST; }
@@ -40,7 +41,19 @@ try {
     $stmt2->execute();
 
     $conn->commit();
-    echo json_encode(["status" => "success", "message" => "Registration Successful! Please Login."]);
+
+    $welcomeMessage = "Welcome to City Vet, {$data['fname']}! Your account has been registered. You may now log in and manage your pets and appointments.";
+    $emailResult = sendResendEmail($data['email'], "Welcome to City Vet", $welcomeMessage);
+    $smsResult = sendSemaphoreSms($data['phone'], $welcomeMessage);
+
+    echo json_encode([
+        "status" => "success",
+        "message" => "Registration Successful! Please Login.",
+        "email_sent" => $emailResult["sent"],
+        "email_message" => $emailResult["message"],
+        "sms_sent" => $smsResult["sent"],
+        "sms_message" => $smsResult["message"]
+    ]);
 
 } catch (Exception $e) {
     $conn->rollback();

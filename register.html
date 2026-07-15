@@ -50,12 +50,8 @@
                     
                     <div>
                         <label class="text-teal-50 text-[10px] font-bold uppercase ml-1 tracking-wider">Barangay</label>
-                        <select id="barangay" required class="w-full p-2.5 rounded-lg bg-white/20 border border-white/10 text-white focus:ring-2 focus:ring-teal-300 focus:bg-white/30 outline-none transition font-medium appearance-none">
+                        <select id="barangay" data-cdo-barangays data-option-class="text-gray-800" required class="w-full p-2.5 rounded-lg bg-white/20 border border-white/10 text-white focus:ring-2 focus:ring-teal-300 focus:bg-white/30 outline-none transition font-medium appearance-none">
                             <option value="" disabled selected class="text-gray-800">Select Barangay</option>
-                            <option value="Carmen" class="text-gray-800">Carmen</option>
-                            <option value="Kauswagan" class="text-gray-800">Kauswagan</option>
-                            <option value="Nazareth" class="text-gray-800">Nazareth</option>
-                            <option value="Poblacion" class="text-gray-800">Poblacion</option>
                         </select>
                     </div>
 
@@ -102,6 +98,7 @@
         </div>
     </div>
 
+    <script src="js/cdo_barangays.js"></script>
     <script>
         function togglePassword() {
             var p = document.getElementById("pass");
@@ -132,7 +129,12 @@
                 const result = await res.json();
 
                 if(result.status === 'success') {
-                    Swal.fire({icon: 'success', title: 'Success', text: result.message}).then(() => window.location.href = 'login.html');
+                    const deliveryText = `${result.message} ${result.email_sent ? 'Email sent via Resend.' : 'Email not sent. Configure Resend API key.'} ${result.sms_sent ? 'SMS sent via Semaphore.' : 'SMS not sent. Configure Semaphore API key.'}`;
+                    const details = [
+                        !result.email_sent && result.email_message ? `Email: ${result.email_message}` : '',
+                        !result.sms_sent && result.sms_message ? `SMS: ${result.sms_message}` : ''
+                    ].filter(Boolean).join('\n');
+                    Swal.fire({icon: result.email_sent || result.sms_sent ? 'success' : 'info', title: 'Success', text: details ? `${deliveryText}\n${details}` : deliveryText}).then(() => window.location.href = 'login.html');
                 } else {
                     Swal.fire({icon: 'error', title: 'Error', text: result.message});
                 }

@@ -132,13 +132,8 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Barangay <span class="text-red-500">*</span></label>
-                                <select id="barangay" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none bg-white transition">
+                                <select id="barangay" data-cdo-barangays required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none bg-white transition">
                                     <option value="" disabled selected>Select Barangay</option>
-                                    <option value="Carmen">Carmen</option>
-                                    <option value="Kauswagan">Kauswagan</option>
-                                    <option value="Nazareth">Nazareth</option>
-                                    <option value="Poblacion">Poblacion</option>
-                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div class="border-t border-gray-200 pt-6 mt-4">
@@ -214,6 +209,7 @@
         </div>
     </div>
 
+    <script src="../../js/cdo_barangays.js"></script>
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -315,7 +311,12 @@
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    Swal.fire({ icon: 'success', title: 'Account Created', text: 'Success!', timer: 1500, showConfirmButton: false });
+                    const deliveryText = `Account created. ${result.email_sent ? 'Email sent via Resend.' : 'Email not sent. Configure Resend API key.'} ${result.sms_sent ? 'SMS sent via Semaphore.' : 'SMS not sent. Configure Semaphore API key.'}`;
+                    const details = [
+                        !result.email_sent && result.email_message ? `Email: ${result.email_message}` : '',
+                        !result.sms_sent && result.sms_message ? `SMS: ${result.sms_message}` : ''
+                    ].filter(Boolean).join('\n');
+                    Swal.fire({ icon: result.email_sent || result.sms_sent ? 'success' : 'info', title: 'Account Created', text: details ? `${deliveryText}\n${details}` : deliveryText });
                     closeAddModal(); loadOwners();
                 } else { Swal.fire('Error', result.message || 'Registration failed.', 'error'); }
             } catch (err) { Swal.fire('System Error', 'Failed to connect.', 'error'); }

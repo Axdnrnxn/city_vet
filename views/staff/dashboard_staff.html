@@ -434,8 +434,9 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        const emailStatus = data.email_sent ? 'Email sent.' : 'Email not sent. Configure SMTP/sendmail for real delivery.';
-                        Swal.fire('Confirmed', `${data.message} Remaining slots: ${data.remaining_slots}. ${emailStatus}`, data.email_sent ? 'success' : 'info').then(() => {
+                        const emailStatus = data.email_sent ? 'Email sent via Resend.' : 'Email not sent. Configure Resend API key.';
+                        const smsStatus = data.sms_sent ? 'SMS sent via Semaphore.' : 'SMS not sent. Configure Semaphore API key.';
+                        Swal.fire('Confirmed', `${data.message} Remaining slots: ${data.remaining_slots}. ${emailStatus} ${smsStatus}`, data.email_sent || data.sms_sent ? 'success' : 'info').then(() => {
                             loadSpayPendingBookings();
                             loadSpayEvents();
                             fetchDashboard();
