@@ -149,6 +149,7 @@
                                 <div class="mt-3">
                                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
                                     <input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none">
+                                    <p class="text-[10px] text-gray-500 mt-1">Use 8+ characters with uppercase, lowercase, number, and symbol.</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -289,6 +290,19 @@
             }, 300);
         }
 
+        function validatePasswordStrength(password, confirmPassword) {
+            if (password.length < 8) {
+                return 'Password must be at least 8 characters long.';
+            }
+            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+                return 'Password must include uppercase, lowercase, number, and special character.';
+            }
+            if (password !== confirmPassword) {
+                return 'Passwords do not match.';
+            }
+            return '';
+        }
+
         function toggleModalPassword() {
             var p = document.getElementById("password");
             var cp = document.getElementById("confirm_password");
@@ -314,8 +328,9 @@
                 return;
             }
 
-            if(data.password !== data.confirm_password) {
-                Swal.fire('Error', 'Passwords do not match.', 'error');
+            const passwordError = validatePasswordStrength(data.password, data.confirm_password);
+            if (passwordError) {
+                Swal.fire('Error', passwordError, 'error');
                 return;
             }
 

@@ -62,7 +62,12 @@ if ($method === 'POST' && $action === 'upload') {
 
     $filename = uniqid('carousel_', true) . '.' . $allowed[$mime];
     $relativePath = 'uploads/carousel/' . $filename;
-    $target = dirname(__DIR__, 2) . '/' . $relativePath;
+    $targetDir = dirname(__DIR__, 2) . '/uploads/carousel';
+    $target = $targetDir . '/' . $filename;
+
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0777, true);
+    }
 
     if (!move_uploaded_file($tmp, $target)) {
         respond(["status" => "error", "message" => "Unable to save uploaded image."], 500);

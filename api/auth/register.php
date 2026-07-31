@@ -7,9 +7,32 @@ require_once '../notifications/notify.php';
 $data = json_decode(file_get_contents("php://input"), true);
 if (is_null($data)) { $data = $_POST; }
 
+function validatePasswordStrength($password): array {
+    if (strlen($password) < 8) {
+        return ["status" => "error", "message" => "Password must be at least 8 characters long."];
+    }
+
+    if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/\d/', $password) || !preg_match('/[^A-Za-z0-9]/', $password)) {
+        return ["status" => "error", "message" => "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character."];
+    }
+
+    return ["status" => "success"];
+}
+
 // 1. Validate Fields
 if (empty($data['email']) || empty($data['password']) || empty($data['fname']) || empty($data['lname'])) {
     echo json_encode(["status" => "error", "message" => "Please fill in all required fields."]);
+    exit();
+}
+
+if (($data['password'] ?? '') !== ($data['confirm_password'] ?? '')) {
+    echo json_encode(["status" => "error", "message" => "Password confirmation does not match."]);
+    exit();
+}
+
+$passwordValidation = validatePasswordStrength((string)($data['password'] ?? ''));
+if ($passwordValidation['status'] !== 'success') {
+    echo json_encode($passwordValidation);
     exit();
 }
 

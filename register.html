@@ -69,6 +69,7 @@
                         <div>
                             <label class="text-teal-50 text-[10px] font-bold uppercase ml-1 tracking-wider">Create Password</label>
                             <input type="password" id="pass" required class="w-full p-2.5 rounded-lg bg-white/20 border border-white/10 text-white focus:ring-2 focus:ring-teal-300 focus:bg-white/30 outline-none transition">
+                            <p class="text-[10px] text-teal-100 mt-1 ml-1">Use 8+ characters with uppercase, lowercase, number, and symbol.</p>
                         </div>
                         
                         <div>
@@ -106,9 +107,30 @@
             if (p.type === "password") { p.type = "text"; cp.type = "text"; } else { p.type = "password"; cp.type = "password"; }
         }
 
+        function validatePasswordFields(password, confirmPassword) {
+            if (password.length < 8) {
+                return 'Password must be at least 8 characters long.';
+            }
+            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+                return 'Password must include uppercase, lowercase, number, and special character.';
+            }
+            if (password !== confirmPassword) {
+                return 'Password confirmation does not match.';
+            }
+            return '';
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const password = document.getElementById('pass').value;
+            const confirmPassword = document.getElementById('confirm_pass').value;
+            const passwordError = validatePasswordFields(password, confirmPassword);
+            if (passwordError) {
+                Swal.fire({icon: 'warning', title: 'Password Strength', text: passwordError});
+                return;
+            }
+
             const formData = {
                 lname: document.getElementById('lname').value,
                 fname: document.getElementById('fname').value,
@@ -116,8 +138,8 @@
                 barangay: document.getElementById('barangay').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
-                password: document.getElementById('pass').value,
-                confirm_password: document.getElementById('confirm_pass').value
+                password: password,
+                confirm_password: confirmPassword
             };
 
              try {

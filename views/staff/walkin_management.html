@@ -142,9 +142,12 @@
                                     <input type="text" id="username" placeholder="Username *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                     <input type="tel" id="phone" pattern="09[0-9]{9}" placeholder="Phone (09XXXXXXXXX) *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                     <input type="email" id="email" placeholder="Email Address *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <input type="password" id="password" placeholder="Password *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
-                                        <input type="password" id="confirm_password" placeholder="Confirm *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                    <div class="space-y-2">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <input type="password" id="password" placeholder="Password *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                            <input type="password" id="confirm_password" placeholder="Confirm *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
+                                        </div>
+                                        <p class="text-[10px] text-gray-500">Use 8+ characters with uppercase, lowercase, number, and symbol.</p>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="showPass" onclick="togglePassVisibility()" class="w-4 h-4 text-teal-600 rounded cursor-pointer">
@@ -267,6 +270,19 @@
             } catch (err) { console.error(err); }
         }
 
+        function validatePasswordStrength(password, confirmPassword) {
+            if (password.length < 8) {
+                return 'Password must be at least 8 characters long.';
+            }
+            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+                return 'Password must include uppercase, lowercase, number, and special character.';
+            }
+            if (password !== confirmPassword) {
+                return 'Passwords do not match.';
+            }
+            return '';
+        }
+
         async function submitNewOwner() {
             const fields = {
                 fname: document.getElementById('fname'), lname: document.getElementById('lname'),
@@ -292,9 +308,10 @@
                 return;
             }
 
-            if (fields.password.value !== fields.confirm_password.value) {
+            const passwordError = validatePasswordStrength(fields.password.value, fields.confirm_password.value);
+            if (passwordError) {
                 fields.confirm_password.classList.add('border-red-500');
-                Swal.fire('Match Error', 'Passwords do not match.', 'error');
+                Swal.fire('Password Strength Error', passwordError, 'error');
                 return;
             }
 

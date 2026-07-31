@@ -32,7 +32,7 @@
                 <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <h2 class="text-xl font-bold text-gray-800">Homepage Carousel CMS</h2>
+                <h2 class="text-xl font-bold text-gray-800">Homepage Carousel & Events Blog CMS</h2>
             </div>
         </header>
 
@@ -40,16 +40,27 @@
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-fit">
                     <h3 class="font-bold text-gray-800 text-lg mb-5 flex items-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up text-[#00796B]"></i> Upload Carousel Image
+                        <i class="fa-solid fa-cloud-arrow-up text-[#00796B]"></i> Publish Homepage Update
                     </h3>
                     <form id="carouselForm" class="space-y-4">
                         <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Content Section</label>
+                            <select name="section" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                                <option value="highlight">City Vet Highlights & Vlogs</option>
+                                <option value="announcement">Events & Veterinary Blog</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Title</label>
-                            <input name="title" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Rabies-Free Community">
+                            <input name="title" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Rabies-Free Community / Veterinary Update">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtitle</label>
-                            <textarea name="subtitle" rows="3" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Short caption for the homepage carousel"></textarea>
+                            <textarea name="subtitle" rows="3" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Short caption for the homepage events/blog section"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Badge</label>
+                            <input name="badge" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Announcement / Health Alert / Pet Care Tip">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sort Order</label>
@@ -58,10 +69,10 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Image</label>
                             <input name="image" type="file" accept="image/jpeg,image/png,image/webp" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-teal-50 file:text-[#00796B] hover:file:bg-teal-100">
-                            <p class="text-xs text-gray-400 mt-2">JPG, PNG, or WEBP. Max 5MB.</p>
+                            <p class="text-xs text-gray-400 mt-2">JPG, PNG, or WEBP. Max 5MB. This image is used in the public homepage feed.</p>
                         </div>
                         <button class="w-full bg-[#00796B] hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-sm transition">
-                            Upload Image
+                            Publish Post
                         </button>
                     </form>
                 </section>
@@ -69,7 +80,7 @@
                 <section class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                            <i class="fa-solid fa-images text-[#00796B]"></i> Carousel Items
+                            <i class="fa-solid fa-images text-[#00796B]"></i> Published Homepage Items
                         </h3>
                         <button onclick="loadCarousel()" class="text-sm font-bold text-[#00796B] hover:underline">Refresh</button>
                     </div>
@@ -91,13 +102,15 @@
             e.preventDefault();
             const formData = new FormData(this);
             formData.append('action', 'upload');
+            const section = String(formData.get('section') || 'announcement');
+            const endpoint = section === 'highlight' ? '../../api/cms/carousel.php' : '../../api/cms/homepage_posts.php';
 
             try {
-                Swal.fire({ title: 'Uploading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: formData });
+                Swal.fire({ title: 'Publishing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await fetch(endpoint, { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    Swal.fire('Uploaded', data.message, 'success');
+                    Swal.fire('Published', data.message, 'success');
                     this.reset();
                     loadCarousel();
                 } else {
@@ -113,61 +126,83 @@
             list.innerHTML = '<p class="text-gray-400">Loading...</p>';
 
             try {
-                const res = await fetch('../../api/cms/carousel.php');
-                const data = await res.json();
-                if (data.status !== 'success' || data.items.length === 0) {
-                    list.innerHTML = '<p class="text-gray-400 md:col-span-2 text-center py-12">No carousel images uploaded yet.</p>';
+                const [carouselRes, postRes] = await Promise.all([
+                    fetch('../../api/cms/carousel.php'),
+                    fetch('../../api/cms/homepage_posts.php')
+                ]);
+
+                const carouselData = await carouselRes.json();
+                const postData = await postRes.json();
+
+                const items = [
+                    ...(carouselData.status === 'success' ? carouselData.items.map(item => ({ ...item, Section: 'highlight', Source: 'carousel' })) : []),
+                    ...(postData.status === 'success' ? postData.items.map(item => ({ ...item, Section: item.Section || 'announcement', Source: 'homepage' })) : [])
+                ].sort((a, b) => {
+                    const sectionOrder = { highlight: 0, announcement: 1 };
+                    return (sectionOrder[a.Section] ?? 99) - (sectionOrder[b.Section] ?? 99) || Number(b.Sort_Order || 0) - Number(a.Sort_Order || 0);
+                });
+
+                if (items.length === 0) {
+                    list.innerHTML = '<p class="text-gray-400 md:col-span-2 text-center py-12">No homepage posts uploaded yet.</p>';
                     return;
                 }
 
-                list.innerHTML = data.items.map(item => `
-                    <article class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50">
-                        <div class="aspect-video bg-gray-200 overflow-hidden">
-                            <img src="../../${item.Image_Path}" alt="${item.Title}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="p-5">
-                            <div class="flex items-start justify-between gap-3 mb-2">
-                                <div>
-                                    <h4 class="font-black text-gray-800">${item.Title}</h4>
-                                    <p class="text-sm text-gray-500 line-clamp-2">${item.Subtitle || ''}</p>
+                list.innerHTML = items.map(item => {
+                    const imageSrc = item.Image_Path && item.Image_Path !== '0' ? `../../${item.Image_Path}` : '../../uploads/hero_slides/1.jpg';
+                    return `
+                        <article class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50">
+                            <div class="aspect-video bg-gray-200 overflow-hidden">
+                                <img src="${imageSrc}" alt="${item.Title}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="p-5">
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <div>
+                                        <h4 class="font-black text-gray-800">${item.Title}</h4>
+                                        <p class="text-sm text-gray-500 line-clamp-2">${item.Subtitle || ''}</p>
+                                    </div>
+                                    <span class="text-[10px] font-bold rounded-full px-2 py-1 ${item.Status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">${item.Status}</span>
                                 </div>
-                                <span class="text-[10px] font-bold rounded-full px-2 py-1 ${item.Status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">${item.Status}</span>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-[10px] font-bold rounded-full px-2 py-1 bg-[#00796B]/10 text-[#00796B]">${item.Section === 'highlight' ? 'Highlights & Vlogs' : 'Events & Blog'}</span>
+                                    <span class="text-[10px] text-gray-400">Sort: ${item.Sort_Order}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="toggleItem(${item.Carousel_ID || item.Post_ID}, '${item.Status === 'active' ? 'inactive' : 'active'}', '${item.Source}')" class="rounded-lg border border-gray-200 py-2 text-sm font-bold text-gray-700 hover:bg-white">
+                                        ${item.Status === 'active' ? 'Hide' : 'Show'}
+                                    </button>
+                                    <button onclick="deleteItem(${item.Carousel_ID || item.Post_ID}, '${item.Source}')" class="rounded-lg border border-red-200 py-2 text-sm font-bold text-red-600 hover:bg-red-50">
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
-                            <p class="text-xs text-gray-400 mb-4">Sort: ${item.Sort_Order}</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="toggleItem(${item.Carousel_ID}, '${item.Status === 'active' ? 'inactive' : 'active'}')" class="rounded-lg border border-gray-200 py-2 text-sm font-bold text-gray-700 hover:bg-white">
-                                    ${item.Status === 'active' ? 'Hide' : 'Show'}
-                                </button>
-                                <button onclick="deleteItem(${item.Carousel_ID})" class="rounded-lg border border-red-200 py-2 text-sm font-bold text-red-600 hover:bg-red-50">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </article>
-                `).join('');
+                        </article>
+                    `;
+                }).join('');
             } catch (error) {
-                list.innerHTML = '<p class="text-red-500">Failed to load carousel items.</p>';
+                list.innerHTML = '<p class="text-red-500">Failed to load homepage items.</p>';
             }
         }
 
-        async function toggleItem(id, status) {
+        async function toggleItem(id, status, source) {
             const fd = new FormData();
             fd.append('action', 'toggle');
             fd.append('id', id);
             fd.append('status', status);
-            const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: fd });
+            const endpoint = source === 'carousel' ? '../../api/cms/carousel.php' : '../../api/cms/homepage_posts.php';
+            const res = await fetch(endpoint, { method: 'POST', body: fd });
             const data = await res.json();
             if (data.status === 'success') loadCarousel();
             else Swal.fire('Error', data.message || 'Unable to update item.', 'error');
         }
 
-        async function deleteItem(id) {
-            const confirm = await Swal.fire({ title: 'Delete image?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626' });
+        async function deleteItem(id, source) {
+            const confirm = await Swal.fire({ title: 'Delete this post?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626' });
             if (!confirm.isConfirmed) return;
             const fd = new FormData();
             fd.append('action', 'delete');
             fd.append('id', id);
-            const res = await fetch('../../api/cms/carousel.php', { method: 'POST', body: fd });
+            const endpoint = source === 'carousel' ? '../../api/cms/carousel.php' : '../../api/cms/homepage_posts.php';
+            const res = await fetch(endpoint, { method: 'POST', body: fd });
             const data = await res.json();
             if (data.status === 'success') loadCarousel();
             else Swal.fire('Error', data.message || 'Unable to delete item.', 'error');

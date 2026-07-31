@@ -17,7 +17,13 @@ function loadSidebar() {
     sidebarContainer.innerHTML = `
     <aside id="sidebar" class="bg-white text-gray-700 w-64 h-screen flex flex-col shadow-xl fixed lg:static transform -translate-x-full lg:translate-x-0 z-30 sidebar-transition">
         
-        <div class="h-24 flex-shrink-0 flex items-center justify-center border-b border-gray-200 bg-gradient-to-br from-[#004D40] to-[#00796B]">
+        <div class="px-4 pt-4">
+            <button onclick="window.history.length > 1 ? history.back() : window.location.href = '../../login.html'" class="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <div class="h-24 flex-shrink-0 flex items-center justify-center border-b border-gray-200 bg-gradient-to-br from-[#004D40] to-[#00796B] mt-3">
             <div class="flex items-center gap-3 text-white">
                 <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
                     <i class="fa-solid fa-paw text-xl"></i>
