@@ -1,8 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Owner Dashboard - City Vet</title>
     
     <script>
@@ -33,7 +36,7 @@
     <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
 
     <div id="sidebar-container"></div>
-    <script src="../../js/sidebar_owner.js"></script>
+    <script src="../../js/sidebar_owner.js?v=20260801"></script>
 
     <div class="flex-1 flex flex-col h-screen relative">
         <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
@@ -270,31 +273,53 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 let cellDate = new Date(year, month, day);
                 let dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                let dayOfWeek = cellDate.getDay();
+                let isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                 let isPast = cellDate < today;
-                const event = eventByDate(dateStr);
-                const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
-                let isDisabled = isPast || !event || isFull;
-                let dayClass = isDisabled ? 'disabled' : 'calendar-day border-[#00796B]/20 bg-teal-50';
+                const eventsOnDate = calendarEvents.filter(e => e.Event_Date === dateStr);
+                const spayEvent = eventsOnDate.find(e => e.Event_Type === 'SpayNeuter');
+                const generalEvents = eventsOnDate.filter(e => e.Event_Type === 'General');
+                const hasEvents = eventsOnDate.length > 0;
+                const isFull = spayEvent && (spayEvent.Is_Full || parseInt(spayEvent.Remaining_Slots, 10) <= 0 || spayEvent.Status === 'Closed');
+
+                let dayClass = 'border-gray-200';
                 let clickEvent = '';
-                if (!isPast && event && !isFull) {
-                    clickEvent = `onclick="openBookingModal(${event.Event_ID})"`;
-                } else if (!isPast && event && isFull) {
-                    clickEvent = `onclick="showFullyBooked()"`;
-                } else if (!isPast && !event) {
-                    clickEvent = `onclick="showNoScheduleMessage()"`;
-                }
                 let badgeHtml = '';
-                if (event && isFull) {
-                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-red-600 bg-red-50 rounded px-1 inline-block">Fully Booked</div>`;
-                } else if (event) {
-                    badgeHtml = `<div class="mt-2 text-[10px] font-bold text-[#00796B] bg-white rounded px-1 inline-block">${event.Remaining_Slots} slots</div>`;
+                let eventTitle = '';
+
+                if (isWeekend) {
+                    dayClass = 'bg-gray-100 border-gray-200 text-gray-400 disabled';
+                } else if (hasEvents) {
+                    if (spayEvent && generalEvents.length > 0) {
+                        dayClass = 'bg-gradient-to-br from-teal-50 to-blue-50 border-teal-200';
+                    } else if (spayEvent) {
+                        dayClass = isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]';
+                    } else {
+                        dayClass = 'bg-blue-50 border-blue-200 text-blue-700';
+                    }
+
+                    eventTitle = eventsOnDate.map(e => e.Title).join(', ');
+
+                    if (spayEvent && !isFull) {
+                        const remaining = parseInt(spayEvent.Remaining_Slots, 10);
+                        badgeHtml = `<div class="mt-1 text-[9px] font-bold text-[#00796B] bg-white rounded px-1 inline-block">${remaining} slot${remaining !== 1 ? 's' : ''} left</div>`;
+                    }
+                    if (generalEvents.length > 0) {
+                        badgeHtml += `<div class="mt-0.5 text-[9px] font-bold text-blue-700 bg-blue-100 rounded px-1 inline-block">${generalEvents.length} event${generalEvents.length > 1 ? 's' : ''}</div>`;
+                    }
+
+                    clickEvent = `onclick="showDateEvents('${dateStr}')"`;
                 } else if (!isPast) {
+                    dayClass = 'calendar-day border-[#00796B]/20 bg-teal-50';
+                    clickEvent = `onclick="showNoScheduleMessage()"`;
                     badgeHtml = `<div class="mt-2 text-[10px] font-bold text-gray-400 bg-gray-100 rounded px-1 inline-block">No Schedule</div>`;
+                } else {
+                    dayClass = 'disabled';
                 }
 
-                html += `<div class="relative p-2 h-20 rounded-lg border border-gray-200 flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
-                    <span class="text-sm font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-700'}">${day}</span>
-                    ${event ? `<span class="text-[10px] font-bold text-gray-700 leading-tight mt-1">${event.Title}</span>` : ''}
+                html += `<div class="relative p-2 h-20 rounded-lg border flex flex-col items-center justify-center ${dayClass}" ${clickEvent}>
+                    <span class="text-sm font-bold ${isWeekend || isPast ? 'text-gray-300' : 'text-gray-700'}">${day}</span>
+                    ${eventTitle ? `<span class="text-[9px] font-bold text-gray-700 leading-tight mt-0.5 truncate w-full">${eventTitle}</span>` : ''}
                     ${badgeHtml}
                 </div>`;
             }
@@ -302,11 +327,39 @@
         }
 
         function showNoScheduleMessage() {
-            Swal.fire('No Schedule Yet', 'Please wait for an available Spay and Neuter schedule to be posted.', 'info');
+            Swal.fire('No Schedule Yet', 'Please wait for an available Spay/Neuter schedule or general event to be posted.', 'info');
         }
 
-        function showFullyBooked() {
-            Swal.fire('Fully Booked', 'This Spay and Neuter schedule has no remaining slots.', 'warning');
+        function showDateEvents(dateStr) {
+            const events = calendarEvents.filter(e => e.Event_Date === dateStr);
+            if (events.length === 0) return;
+
+            const spayEvent = events.find(e => e.Event_Type === 'SpayNeuter');
+            const generalEvents = events.filter(e => e.Event_Type === 'General');
+
+            let message = '';
+            if (spayEvent) {
+                const remaining = parseInt(spayEvent.Remaining_Slots, 10);
+                if (remaining > 0) {
+                    message += `<strong>${spayEvent.Title}</strong> (Spay/Neuter)<br>${remaining} slot${remaining !== 1 ? 's' : ''} left<br><br>`;
+                } else {
+                    message += `<strong>${spayEvent.Title}</strong> (Spay/Neuter)<br>Fully booked<br><br>`;
+                }
+            }
+            generalEvents.forEach(e => {
+                message += `<strong>${e.Title}</strong> (General Event)`;
+                if (e.Content) {
+                    message += `<br><em>${e.Content.substring(0, 150)}${e.Content.length > 150 ? '...' : ''}</em>`;
+                }
+                message += '<br><br>';
+            });
+
+            Swal.fire({
+                title: 'Events on ' + dateStr,
+                html: message,
+                icon: 'info',
+                confirmButtonText: 'Close'
+            });
         }
 
         function openBookingModal(eventId) {

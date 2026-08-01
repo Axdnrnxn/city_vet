@@ -154,7 +154,7 @@ if ($action === 'update_status') {
 }
 
 if ($action === 'save_consultation') {
-    requireRole([1, 2]);
+    requireRole([1, 2, 4]);
     $appointmentId = (int)($input['appointment_id'] ?? 0);
     $petId = (int)($input['pet_id'] ?? 0);
     $treatment = trim($input['treatment'] ?? '');

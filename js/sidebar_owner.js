@@ -5,58 +5,58 @@ function loadSidebar() {
     const currentPage = window.location.pathname.split("/").pop();
 
     const getLinkClass = (pageName) => {
-        const baseClass = "flex items-center px-4 py-3 rounded-lg transition-colors";
-        // ACTIVE: Light teal background with dark teal text
-        const activeClass = "bg-[#E0F2F1] text-[#00796B] font-semibold shadow-sm";
-        // INACTIVE: Gray text, hovering changes to brand teal
-        const inactiveClass = "text-gray-600 hover:bg-teal-50 hover:text-[#00796B]";
-        
+        const baseClass = "flex items-center px-4 py-3 rounded-xl transition-all duration-200 mb-1";
+        const activeClass = "bg-[#00796B] text-white font-semibold shadow-md";
+        const inactiveClass = "text-teal-50 hover:bg-[#00796B]/20 hover:text-white";
         return `${baseClass} ${currentPage === pageName ? activeClass : inactiveClass}`;
     };
 
     sidebarContainer.innerHTML = `
-    <aside id="sidebar" class="bg-white text-gray-700 w-64 h-screen flex flex-col shadow-xl fixed lg:static transform -translate-x-full lg:translate-x-0 z-30 sidebar-transition">
+    <aside id="sidebar" class="bg-[#004D40] text-white w-64 h-screen flex flex-col shadow-2xl fixed lg:static transform -translate-x-full lg:translate-x-0 z-30 sidebar-transition border-r border-[#00332B]">
         
         <div class="px-4 pt-4">
-            <button onclick="window.history.length > 1 ? history.back() : window.location.href = '../../login.html'" class="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition">
+            <button onclick="window.history.length > 1 ? history.back() : window.location.href = '../../login.html'" class="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-bold text-white hover:bg-white/10 transition">
                 <i class="fa-solid fa-arrow-left"></i> Back
             </button>
         </div>
 
-        <div class="h-24 flex-shrink-0 flex items-center justify-center border-b border-gray-200 bg-gradient-to-br from-[#004D40] to-[#00796B] mt-3">
+        <div class="h-24 flex-shrink-0 flex items-center justify-center border-b border-[#00332B] bg-gradient-to-r from-[#004D40] to-[#00796B] mt-3">
             <div class="flex items-center gap-3 text-white">
                 <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
                     <i class="fa-solid fa-paw text-xl"></i>
                 </div>
-                <h1 class="text-lg font-bold tracking-wide">CITY VET</h1>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">CITY <span class="text-teal-300">VET</span></h1>
+                    <p class="text-[10px] uppercase opacity-70">Pet Owner Portal</p>
+                </div>
             </div>
         </div>
 
-        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Owner Menu</p>
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Owner Menu</p>
             
             <a href="dashboard.html" class="${getLinkClass('dashboard.html')}">
-                <i class="fa-solid fa-calendar-check mr-3 w-6 text-center text-lg"></i> 
+                <i class="fa-solid fa-calendar-check mr-3 w-6 text-center"></i> 
                 Book Appointment
             </a>
             
             <a href="mypets.html" class="${getLinkClass('mypets.html')}">
-                <i class="fa-solid fa-dog mr-3 w-6 text-center text-lg"></i> 
+                <i class="fa-solid fa-dog mr-3 w-6 text-center"></i> 
                 My Pet Records
             </a>
 
-            <div class="pt-4 mt-4 border-t border-gray-100">
-                <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Settings</p>
+            <div class="pt-6 mt-2 border-t border-[#00332B]">
+                <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Settings</p>
                 
                 <a href="profile_settings.html" class="${getLinkClass('profile_settings.html')}">
-                    <i class="fa-solid fa-user-gear mr-3 w-6 text-center text-lg"></i> 
+                    <i class="fa-solid fa-user-gear mr-3 w-6 text-center"></i> 
                     Account Profile
                 </a>
             </div>
         </nav>
 
-        <div class="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50/50">
-            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-bold transition-all border border-transparent hover:border-red-100">
+        <div class="p-4 border-t border-[#00332B] flex-shrink-0 mb-2 bg-[#00332B]/30">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 text-red-300 hover:bg-red-900/30 rounded-xl font-bold transition-all border border-transparent hover:border-red-900/50">
                 <i class="fa-solid fa-right-from-bracket mr-2"></i> Sign Out
             </button>
         </div>
@@ -114,13 +114,9 @@ function logout() {
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#00796B',
-        cancelButtonColor: '#ef4444',
+        cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, Logout',
-        cancelButtonText: 'Cancel',
-        customClass: {
-            confirmButton: 'rounded-lg px-6 py-2',
-            cancelButton: 'rounded-lg px-6 py-2'
-        }
+        cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch('../../api/auth/logout.php', { headers: { 'Accept': 'application/json' } })

@@ -33,9 +33,13 @@
             const cellClass = event
                 ? (isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]')
                 : 'bg-white border-gray-200 text-gray-400';
-            const badge = event
-                ? `<span class="mt-1 inline-block rounded px-2 py-1 text-[10px] font-bold ${isFull ? 'bg-red-100 text-red-700' : 'bg-white text-[#00796B]'}">${isFull ? 'Fully Booked' : event.Remaining_Slots + ' slots'}</span>`
-                : '';
+            let badge = '';
+            if (event && !isFull) {
+                const remaining = parseInt(event.Remaining_Slots, 10);
+                if (remaining > 0) {
+                    badge = `<span class="mt-1 inline-block rounded px-2 py-1 text-[10px] font-bold bg-white text-[#00796B]">${remaining} slot${remaining !== 1 ? 's' : ''} left</span>`;
+                }
+            }
 
             html += `
                 <div class="h-20 rounded-lg border p-2 flex flex-col items-center justify-center ${cellClass} ${canClick ? 'cursor-pointer hover:shadow-sm transition' : ''}" ${canClick ? `onclick="CityVetSpayCalendar.openEvent(${event.Event_ID})"` : ''}>

@@ -19,6 +19,15 @@ function validatePasswordStrength($password): array {
     return ["status" => "success"];
 }
 
+// Relaxed validation for walk-in registrations (elderly-friendly)
+function validateWalkInPasswordStrength($password): array {
+    if (strlen($password) < 6) {
+        return ["status" => "error", "message" => "Password must be at least 6 characters long."];
+    }
+
+    return ["status" => "success"];
+}
+
 // 1. Validate Fields
 if (empty($data['email']) || empty($data['password']) || empty($data['fname']) || empty($data['lname'])) {
     echo json_encode(["status" => "error", "message" => "Please fill in all required fields."]);
@@ -30,7 +39,10 @@ if (($data['password'] ?? '') !== ($data['confirm_password'] ?? '')) {
     exit();
 }
 
-$passwordValidation = validatePasswordStrength((string)($data['password'] ?? ''));
+$isWalkIn = !empty($data['walk_in']);
+$passwordValidation = $isWalkIn
+    ? validateWalkInPasswordStrength((string)($data['password'] ?? ''))
+    : validatePasswordStrength((string)($data['password'] ?? ''));
 if ($passwordValidation['status'] !== 'success') {
     echo json_encode($passwordValidation);
     exit();

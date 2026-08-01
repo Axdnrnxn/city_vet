@@ -1,8 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Staff Dashboard - City Vet</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,7 +54,7 @@
     <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
 
     <div id="sidebar-container"></div>
-    <script src="../../js/sidebar_staff.js"></script>
+    <script src="../../js/sidebar_staff.js?v=20260801"></script>
 
     <div class="flex-1 flex flex-col h-screen relative">
         <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
@@ -161,6 +164,13 @@
             </div>
             <form id="eventForm" class="p-6 space-y-4">
                 <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Event Type</label>
+                    <select id="eventType" onchange="toggleEventFields()" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                        <option value="SpayNeuter">Spay & Neuter (with slots)</option>
+                        <option value="General">General Event / Holiday (no slots)</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Event Title</label>
                     <input id="eventTitle" type="text" value="Free Spay & Neuter" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
                 </div>
@@ -168,9 +178,13 @@
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
                     <input id="eventDate" type="date" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
                 </div>
-                <div>
+                <div id="slotsField">
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Total Available Slots</label>
                     <input id="eventSlots" type="number" min="1" value="50" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                </div>
+                <div id="contentField" class="hidden">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Event Content / Description</label>
+                    <textarea id="eventContent" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Describe the event..."></textarea>
                 </div>
                 <div class="pt-2 flex justify-end gap-3">
                     <button type="button" onclick="closeEventModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
@@ -262,6 +276,9 @@
                                 <button onclick="updateQueueStatus('In Consultation')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center gap-2 shadow-md">
                                     <i class="fa-solid fa-user-doctor"></i> Send to Vet
                                 </button>
+                                <button onclick="openStaffConsultModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center gap-2 shadow-md">
+                                    <i class="fa-solid fa-notes-medical"></i> Save Consultation (Bypass)
+                                </button>
                                 <button onclick="updateQueueStatus('No Show')" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2.5 rounded-lg transition flex justify-center items-center gap-2 text-sm mt-4">
                                     <i class="fa-solid fa-user-slash"></i> Mark No-Show
                                 </button>
@@ -273,6 +290,99 @@
         </div>
     </div>
 
+    <!-- STAFF CONSULTATION BYPASS MODAL -->
+    <div id="staffConsultModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-orange-600 text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold"><i class="fa-solid fa-notes-medical mr-2"></i> Save Consultation (Staff Bypass)</h3>
+                    <p id="staff-consult-subtitle" class="text-xs text-orange-100">--</p>
+                </div>
+                <button onclick="closeStaffConsultModal()" class="text-white/80 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="staffConsultForm" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="staff-consult-appointment-id">
+                <input type="hidden" id="staff-consult-pet-id">
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Patient</p>
+                    <p id="staff-consult-patient" class="font-black text-gray-800">--</p>
+                    <p id="staff-consult-owner" class="text-sm text-gray-500">--</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Treatment / Procedure <span class="text-red-500">*</span></label>
+                    <input id="staff-consult-treatment" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Administer 5-in-1 Vaccine">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Notes</label>
+                    <textarea id="staff-consult-notes" rows="4" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Clinical findings, observations, owner instructions..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Follow-up Appointment Date</label>
+                    <input id="staff-consult-follow-up" type="date" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
+                    <p class="text-xs text-gray-400 mt-1">Optional. If set, the owner will see it in upcoming appointments.</p>
+                </div>
+                <div class="pt-2 flex justify-end gap-3 border-t border-gray-100">
+                    <button type="button" onclick="closeStaffConsultModal()" class="px-5 py-2.5 text-sm text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 text-sm bg-orange-600 font-bold text-white rounded-lg hover:bg-orange-700 shadow-md transition">
+                        Save Consultation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PATIENT RECORD MODAL -->
+    <div id="patientRecordModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-[#00796B] text-white flex items-center justify-between">
+                <h3 class="text-lg font-bold"><i class="fa-solid fa-folder-open mr-2"></i> Patient Record</h3>
+                <button onclick="closePatientRecordModal()" class="text-white/70 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto modal-scroll bg-gray-50">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-paw text-6xl text-blue-900"></i></div>
+                        <h3 class="text-blue-900 font-bold uppercase text-[10px] tracking-widest mb-4">Pet Information</h3>
+                        <div class="flex items-center gap-4">
+                            <div id="pr-pet-pic" class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center border-2 border-blue-50 overflow-hidden"><i class="fa-solid fa-dog text-3xl text-gray-300"></i></div>
+                            <div>
+                                <h1 id="pr-pet-name" class="text-2xl font-black text-gray-800">---</h1>
+                                <p id="pr-pet-species" class="text-blue-600 font-medium">---</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-6 text-sm">
+                            <div><span class="text-gray-400 block uppercase text-[10px] font-bold">Gender</span><p id="pr-pet-gender" class="font-semibold text-gray-700">---</p></div>
+                            <div><span class="text-gray-400 block uppercase text-[10px] font-bold">Weight</span><p id="pr-pet-weight" class="font-semibold text-gray-700">--- kg</p></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-6 rounded-xl shadow-sm text-white">
+                        <h3 class="text-blue-300 font-bold uppercase text-[10px] tracking-widest mb-4">Owner Information</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3"><i class="fa-solid fa-user text-blue-300"></i><span id="pr-owner-name" class="text-lg font-bold">---</span></div>
+                            <div class="flex items-center gap-3 text-sm text-slate-300"><i class="fa-solid fa-phone"></i><span id="pr-owner-contact">---</span></div>
+                            <div class="flex items-center gap-3 text-sm text-slate-300"><i class="fa-solid fa-location-dot"></i><span id="pr-owner-address">---</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-50"><h3 class="font-bold text-gray-800 uppercase text-xs tracking-widest">Medical History and Logs</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-[#00796B] text-white">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Date</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Type</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Treatment</th>
+                                    <th class="px-6 py-4 text-xs font-bold uppercase">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pr-history-body" class="divide-y divide-gray-50 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         let autoRefreshInterval;
         let globalQueueData = []; 
@@ -305,6 +415,19 @@
             renderEventCalendar(eventCalendarMonth, eventCalendarYear);
         }
 
+        function toggleEventFields() {
+            const eventType = document.getElementById('eventType').value;
+            const slotsField = document.getElementById('slotsField');
+            const contentField = document.getElementById('contentField');
+            if (eventType === 'General') {
+                slotsField.classList.add('hidden');
+                contentField.classList.remove('hidden');
+            } else {
+                slotsField.classList.remove('hidden');
+                contentField.classList.add('hidden');
+            }
+        }
+
         function renderEventCalendar(month, year) {
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             document.getElementById('event-calendar-month').innerText = `${monthNames[month]} ${year}`;
@@ -322,22 +445,56 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const cellDate = new Date(year, month, day);
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const event = eventByDate(dateStr);
+                const dayOfWeek = cellDate.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const eventsOnDate = spayEvents.filter(e => e.Event_Date === dateStr);
                 const isPast = cellDate < today;
-                const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
-                const clickable = !isPast && !event;
-                const clickEvent = clickable ? `onclick="openEventModal('${dateStr}')"` : (event ? `onclick="deleteEvent(${event.Event_ID})"` : '');
-                const cellClass = event
-                    ? (isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]')
-                    : (clickable ? 'bg-white hover:bg-teal-50 cursor-pointer border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-300');
-                const badge = event
-                    ? `<span class="mt-2 inline-block rounded px-2 py-1 text-[10px] font-bold ${isFull ? 'bg-red-100 text-red-700' : 'bg-white text-[#00796B]'}">${isFull ? 'Fully Booked' : event.Remaining_Slots + ' slots left'}</span>`
-                    : (!isPast ? '<span class="mt-2 inline-block rounded bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-400">Click to post</span>' : '');
+                const hasEvents = eventsOnDate.length > 0;
+
+                let cellClass = 'bg-gray-50 border-gray-100 text-gray-300';
+                let clickEvent = '';
+                let badge = '';
+                let eventTitles = '';
+
+                if (isWeekend) {
+                    cellClass = 'bg-gray-100 border-gray-200 text-gray-400';
+                } else if (hasEvents) {
+                    const spayEvent = eventsOnDate.find(e => e.Event_Type === 'SpayNeuter');
+                    const generalEvents = eventsOnDate.filter(e => e.Event_Type === 'General');
+                    const isFull = spayEvent && (spayEvent.Is_Full || parseInt(spayEvent.Remaining_Slots, 10) <= 0 || spayEvent.Status === 'Closed');
+
+                    if (spayEvent && generalEvents.length > 0) {
+                        cellClass = 'bg-gradient-to-br from-teal-50 to-blue-50 border-teal-200 text-[#00796B]';
+                    } else if (spayEvent) {
+                        cellClass = isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]';
+                    } else {
+                        cellClass = 'bg-blue-50 border-blue-200 text-blue-700';
+                    }
+
+                    const titleParts = eventsOnDate.map(e => e.Title);
+                    eventTitles = titleParts.map(t => `<span class="mt-0.5 text-[9px] font-bold leading-tight truncate w-full">${t}</span>`).join('');
+
+                    if (spayEvent) {
+                        const remaining = parseInt(spayEvent.Remaining_Slots, 10);
+                        if (remaining > 0) {
+                            badge = `<span class="mt-1 inline-block rounded px-2 py-0.5 text-[9px] font-bold bg-white text-[#00796B]">${remaining} slot${remaining !== 1 ? 's' : ''} left</span>`;
+                        }
+                    }
+                    if (generalEvents.length > 0) {
+                        badge += `<span class="mt-0.5 inline-block rounded px-2 py-0.5 text-[9px] font-bold bg-blue-100 text-blue-700">${generalEvents.length} event${generalEvents.length > 1 ? 's' : ''}</span>`;
+                    }
+
+                    clickEvent = `onclick="showDateEvents('${dateStr}')"`;
+                } else if (!isPast && !isWeekend) {
+                    cellClass = 'bg-white hover:bg-teal-50 cursor-pointer border-gray-200';
+                    clickEvent = `onclick="openEventModal('${dateStr}')"`;
+                    badge = '<span class="mt-2 inline-block rounded bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-400">Click to post</span>';
+                }
 
                 html += `
-                    <div class="h-24 rounded-xl border p-2 flex flex-col items-center justify-center transition ${cellClass}" ${clickEvent}>
+                    <div class="h-24 rounded-xl border p-1.5 flex flex-col items-center justify-center transition ${cellClass}" ${clickEvent}>
                         <span class="text-sm font-black">${day}</span>
-                        ${event ? `<span class="mt-1 text-[10px] font-bold leading-tight">${event.Title}</span>` : ''}
+                        ${eventTitles}
                         ${badge}
                     </div>
                 `;
@@ -345,8 +502,43 @@
             grid.innerHTML = html;
         }
 
+        function showDateEvents(dateStr) {
+            const events = spayEvents.filter(e => e.Event_Date === dateStr);
+            if (events.length === 0) return;
+
+            let eventList = events.map(e => {
+                const typeLabel = e.Event_Type === 'SpayNeuter' ? 'Spay/Neuter' : 'General Event';
+                let details = `<strong>${e.Title}</strong> (${typeLabel})`;
+                if (e.Event_Type === 'SpayNeuter') {
+                    details += `<br>Slots: ${e.Remaining_Slots} left`;
+                }
+                if (e.Content) {
+                    details += `<br><em>${e.Content.substring(0, 100)}${e.Content.length > 100 ? '...' : ''}</em>`;
+                }
+                return details;
+            }).join('<hr class="my-2 border-gray-200">');
+
+            const canDelete = events.some(e => e.Event_Type === 'SpayNeuter' && parseInt(e.Used_Slots) === 0);
+            const deleteButtons = events.filter(e => e.Event_Type === 'SpayNeuter' && parseInt(e.Used_Slots) === 0).map(e =>
+                `<button onclick="event.stopPropagation(); deleteEvent(${e.Event_ID})" class="mt-3 w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition">Delete ${e.Title}</button>`
+            ).join('');
+
+            Swal.fire({
+                title: 'Events on ' + dateStr,
+                html: eventList + (deleteButtons ? '<div class="mt-3">' + deleteButtons + '</div>' : ''),
+                icon: 'info',
+                confirmButtonText: 'Close'
+            });
+        }
+
         function openEventModal(dateStr) {
             document.getElementById('eventDate').value = dateStr;
+            document.getElementById('eventTitle').value = 'Free Spay & Neuter';
+            document.getElementById('eventType').value = 'SpayNeuter';
+            document.getElementById('eventSlots').value = '50';
+            const contentField = document.getElementById('eventContent');
+            if (contentField) contentField.value = '';
+            toggleEventFields();
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
@@ -388,18 +580,33 @@
         document.getElementById('eventForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const title = document.getElementById('eventTitle').value.trim();
+            const eventType = document.getElementById('eventType').value;
             const eventDate = document.getElementById('eventDate').value;
-            const maxSlots = parseInt(document.getElementById('eventSlots').value, 10);
+            const maxSlots = eventType === 'General' ? 0 : parseInt(document.getElementById('eventSlots').value, 10);
+            const content = document.getElementById('eventContent') ? document.getElementById('eventContent').value.trim() : '';
 
-            if (!title || !eventDate || !maxSlots || maxSlots < 1) {
-                Swal.fire('Missing Details', 'Please provide the event title, date, and total slots.', 'warning');
+            if (!title || !eventDate) {
+                Swal.fire('Missing Details', 'Please provide the event title and date.', 'warning');
                 return;
             }
+            if (eventType === 'SpayNeuter' && (!maxSlots || maxSlots < 1)) {
+                Swal.fire('Missing Details', 'Please provide the total available slots for Spay/Neuter events.', 'warning');
+                return;
+            }
+
+            const payload = {
+                action: 'create_event',
+                title: title,
+                event_type: eventType,
+                event_date: eventDate,
+                max_slots: maxSlots,
+                content: content
+            };
 
             fetch('../../api/calendar/events.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'create_event', title, event_date: eventDate, max_slots: maxSlots })
+                body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(data => {
@@ -551,7 +758,7 @@
             const profileBtn = document.getElementById('viewStaffProfileBtn');
             if (row.Pet_ID) {
                 // If they are Staff, make sure the path to pet_details.html is correct for their folder
-                profileBtn.onclick = () => window.location.href = `pet_details.html?id=${row.Pet_ID}`;
+                profileBtn.onclick = () => openPatientRecordModal(row.Pet_ID);
                 profileBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
                 profileBtn.onclick = null;
@@ -605,6 +812,143 @@
             });
         }
 
+        // --- 2.5 Staff Consultation Bypass ---
+        function openStaffConsultModal() {
+            if (!selectedQueueRow || !selectedQueueRow.Appointment_ID) {
+                Swal.fire('Unavailable', 'No queue record selected.', 'warning');
+                return;
+            }
+            if (!selectedQueueRow.Pet_ID) {
+                Swal.fire('Unavailable', 'No pet linked to this queue item.', 'warning');
+                return;
+            }
+
+            document.getElementById('staff-consult-appointment-id').value = selectedQueueRow.Appointment_ID;
+            document.getElementById('staff-consult-pet-id').value = selectedQueueRow.Pet_ID;
+            document.getElementById('staff-consult-subtitle').innerText = `${selectedQueueRow.Service || selectedQueueRow.Service_Name || 'Consultation'} • ${selectedQueueRow.Time}`;
+            document.getElementById('staff-consult-patient').innerText = `${selectedQueueRow.Pet} (${selectedQueueRow.Species || 'Pet'})`;
+            document.getElementById('staff-consult-owner').innerText = `Owner: ${selectedQueueRow.Owner_F} ${selectedQueueRow.Owner_L} • ${selectedQueueRow.Contact_number || 'No contact'}`;
+            document.getElementById('staff-consult-treatment').value = '';
+            document.getElementById('staff-consult-notes').value = selectedQueueRow.Notes || '';
+            document.getElementById('staff-consult-follow-up').value = '';
+            document.getElementById('staff-consult-follow-up').min = new Date().toISOString().split('T')[0];
+
+            document.getElementById('staffConsultModal').classList.remove('hidden');
+        }
+
+        function closeStaffConsultModal() {
+            document.getElementById('staffConsultModal').classList.add('hidden');
+            document.getElementById('staffConsultForm').reset();
+        }
+
+        document.getElementById('staffConsultForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const payload = {
+                action: 'save_consultation',
+                appointment_id: document.getElementById('staff-consult-appointment-id').value,
+                pet_id: document.getElementById('staff-consult-pet-id').value,
+                treatment: document.getElementById('staff-consult-treatment').value.trim(),
+                notes: document.getElementById('staff-consult-notes').value.trim(),
+                follow_up_date: document.getElementById('staff-consult-follow-up').value
+            };
+
+            if (!payload.treatment) {
+                Swal.fire('Required', 'Please enter the treatment / procedure.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Save Consultation?',
+                text: 'This will record the treatment and mark the appointment as Completed. The vet can still review this later.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ea580c',
+                confirmButtonText: 'Yes, Save',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                fetch('../../api/clinic/vet_queue.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const followText = data.follow_up_id ? ' Follow-up appointment was also scheduled.' : '';
+                        Swal.fire('Saved', `Medical record saved.${followText}`, 'success').then(() => {
+                            closeStaffConsultModal();
+                            closeStaffModal();
+                            fetchDashboard();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Unable to save consultation.', 'error');
+                    }
+                })
+                .catch(() => Swal.fire('Error', 'Connection failed.', 'error'));
+            });
+        });
+
+        // --- Patient Record Modal ---
+        async function openPatientRecordModal(petId) {
+            if (!petId) {
+                Swal.fire('Unavailable', 'No pet linked to this queue item.', 'warning');
+                return;
+            }
+            document.getElementById('patientRecordModal').classList.remove('hidden');
+            document.getElementById('pr-pet-name').innerText = 'Loading...';
+            document.getElementById('pr-pet-species').innerText = '---';
+            document.getElementById('pr-pet-gender').innerText = '---';
+            document.getElementById('pr-pet-weight').innerText = '--- kg';
+            document.getElementById('pr-owner-name').innerText = '---';
+            document.getElementById('pr-owner-contact').innerText = '---';
+            document.getElementById('pr-owner-address').innerText = '---';
+            document.getElementById('pr-history-body').innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Loading medical history...</td></tr>';
+
+            try {
+                const res = await fetch(`../../api/clinic/get_pet_info.php?id=${petId}`);
+                const data = await res.json();
+                if (data.status === 'error') throw new Error(data.message);
+
+                document.getElementById('pr-pet-name').innerText = data.details.Name;
+                document.getElementById('pr-pet-species').innerText = `${data.details.Species_Name} (${data.details.Breed_Name || 'Mixed'})`;
+                document.getElementById('pr-pet-gender').innerText = data.details.Gender || 'N/A';
+                document.getElementById('pr-pet-weight').innerText = data.details.Weight || 'N/A';
+                document.getElementById('pr-owner-name').innerText = `${data.details.First_name} ${data.details.Last_name}`;
+                document.getElementById('pr-owner-contact').innerText = data.details.Contact_number || 'N/A';
+                document.getElementById('pr-owner-address').innerText = data.details.Address || 'N/A';
+
+                if (data.details.Profile_Pic) {
+                    document.getElementById('pr-pet-pic').innerHTML = `<img src="../../uploads/pets/${data.details.Profile_Pic}" class="w-full h-full object-cover">`;
+                } else {
+                    document.getElementById('pr-pet-pic').innerHTML = '<i class="fa-solid fa-dog text-3xl text-gray-300"></i>';
+                }
+
+                const tbody = document.getElementById('pr-history-body');
+                if (!data.history || data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">No medical history found.</td></tr>';
+                } else {
+                    tbody.innerHTML = data.history.map(log => {
+                        const typeBadge = log.Type === 'Consultation' ? 'bg-blue-50 text-blue-600' : 'bg-teal-50 text-teal-600';
+                        return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-500">${new Date(log.Date).toLocaleDateString()}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${typeBadge}">${log.Type}</span></td>
+                            <td class="px-6 py-4 font-bold text-gray-800">${log.Treatment}</td>
+                            <td class="px-6 py-4 text-gray-500">${log.Notes || '---'}</td>
+                        </tr>`;
+                    }).join('');
+                }
+            } catch (err) {
+                Swal.fire('Error', err.message || 'Unable to load patient record.', 'error');
+                closePatientRecordModal();
+            }
+        }
+
+        function closePatientRecordModal() {
+            document.getElementById('patientRecordModal').classList.add('hidden');
+        }
         // --- 3. UI Helpers & Initialization ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

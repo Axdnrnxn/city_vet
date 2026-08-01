@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 header("Content-Type: application/json; charset=UTF-8");
 require_once '../../config/db_connection.php';
@@ -85,7 +85,7 @@ if ($method === 'GET') {
             jsonResponse(["status" => "error", "message" => "Missing event ID"], 422);
         }
 
-        $stmt = $conn->prepare("SELECT Event_ID, Title, Event_Date, Max_Slots, Status FROM calendar_events WHERE Event_ID = ?");
+        $stmt = $conn->prepare("SELECT Event_ID, Title, Event_Type, Event_Date, Max_Slots, Content, Status FROM calendar_events WHERE Event_ID = ?");
         $stmt->bind_param("i", $eventId);
         $stmt->execute();
         $event = $stmt->get_result()->fetch_assoc();
@@ -135,8 +135,10 @@ if ($method === 'GET') {
         SELECT
             ce.Event_ID,
             ce.Title,
+            ce.Event_Type,
             ce.Event_Date,
             ce.Max_Slots,
+            ce.Content,
             ce.Status,
             COALESCE(COUNT(ap.Appointment_Pet_ID), 0) AS Used_Slots
         FROM calendar_events ce
@@ -152,7 +154,7 @@ if ($method === 'GET') {
     $events = [];
     while ($row = $result->fetch_assoc()) {
         $row['Remaining_Slots'] = max(0, (int)$row['Max_Slots'] - (int)$row['Used_Slots']);
-        $row['Is_Full'] = $row['Remaining_Slots'] <= 0;
+        $row['Is_Full'] = $row['Remaining_Slots'] <= 0 && (int)$row['Max_Slots'] > 0;
         $events[] = $row;
     }
     jsonResponse(["status" => "success", "events" => $events]);
@@ -172,12 +174,17 @@ if ($action === 'create_event') {
     requireRole([1, 4]);
 
     $title = trim($input['title'] ?? '');
+    $eventType = trim($input['event_type'] ?? 'SpayNeuter');
     $eventDate = trim($input['event_date'] ?? '');
-    $maxSlots = (int)($input['max_slots'] ?? 0);
+    $maxSlots = $eventType === 'General' ? 0 : (int)($input['max_slots'] ?? 0);
+    $content = trim($input['content'] ?? '');
     $createdBy = (int)$_SESSION['user_id'];
 
-    if ($title === '' || $eventDate === '' || $maxSlots < 1) {
-        jsonResponse(["status" => "error", "message" => "Please provide title, date, and available slots."], 422);
+    if ($title === '' || $eventDate === '') {
+        jsonResponse(["status" => "error", "message" => "Please provide title and date."], 422);
+    }
+    if ($eventType === 'SpayNeuter' && $maxSlots < 1) {
+        jsonResponse(["status" => "error", "message" => "Please provide available slots for Spay/Neuter events."], 422);
     }
 
     $dateObj = DateTime::createFromFormat('Y-m-d', $eventDate);
@@ -185,24 +192,36 @@ if ($action === 'create_event') {
         jsonResponse(["status" => "error", "message" => "Invalid event date."], 422);
     }
 
-    $stmt = $conn->prepare("INSERT INTO calendar_events (Title, Event_Date, Max_Slots, Created_By) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssii", $title, $eventDate, $maxSlots, $createdBy);
+    $stmt = $conn->prepare("INSERT INTO calendar_events (Title, Event_Type, Event_Date, Max_Slots, Content, Created_By) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssisi", $title, $eventType, $eventDate, $maxSlots, $content, $createdBy);
 
     if (!$stmt->execute()) {
-        $message = $conn->errno === 1062 ? "An event already exists on this date." : "Unable to create event.";
-        jsonResponse(["status" => "error", "message" => $message], 400);
+        jsonResponse(["status" => "error", "message" => "Unable to create event."], 400);
     }
 
     $eventId = $conn->insert_id;
-    writeAuditLog($conn, $createdBy, "Create Spay/Neuter Event", "calendar_events", $eventId);
-    notifyUsersByRole(
-        $conn,
-        3,
-        "New Spay & Neuter Schedule",
-        "{$title} is available on {$eventDate}. Book your registered pets while slots are available."
-    );
+    $auditAction = $eventType === 'General' ? "Create General Event" : "Create Spay/Neuter Event";
+    writeAuditLog($conn, $createdBy, $auditAction, "calendar_events", $eventId);
 
-    jsonResponse(["status" => "success", "message" => "Event created and pet owners were notified.", "event_id" => $eventId]);
+    if ($eventType === 'SpayNeuter') {
+        notifyUsersByRole(
+            $conn,
+            3,
+            "New Spay & Neuter Schedule",
+            "{$title} is available on {$eventDate}. Book your registered pets while slots are available."
+        );
+    } else {
+        notifyUsersByRole(
+            $conn,
+            3,
+            "New Event: {$title}",
+            "{$title} on {$eventDate}. {$content}",
+            'System'
+        );
+    }
+
+    $successMsg = $eventType === 'General' ? "General event created and pet owners were notified." : "Event created and pet owners were notified.";
+    jsonResponse(["status" => "success", "message" => $successMsg, "event_id" => $eventId]);
 }
 
 if ($action === 'book_event') {
@@ -354,7 +373,7 @@ if ($action === 'delete_event') {
         $deleteStmt->execute();
         $deleteStmt->close();
 
-        writeAuditLog($conn, (int)$_SESSION['user_id'], "Delete Spay/Neuter Event", "calendar_events", $eventId);
+        writeAuditLog($conn, (int)$_SESSION['user_id'], "Delete Calendar Event", "calendar_events", $eventId);
         $conn->commit();
         jsonResponse(["status" => "success", "message" => "Event deleted successfully."]);
     } catch (Exception $e) {

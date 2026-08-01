@@ -148,8 +148,17 @@
                                 
                                 <div class="mt-3">
                                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
-                                    <input type="password" id="password" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none">
-                                    <p class="text-[10px] text-gray-500 mt-1">Use 8+ characters with uppercase, lowercase, number, and symbol.</p>
+                                    <input type="password" id="password" oninput="updatePasswordStrength()" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none">
+                                    <div id="passwordStrengthBar" class="hidden mt-2">
+                                        <div class="flex gap-1 mb-1">
+                                            <div class="strength-seg h-1.5 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                                            <div class="strength-seg h-1.5 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                                            <div class="strength-seg h-1.5 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                                            <div class="strength-seg h-1.5 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                                        </div>
+                                        <p id="passwordStrengthText" class="text-[10px] font-bold"></p>
+                                    </div>
+                                    <p class="text-[10px] text-gray-500 mt-1">For walk-in clients: at least 6 characters. A simple, easy-to-remember password is acceptable for elderly clients.</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -287,15 +296,46 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 document.getElementById('addOwnerForm').reset(); // Clear form
+                document.getElementById('passwordStrengthBar').classList.add('hidden');
+                document.querySelectorAll('.strength-seg').forEach(seg => {
+                    seg.className = 'strength-seg h-1.5 flex-1 rounded-full bg-gray-200 transition-all';
+                });
             }, 300);
         }
 
-        function validatePasswordStrength(password, confirmPassword) {
-            if (password.length < 8) {
-                return 'Password must be at least 8 characters long.';
+        function updatePasswordStrength() {
+            const password = document.getElementById('password').value;
+            const bar = document.getElementById('passwordStrengthBar');
+            const text = document.getElementById('passwordStrengthText');
+            const segs = document.querySelectorAll('.strength-seg');
+            
+            if (!password) {
+                bar.classList.add('hidden');
+                return;
             }
-            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-                return 'Password must include uppercase, lowercase, number, and special character.';
+            bar.classList.remove('hidden');
+
+            let score = 0;
+            if (password.length >= 6) score++;
+            if (password.length >= 8) score++;
+            if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+            if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score++;
+
+            const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+            const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+            const labelColors = ['text-red-500', 'text-orange-500', 'text-yellow-600', 'text-green-600'];
+
+            segs.forEach((seg, i) => {
+                seg.className = `strength-seg h-1.5 flex-1 rounded-full transition-all ${i < score ? colors[score - 1] : 'bg-gray-200'}`;
+            });
+            text.className = `text-[10px] font-bold ${labelColors[score - 1] || 'text-gray-400'}`;
+            text.innerText = score > 0 ? `${labels[score - 1]} password` : 'Too short';
+        }
+
+        function validatePasswordStrength(password, confirmPassword) {
+            // Relaxed validation for walk-in/elderly clients
+            if (password.length < 6) {
+                return 'Password must be at least 6 characters long.';
             }
             if (password !== confirmPassword) {
                 return 'Passwords do not match.';
@@ -319,7 +359,8 @@
                 phone: document.getElementById('phone').value,
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value,
-                confirm_password: document.getElementById('confirm_password').value
+                confirm_password: document.getElementById('confirm_password').value,
+                walk_in: true
             };
 
             // Simple Validation
