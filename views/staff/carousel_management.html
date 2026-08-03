@@ -75,6 +75,37 @@
                             Publish Post
                         </button>
                     </form>
+
+                    <div class="mt-8 border-t border-gray-100 pt-6">
+                        <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                            <i class="fa-brands fa-youtube text-[#00796B]"></i> Add Pet First-Aid Video
+                        </h3>
+                        <form id="firstAidVideoForm" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Video Title</label>
+                                <input name="title" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Dog CPR Basics">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
+                                <textarea name="description" rows="3" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="Short explanation of what the clip covers"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">YouTube URL</label>
+                                <input name="youtube_url" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="https://www.youtube.com/watch?v=...">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tags</label>
+                                <input name="tags" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none" placeholder="choking, bleeding, dog, first aid">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sort Order</label>
+                                <input name="sort_order" type="number" value="0" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
+                            </div>
+                            <button class="w-full bg-[#00796B] hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-sm transition">
+                                Save Video
+                            </button>
+                        </form>
+                    </div>
                 </section>
 
                 <section class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -86,6 +117,17 @@
                     </div>
                     <div id="carouselList" class="grid grid-cols-1 md:grid-cols-2 gap-5 p-6">
                         <p class="text-gray-400">Loading...</p>
+                    </div>
+                    <div class="border-t border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                                <i class="fa-brands fa-youtube text-[#00796B]"></i> Published First-Aid Videos
+                            </h3>
+                            <button onclick="loadFirstAidVideos()" class="text-sm font-bold text-[#00796B] hover:underline">Refresh</button>
+                        </div>
+                        <div id="firstAidVideoList" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <p class="text-gray-400">Loading...</p>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -118,6 +160,35 @@
                 }
             } catch (error) {
                 Swal.fire('Error', 'Connection failed.', 'error');
+            }
+        });
+
+        document.getElementById('firstAidVideoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('action', 'upload');
+
+            try {
+                Swal.fire({ title: 'Saving video...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await fetch('../../api/cms/first_aid_videos.php', { method: 'POST', body: formData });
+                const rawText = await res.text();
+                let data = {};
+
+                try {
+                    data = rawText ? JSON.parse(rawText) : {};
+                } catch (parseError) {
+                    throw new Error(rawText || 'Server returned an invalid JSON response.');
+                }
+
+                if (data.status === 'success') {
+                    Swal.fire('Saved', data.message, 'success');
+                    this.reset();
+                    loadFirstAidVideos();
+                } else {
+                    Swal.fire('Error', data.message || 'Unable to save video.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', error.message || 'Connection failed.', 'error');
             }
         });
 
@@ -183,6 +254,77 @@
             }
         }
 
+        async function loadFirstAidVideos() {
+            const list = document.getElementById('firstAidVideoList');
+            list.innerHTML = '<p class="text-gray-400">Loading...</p>';
+
+            try {
+                const res = await fetch('../../api/cms/first_aid_videos.php');
+                const data = await res.json();
+
+                if (data.status !== 'success' || !Array.isArray(data.items) || data.items.length === 0) {
+                    list.innerHTML = '<p class="text-gray-400 md:col-span-2 text-center py-12">No first-aid videos saved yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(item => `
+                    <article class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50">
+                        <div class="aspect-video bg-gray-200">
+                            <iframe src="${item.Embed_Url}" title="${item.Title}" class="w-full h-full" loading="lazy" allowfullscreen></iframe>
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <div>
+                                    <h4 class="font-black text-gray-800">${item.Title}</h4>
+                                    <p class="text-sm text-gray-500 line-clamp-2">${item.Description || ''}</p>
+                                </div>
+                                <span class="text-[10px] font-bold rounded-full px-2 py-1 ${item.Status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">${item.Status}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                ${(item.Tags || '').split(',').map(tag => tag.trim()).filter(Boolean).map(tag => `<span class="text-[10px] font-bold rounded-full px-2 py-1 bg-[#00796B]/10 text-[#00796B]">${tag}</span>`).join('')}
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="toggleFirstAidVideo(${item.Video_ID}, '${item.Status === 'active' ? 'inactive' : 'active'}')" class="rounded-lg border border-gray-200 py-2 text-sm font-bold text-gray-700 hover:bg-white">
+                                    ${item.Status === 'active' ? 'Hide' : 'Show'}
+                                </button>
+                                <button onclick="deleteFirstAidVideo(${item.Video_ID})" class="rounded-lg border border-red-200 py-2 text-sm font-bold text-red-600 hover:bg-red-50">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            } catch (error) {
+                list.innerHTML = '<p class="text-red-500">Failed to load first-aid videos.</p>';
+            }
+        }
+
+        async function toggleFirstAidVideo(id, status) {
+            const fd = new FormData();
+            fd.append('action', 'toggle');
+            fd.append('id', id);
+            fd.append('status', status);
+
+            const res = await fetch('../../api/cms/first_aid_videos.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') loadFirstAidVideos();
+            else Swal.fire('Error', data.message || 'Unable to update video.', 'error');
+        }
+
+        async function deleteFirstAidVideo(id) {
+            const confirm = await Swal.fire({ title: 'Delete this video?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626' });
+            if (!confirm.isConfirmed) return;
+
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+
+            const res = await fetch('../../api/cms/first_aid_videos.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') loadFirstAidVideos();
+            else Swal.fire('Error', data.message || 'Unable to delete video.', 'error');
+        }
+
         async function toggleItem(id, status, source) {
             const fd = new FormData();
             fd.append('action', 'toggle');
@@ -208,7 +350,10 @@
             else Swal.fire('Error', data.message || 'Unable to delete item.', 'error');
         }
 
-        document.addEventListener('DOMContentLoaded', loadCarousel);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCarousel();
+            loadFirstAidVideos();
+        });
     </script>
 </body>
 </html>

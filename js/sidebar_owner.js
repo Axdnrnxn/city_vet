@@ -36,13 +36,18 @@ function loadSidebar() {
             <p class="text-[10px] uppercase font-bold text-teal-400 px-4 tracking-[0.2em] mb-4">Owner Menu</p>
             
             <a href="dashboard.html" class="${getLinkClass('dashboard.html')}">
-                <i class="fa-solid fa-calendar-check mr-3 w-6 text-center"></i> 
-                Book Appointment
+                <i class="fa-solid fa-house mr-3 w-6 text-center"></i>
+                Dashboard
+            </a>
+
+            <a href="appointments.html" class="${getLinkClass('appointments.html')}">
+                <i class="fa-solid fa-calendar-check mr-3 w-6 text-center"></i>
+                Appointment Booking
             </a>
             
             <a href="mypets.html" class="${getLinkClass('mypets.html')}">
                 <i class="fa-solid fa-dog mr-3 w-6 text-center"></i> 
-                My Pet Records
+                Pet Records
             </a>
 
             <div class="pt-6 mt-2 border-t border-[#00332B]">

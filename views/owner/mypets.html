@@ -347,6 +347,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const petId = urlParams.get('id');
+            const action = urlParams.get('action');
 
             const today = new Date().toISOString().split('T')[0];
             const addBirthdateInput = document.getElementById('add_birthdate');
@@ -357,8 +358,14 @@
             
             await fetchSpecies();
 
-            if (petId) loadPetDetail(petId);
-            else loadPetList();
+            if (petId) {
+                loadPetDetail(petId);
+            } else {
+                loadPetList();
+                if (action === 'add') {
+                    setTimeout(() => openAddModal(), 150);
+                }
+            }
         });
 
         async function fetchSpecies() {
