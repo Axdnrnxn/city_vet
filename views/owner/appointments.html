@@ -292,6 +292,7 @@
 
             const spayEvent = events.find(e => e.Event_Type === 'SpayNeuter');
             const generalEvents = events.filter(e => e.Event_Type === 'General');
+            const canBook = !!spayEvent && parseInt(spayEvent.Remaining_Slots, 10) > 0;
 
             let message = '';
             if (spayEvent) {
@@ -314,13 +315,23 @@
                 title: 'Events on ' + dateStr,
                 html: message,
                 icon: 'info',
-                confirmButtonText: 'Close'
+                confirmButtonText: 'Close',
+                showCancelButton: canBook,
+                cancelButtonText: 'Book this schedule'
+            }).then((result) => {
+                if (canBook && result.dismiss === Swal.DismissReason.cancel) {
+                    openBookingModal(spayEvent.Event_ID);
+                }
             });
         }
 
         function openBookingModal(eventId) {
             selectedEvent = calendarEvents.find(event => parseInt(event.Event_ID, 10) === parseInt(eventId, 10));
             if (!selectedEvent) return;
+            if (selectedEvent.Event_Type !== 'SpayNeuter') {
+                Swal.fire('Not Available', 'This schedule does not accept slot bookings.', 'info');
+                return;
+            }
             document.getElementById('modal-event-title').innerText = selectedEvent.Title;
             document.getElementById('modal-date-display').innerText = formatLongDate(selectedEvent.Event_Date);
             document.getElementById('modal-slots-display').innerText = `${selectedEvent.Remaining_Slots} slots left`;

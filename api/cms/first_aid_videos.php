@@ -77,6 +77,8 @@ function ensureFirstAidVideosTable($conn) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
+// include audit helper if available
+if (file_exists(dirname(__DIR__) . '/system/audit_helper.php')) require_once dirname(__DIR__) . '/system/audit_helper.php';
 ensureFirstAidVideosTable($conn);
 
 if ($method === 'GET') {
@@ -129,6 +131,9 @@ if ($method === 'POST' && $action === 'upload') {
         respond(['status' => 'error', 'message' => 'Unable to save first aid video.'], 500);
     }
 
+    $insertId = $conn->insert_id;
+    if (function_exists('auditLog')) auditLog($conn, $createdBy, 'Create First Aid Video', 'first_aid_videos', $insertId);
+
     respond(['status' => 'success', 'message' => 'First aid video saved.']);
 }
 
@@ -141,7 +146,9 @@ if ($method === 'POST' && $action === 'toggle') {
     }
 
     $stmt->bind_param('si', $status, $id);
-    respond($stmt->execute() ? ['status' => 'success'] : ['status' => 'error', 'message' => 'Unable to update first aid video.']);
+    $ok = $stmt->execute();
+    if ($ok && function_exists('auditLog')) auditLog($conn, (int)$_SESSION['user_id'], "Toggle First Aid Video Status to {$status}", 'first_aid_videos', $id);
+    respond($ok ? ['status' => 'success'] : ['status' => 'error', 'message' => 'Unable to update first aid video.']);
 }
 
 if ($method === 'POST' && $action === 'delete') {
@@ -152,7 +159,9 @@ if ($method === 'POST' && $action === 'delete') {
     }
 
     $stmt->bind_param('i', $id);
-    respond($stmt->execute() ? ['status' => 'success'] : ['status' => 'error', 'message' => 'Unable to delete first aid video.']);
+    $ok = $stmt->execute();
+    if ($ok && function_exists('auditLog')) auditLog($conn, (int)$_SESSION['user_id'], 'Delete First Aid Video', 'first_aid_videos', $id);
+    respond($ok ? ['status' => 'success'] : ['status' => 'error', 'message' => 'Unable to delete first aid video.']);
 }
 
 respond(['status' => 'error', 'message' => 'Invalid request.'], 400);

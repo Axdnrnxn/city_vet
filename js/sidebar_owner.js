@@ -11,8 +11,11 @@ function loadSidebar() {
         return `${baseClass} ${currentPage === pageName ? activeClass : inactiveClass}`;
     };
 
+    sidebarContainer.classList.add('lg:w-64', 'lg:flex-none');
     sidebarContainer.innerHTML = `
-    <aside id="sidebar" class="bg-[#004D40] text-white w-64 h-screen flex flex-col shadow-2xl fixed lg:static transform -translate-x-full lg:translate-x-0 z-30 sidebar-transition border-r border-[#00332B]">
+    <button id="sidebar-toggle" type="button" aria-label="Open navigation" aria-expanded="false" class="lg:hidden fixed bottom-4 left-4 z-40 h-11 w-11 rounded-full bg-[#004D40] text-white shadow-lg"><i class="fa-solid fa-bars"></i></button>
+    <div id="sidebar-overlay" class="lg:hidden fixed inset-0 z-40 hidden bg-slate-950/50"></div>
+    <aside id="sidebar" class="bg-[#004D40] text-white w-64 h-screen flex flex-col shadow-2xl fixed inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 z-50 transition-transform duration-300 ease-in-out border-r border-[#00332B]">
         
         <div class="px-4 pt-4">
             <button onclick="window.history.length > 1 ? history.back() : window.location.href = '../../login.html'" class="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-bold text-white hover:bg-white/10 transition">
@@ -66,6 +69,19 @@ function loadSidebar() {
             </button>
         </div>
     </aside>`;
+    initializeResponsiveSidebar(sidebarContainer);
+}
+
+function initializeResponsiveSidebar(container) {
+    const sidebar = container.querySelector('#sidebar'), toggle = container.querySelector('#sidebar-toggle'), overlay = container.querySelector('#sidebar-overlay');
+    if (!sidebar || !toggle || !overlay) return;
+    const syncLayout = () => { container.style.flex = window.innerWidth >= 1024 ? '0 0 16rem' : '0 0 0'; };
+    syncLayout();
+    const close = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); toggle.setAttribute('aria-expanded', 'false'); };
+    const open = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); toggle.setAttribute('aria-expanded', 'true'); };
+    toggle.addEventListener('click', () => sidebar.classList.contains('-translate-x-full') ? open() : close()); overlay.addEventListener('click', close);
+    sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', close));
+    window.addEventListener('resize', () => { syncLayout(); if (window.innerWidth >= 1024) { overlay.classList.add('hidden'); toggle.setAttribute('aria-expanded', 'false'); } });
 }
 loadSidebar();
 

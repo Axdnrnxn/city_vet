@@ -3,6 +3,7 @@ session_start();
 header("Content-Type: application/json; charset=UTF-8");
 mysqli_report(MYSQLI_REPORT_OFF);
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 if ($conn instanceof mysqli) $conn->set_charset('utf8mb4');
 
@@ -160,6 +161,9 @@ if ($method === 'POST' && $action === 'upload') {
         respond(["status" => "error", "message" => "Unable to save homepage post."], 500);
     }
 
+    auditLog($conn, $createdBy, 'Create Homepage Post', 'homepage_posts', (int)$conn->insert_id, [
+        'metadata' => ['section' => $section, 'status' => 'active']
+    ]);
     respond(["status" => "success", "message" => "Homepage post published."]);
 }
 
@@ -169,7 +173,13 @@ if ($method === 'POST' && $action === 'toggle') {
     $stmt = $conn->prepare("UPDATE homepage_posts SET Status = ? WHERE Post_ID = ?");
     if (!$stmt) respond(["status" => "error", "message" => "Unable to update homepage post."], 500);
     $stmt->bind_param("si", $status, $id);
-    respond($stmt->execute() ? ["status" => "success"] : ["status" => "error", "message" => "Unable to update homepage post."]);
+    if ($stmt->execute()) {
+        auditLog($conn, (int)$_SESSION['user_id'], 'Update Homepage Post Status', 'homepage_posts', $id, [
+            'metadata' => ['status' => $status]
+        ]);
+        respond(["status" => "success"]);
+    }
+    respond(["status" => "error", "message" => "Unable to update homepage post."]);
 }
 
 if ($method === 'POST' && $action === 'delete') {
@@ -186,6 +196,7 @@ if ($method === 'POST' && $action === 'delete') {
     if ($del->execute()) {
         $file = dirname(__DIR__, 2) . '/' . $row['Image_Path'];
         if ($row['Image_Path'] && is_file($file)) @unlink($file);
+        auditLog($conn, (int)$_SESSION['user_id'], 'Delete Homepage Post', 'homepage_posts', $id);
         respond(["status" => "success"]);
     }
 

@@ -37,7 +37,9 @@ if ($method === 'GET') {
     respond(["status" => "success", "items" => $items]);
 }
 
+$requireAudit = dirname(__DIR__) . '/system/audit_helper.php';
 requireStaffOrAdmin();
+if (file_exists($requireAudit)) require_once $requireAudit;
 $action = $_POST['action'] ?? '';
 
 if ($method === 'POST' && $action === 'upload') {
@@ -85,6 +87,9 @@ if ($method === 'POST' && $action === 'upload') {
         @unlink($target);
         respond(["status" => "error", "message" => "Unable to save carousel item."], 500);
     }
+    // Audit
+    $insertId = $conn->insert_id;
+    if (function_exists('auditLog')) auditLog($conn, $createdBy, "Create Carousel Item", "carousel_images", $insertId);
 
     respond(["status" => "success", "message" => "Carousel image uploaded."]);
 }
@@ -95,7 +100,9 @@ if ($method === 'POST' && $action === 'toggle') {
     $stmt = $conn->prepare("UPDATE carousel_images SET Status = ? WHERE Carousel_ID = ?");
     if (!$stmt) respond(["status" => "error", "message" => "Carousel table is missing. Please run the CMS carousel migration."], 500);
     $stmt->bind_param("si", $status, $id);
-    respond($stmt->execute() ? ["status" => "success"] : ["status" => "error", "message" => "Unable to update item."]);
+    $ok = $stmt->execute();
+    if ($ok && function_exists('auditLog')) auditLog($conn, (int)$_SESSION['user_id'], "Toggle Carousel Item Status to {$status}", "carousel_images", $id);
+    respond($ok ? ["status" => "success"] : ["status" => "error", "message" => "Unable to update item."]);
 }
 
 if ($method === 'POST' && $action === 'delete') {
@@ -112,6 +119,7 @@ if ($method === 'POST' && $action === 'delete') {
     if ($del->execute()) {
         $file = dirname(__DIR__, 2) . '/' . $row['Image_Path'];
         if (is_file($file)) @unlink($file);
+        if (function_exists('auditLog')) auditLog($conn, (int)$_SESSION['user_id'], "Delete Carousel Item", "carousel_images", $id);
         respond(["status" => "success"]);
     }
     respond(["status" => "error", "message" => "Unable to delete item."], 500);

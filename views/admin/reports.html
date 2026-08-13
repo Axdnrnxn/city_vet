@@ -1,255 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports & Analytics - City Vet</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-
-    <script>
-        // Check session IMMEDIATELY before page loads
-        fetch('../../api/auth/session_check.php')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status !== 'success') {
-                    window.location.replace('../../login.html');
-                } else {
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const nameDisplay = document.getElementById('admin-name-display');
-                        if (nameDisplay && data.user && data.user.name) {
-                            nameDisplay.innerText = data.user.name.split('@')[0].toUpperCase();
-                        }
-                    });
-                }
-            })
-            .catch(() => { window.location.replace('../../login.html'); });
-    </script>
-
-    <style> 
-        body { font-family: 'Inter', sans-serif; } 
-        
-        /* --- PRINT OPTIMIZATION --- */
-        @media print { 
-            @page { size: A4; margin: 1.5cm; }
-            #sidebar-container, .print-hide, #sidebar { display: none !important; } 
-            body { background: white !important; overflow: visible !important; }
-            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; overflow: visible !important; }
-            .bg-white { border: 1px solid #eee !important; box-shadow: none !important; }
-            .grid { display: block !important; } /* Stack charts vertically for clear printing */
-            .grid > div { margin-bottom: 2rem !important; page-break-inside: avoid; }
-            .print-only { display: block !important; }
-            tr { page-break-inside: avoid; }
-        }
-
-        .print-only { display: none; }
-    </style>
+    <style>body{font-family:Inter,sans-serif}.heat{min-height:34px}@media print{#sidebar-container,.print-hide{display:none!important}body{background:#fff!important;height:auto!important;overflow:visible!important}}</style>
 </head>
-<body class="bg-gray-50 h-screen flex overflow-hidden">
-
-    <div id="sidebar-container" class="print-hide"></div>
-    <script src="../../js/sidebar.js"></script>
-
-    <div class="flex-1 flex flex-col h-screen overflow-y-auto main-content">
-        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm sticky top-0 z-10 print-hide">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-blue-600 text-xl"></i>
-                <h2 class="text-xl font-bold text-gray-800">Reports & Analytics</h2>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="admin-name-display" class="text-xs font-bold text-gray-400">ADMIN</span>
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
-                    <i class="fa-solid fa-print"></i> Export to PDF/Print
-                </button>
-            </div>
+<body class="bg-gray-50 min-h-screen flex">
+    <div id="sidebar-container" class="print-hide"></div><script src="../../js/sidebar.js"></script>
+    <div class="flex-1 min-w-0">
+        <header class="sticky top-0 z-10 h-16 bg-white border-b border-gray-100 px-5 md:px-8 flex items-center justify-between print-hide">
+            <div><h1 class="text-xl font-black text-gray-800">Reports & Analytics</h1><p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Live database metrics</p></div>
+            <div class="flex gap-2"><button onclick="loadReports()" class="border border-gray-200 px-3 py-2 rounded-xl text-xs font-bold text-gray-600"><i class="fa-solid fa-rotate mr-1"></i>Refresh</button><button onclick="window.print()" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-print mr-1"></i>Print</button></div>
         </header>
-
-        <div class="print-only w-full text-center border-b-4 border-double border-gray-800 pb-8 mb-8 mt-4">
-            <h1 class="text-4xl font-black uppercase tracking-tighter text-gray-900">City Vet Clinic</h1>
-            <p class="text-sm text-gray-600 font-bold tracking-widest uppercase">System Operations & Analytics Report</p>
-            <p class="text-xs text-gray-400 mt-2">Report Generated: <span id="print-timestamp"></span></p>
-        </div>
-
-        <main class="p-8 space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Service Audit</p>
-                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="totalValue">₱0.00</h3>
-                    <div class="h-1 w-12 bg-teal-500 mt-2 rounded-full"></div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Growth (New Clients)</p>
-                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="newClients">0</h3>
-                    <div class="h-1 w-12 bg-blue-500 mt-2 rounded-full"></div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Activity Volume</p>
-                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="totalAppts">0</h3>
-                    <div class="h-1 w-12 bg-purple-500 mt-2 rounded-full"></div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Registered Patients</p>
-                    <h3 class="text-2xl font-black text-gray-800 mt-1" id="activePets">0</h3>
-                    <div class="h-1 w-12 bg-orange-500 mt-2 rounded-full"></div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-8 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-blue-600"></i> Value Trend Over Time
-                    </h4>
-                    <div class="relative h-[320px] w-full">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                    <h4 class="font-bold text-gray-800 mb-8 flex items-center gap-2">
-                        <i class="fa-solid fa-dog text-orange-500"></i> Species Distribution
-                    </h4>
-                    <div class="relative h-[320px] w-full flex items-center justify-center">
-                        <canvas id="speciesChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h4 class="font-bold text-gray-800 uppercase text-xs tracking-widest">Recent Detailed Operational Logs</h4>
-                    <span class="print-hide text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">LIVE DATABASE</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-[10px] uppercase text-gray-400 font-black border-b border-gray-100">
-                            <tr>
-                                <th class="px-8 py-4">Date of Visit</th>
-                                <th class="px-8 py-4">Owner Name</th>
-                                <th class="px-8 py-4">Service Rendered</th>
-                                <th class="px-8 py-4 text-right">Audit Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionLog" class="divide-y divide-gray-50 text-sm">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="print-only pt-12 text-center border-t border-gray-100">
-                <p class="text-[10px] text-gray-400 italic">This is an automatically generated system report from City Vet Management System.</p>
-            </div>
+        <main class="max-w-7xl mx-auto p-5 md:p-8 space-y-6">
+            <div id="reportError" class="hidden rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700"></div>
+            <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <article class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completed-service revenue</p><p id="kpiRevenue" class="mt-2 text-2xl font-black text-gray-800">₱0.00</p><p id="deltaRevenue" class="mt-2 text-xs font-bold"></p></article>
+                <article class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Appointments this month</p><p id="kpiAppointments" class="mt-2 text-2xl font-black text-gray-800">0</p><p id="deltaAppointments" class="mt-2 text-xs font-bold"></p></article>
+                <article class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">New clients this month</p><p id="kpiClients" class="mt-2 text-2xl font-black text-gray-800">0</p><p id="deltaClients" class="mt-2 text-xs font-bold"></p></article>
+                <article class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No-show / cancellation rate</p><p id="kpiNoShow" class="mt-2 text-2xl font-black text-gray-800">0%</p><p id="deltaNoShow" class="mt-2 text-xs font-bold"></p></article>
+            </section>
+            <section class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                <article class="xl:col-span-3 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Appointment status funnel <span class="text-xs font-normal text-gray-400">last 90 days</span></h2><div class="h-72 mt-4"><canvas id="funnelChart"></canvas></div></article>
+                <article class="xl:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">No-show & cancellation trend</h2><div class="h-72 mt-4"><canvas id="noShowChart"></canvas></div></article>
+            </section>
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <article class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Revenue & appointment trend</h2><div class="h-72 mt-4"><canvas id="trendChart"></canvas></div></article>
+                <article class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Top services <span class="text-xs font-normal text-gray-400">last 12 months</span></h2><div class="h-72 mt-4"><canvas id="servicesChart"></canvas></div></article>
+            </section>
+            <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <article class="xl:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><div class="flex justify-between items-center"><h2 class="font-bold text-gray-800">Peak appointment demand</h2><span class="text-xs text-gray-400">last 90 days</span></div><div id="heatmap" class="mt-4 overflow-x-auto"></div></article>
+                <article class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Active pet vaccination status</h2><div class="mt-6 flex items-center gap-5"><div class="h-24 w-24"><canvas id="vaccinationChart"></canvas></div><div class="text-sm space-y-2"><p><span id="vaccinationUp" class="font-black text-emerald-600">0</span> up to date</p><p><span id="vaccinationOverdue" class="font-black text-red-500">0</span> overdue / unrecorded</p><p class="text-xs text-gray-400"><span id="vaccinationTotal">0</span> active pets</p></div></div></article>
+            </section>
+            <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <article class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Species distribution</h2><div class="h-64 mt-4"><canvas id="speciesChart"></canvas></div></article>
+                <article class="xl:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"><h2 class="font-bold text-gray-800">Spay / Neuter event utilization</h2><div class="overflow-x-auto mt-4"><table class="w-full text-sm"><thead class="text-left text-[10px] uppercase text-gray-400"><tr><th class="pb-3">Event</th><th class="pb-3">Date</th><th class="pb-3 text-right">Registered</th><th class="pb-3 text-right">Confirmed</th><th class="pb-3 text-right">Fill rate</th></tr></thead><tbody id="eventRows" class="divide-y divide-gray-50"></tbody></table></div></article>
+            </section>
+            <p class="text-xs text-gray-400">Reports intentionally exclude wait-time, vet-utilization, follow-up completion, and notification engagement metrics because the current data model does not record the required timestamps or links consistently.</p>
         </main>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchReportData();
-            document.getElementById('print-timestamp').innerText = new Date().toLocaleString('en-PH', { 
-                dateStyle: 'full', 
-                timeStyle: 'short' 
-            });
-        });
-
-        let trendChartInstance = null;
-        let speciesChartInstance = null;
-
-        async function fetchReportData() {
-            try {
-                const response = await fetch('../../api/reports/get_stats.php');
-                const data = await response.json();
-
-                if (data.status === 'error') return;
-
-                document.getElementById('totalValue').innerText = '₱' + data.kpis.value;
-                document.getElementById('newClients').innerText = data.kpis.clients;
-                document.getElementById('totalAppts').innerText = data.kpis.appts;
-                document.getElementById('activePets').innerText = data.kpis.pets;
-
-                const logTable = document.getElementById('transactionLog');
-                if (data.recent && data.recent.length > 0) {
-                    logTable.innerHTML = data.recent.map(item => `
-                        <tr class="hover:bg-blue-50/20 transition-colors">
-                            <td class="px-8 py-4 font-medium text-gray-500">
-                                ${new Date(item.Visit_Date).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
-                            </td>
-                            <td class="px-8 py-4 font-bold text-gray-800 uppercase text-xs">${item.Last_name}</td>
-                            <td class="px-8 py-4 text-gray-600 font-medium">${item.Treatment || 'Consultation'}</td>
-                            <td class="px-8 py-4 font-black text-gray-900 text-right">
-                                ₱${item.Price ? parseFloat(item.Price).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'}
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    logTable.innerHTML = `<tr><td colspan="4" class="px-8 py-20 text-center text-gray-300 font-medium italic">No recent activity records available.</td></tr>`;
-                }
-
-                initCharts(data.trend, data.species);
-            } catch (err) {
-                console.error("Dashboard Error:", err);
-            }
-        }
-
-        function initCharts(trendData, speciesData) {
-            const ctxTrend = document.getElementById('revenueChart').getContext('2d');
-            if(trendChartInstance) trendChartInstance.destroy();
-            
-            trendChartInstance = new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: trendData.map(d => d.month),
-                    datasets: [{
-                        label: 'Value (₱)',
-                        data: trendData.map(d => d.amount),
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 4,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#2563eb',
-                        pointBorderWidth: 2,
-                        pointRadius: 5
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, border: { display: false }, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            const ctxSpecies = document.getElementById('speciesChart').getContext('2d');
-            if(speciesChartInstance) speciesChartInstance.destroy();
-
-            speciesChartInstance = new Chart(ctxSpecies, {
-                type: 'doughnut',
-                data: {
-                    labels: speciesData.map(s => s.Species_Name),
-                    datasets: [{
-                        data: speciesData.map(s => s.count),
-                        backgroundColor: ['#3b82f6', '#f97316', '#10b981', '#a855f7', '#f43f5e'],
-                        hoverOffset: 20,
-                        borderWidth: 6,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 25, font: { weight: 'bold', size: 10 } } } 
-                    }
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+<script>
+let charts={}; const money=n=>new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(n||0); const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
+function chart(id,config){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),config)}
+function delta(id,value,unit='%'){const el=document.getElementById(id);if(value===null||value===undefined){el.textContent='No prior-month comparison';el.className='mt-2 text-xs font-bold text-gray-400';return}const up=value>0;el.textContent=`${up?'▲':'▼'} ${Math.abs(value)}${unit} vs last month`;el.className=`mt-2 text-xs font-bold ${up?'text-emerald-600':'text-rose-500'}`}
+function monthLabel(v){const [y,m]=v.split('-');return new Date(+y,+m-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'})}
+function drawHeatmap(rows){const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],hours=[8,9,10,11,12,13,14,15,16,17],map=new Map(rows.map(r=>[`${r.weekday}-${r.hour}`,Number(r.total)])),max=Math.max(1,...rows.map(r=>Number(r.total)));let html='<div class="min-w-[620px] grid grid-cols-[65px_repeat(10,minmax(38px,1fr))] gap-1 text-[10px] text-center">';html+='<span></span>'+hours.map(h=>`<span class="text-gray-400">${h}:00</span>`).join('');days.forEach((d,i)=>{html+=`<span class="self-center text-right pr-2 font-bold text-gray-500">${d}</span>`;hours.forEach(h=>{const n=map.get(`${i}-${h}`)||0,opacity=n?0.15+0.85*n/max:0.04;html+=`<span class="heat rounded-md flex items-center justify-center font-bold" style="background:rgba(13,148,136,${opacity});color:${opacity>.55?'white':'#334155'}">${n||''}</span>`})});document.getElementById('heatmap').innerHTML=html+'</div>'}
+function render(data){const k=data.kpis;document.getElementById('kpiRevenue').textContent=money(k.revenue);document.getElementById('kpiAppointments').textContent=k.appointments;document.getElementById('kpiClients').textContent=k.clients;document.getElementById('kpiNoShow').textContent=`${k.no_show_rate}%`;delta('deltaRevenue',k.deltas.revenue);delta('deltaAppointments',k.deltas.appointments);delta('deltaClients',k.deltas.clients);delta('deltaNoShow',k.deltas.no_show_rate,' pts');
+const statuses=['Pending','Confirmed','Checked In','In Consultation','Completed','No Show','Cancelled'],colors=['#f59e0b','#3b82f6','#8b5cf6','#06b6d4','#10b981','#f97316','#ef4444'],f=Object.fromEntries(data.funnel.map(x=>[x.Status,Number(x.total)]));chart('funnelChart',{type:'bar',data:{labels:statuses,datasets:[{data:statuses.map(s=>f[s]||0),backgroundColor:colors,borderRadius:8}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
+const ns=data.no_show_trend;chart('noShowChart',{type:'line',data:{labels:ns.map(x=>monthLabel(x.month)),datasets:[{label:'Missed',data:ns.map(x=>x.missed),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.35},{label:'All appointments',data:ns.map(x=>x.appointments),borderColor:'#94a3b8',tension:.35}]},options:{responsive:true,maintainAspectRatio:false}});
+const t=data.trend;chart('trendChart',{type:'bar',data:{labels:t.map(x=>monthLabel(x.month)),datasets:[{type:'line',label:'Revenue',data:t.map(x=>x.revenue),borderColor:'#0d9488',backgroundColor:'#0d9488',yAxisID:'y'},{label:'Appointments',data:t.map(x=>x.appointments),backgroundColor:'rgba(59,130,246,.5)',yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true},y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{precision:0}}}}});
+const s=data.services;chart('servicesChart',{type:'bar',data:{labels:s.map(x=>x.service_name),datasets:[{label:'Revenue',data:s.map(x=>x.revenue),backgroundColor:'#2563eb',borderRadius:6},{label:'Volume',data:s.map(x=>x.volume),backgroundColor:'#a5b4fc',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxRotation:45,minRotation:45}},y:{beginAtZero:true}}}});drawHeatmap(data.peak);
+const v=data.vaccination;document.getElementById('vaccinationUp').textContent=v.up_to_date;document.getElementById('vaccinationOverdue').textContent=v.overdue;document.getElementById('vaccinationTotal').textContent=v.active_pets;chart('vaccinationChart',{type:'doughnut',data:{labels:['Up to date','Overdue / unrecorded'],datasets:[{data:[v.up_to_date,v.overdue],backgroundColor:['#10b981','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false}}}});
+const sp=data.species;chart('speciesChart',{type:'doughnut',data:{labels:sp.map(x=>x.species_name),datasets:[{data:sp.map(x=>x.total),backgroundColor:['#0ea5e9','#f97316','#10b981','#8b5cf6','#ec4899'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+document.getElementById('eventRows').innerHTML=data.events.length?data.events.map(e=>{const rate=e.Max_Slots?Math.round(e.registered*100/e.Max_Slots):0;return `<tr><td class="py-3 font-semibold text-gray-700">${esc(e.Title)}</td><td class="py-3 text-gray-500">${esc(e.Event_Date)}</td><td class="py-3 text-right">${e.registered}/${e.Max_Slots}</td><td class="py-3 text-right">${e.confirmed||0}</td><td class="py-3 text-right font-bold text-teal-700">${rate}%</td></tr>`}).join(''):'<tr><td colspan="5" class="py-8 text-center text-gray-400">No Spay/Neuter events found.</td></tr>'}
+async function loadReports(){const error=document.getElementById('reportError');error.classList.add('hidden');try{const r=await fetch('../../api/reports/get_stats.php'),d=await r.json();if(!r.ok||d.status!=='success')throw new Error(d.message||'Unable to load reports.');render(d)}catch(e){error.textContent=e.message;error.classList.remove('hidden')}}
+document.addEventListener('DOMContentLoaded',loadReports);
+</script></body></html>

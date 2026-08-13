@@ -15,17 +15,18 @@ try {
         if (!file_exists($db_file)) throw new Exception("Database file not found.");
     }
     require_once $db_file;
+    require_once dirname(__DIR__) . '/system/audit_helper.php';
     if (isset($conn) && $conn instanceof mysqli) $conn->set_charset("utf8mb4");
 
     function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
-        if (!$userId) return;
+        return auditLog($conn, $userId, $action, $tableAffected, $recordId);
+    }
 
-        $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
-            $stmt->execute();
-            $stmt->close();
-        }
+    if (!isset($_SESSION['user_id'], $_SESSION['role_id']) || !in_array((int)$_SESSION['role_id'], [1, 2, 4], true)) {
+        http_response_code(403);
+        auditLog($conn, null, 'Unauthorized Appointment Access', 'appointments', 0, ['event_type' => 'security', 'outcome' => 'denied']);
+        echo json_encode(["status" => "error", "message" => "Access denied."]);
+        exit();
     }
 
     $method = $_SERVER['REQUEST_METHOD'];
@@ -92,6 +93,12 @@ try {
 
     // --- POST REQUESTS ---
     if ($method === 'POST') {
+        if (!in_array((int)$_SESSION['role_id'], [1, 4], true)) {
+            http_response_code(403);
+            auditLog($conn, (int)$_SESSION['user_id'], 'Denied Appointment Change', 'appointments', 0, ['event_type' => 'security', 'outcome' => 'denied']);
+            echo json_encode(["status" => "error", "message" => "Access denied."]);
+            exit();
+        }
         $input = json_decode(file_get_contents("php://input"), true);
         $action = $input['action'] ?? '';
 

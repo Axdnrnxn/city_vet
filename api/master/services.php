@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
 }
 
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 // 2. DATA VALIDATION HELPER
 function validateInput($data) {
@@ -74,6 +75,9 @@ if ($method === 'POST') {
         $stmt->bind_param("isd", $data['category_id'], $data['service_name'], $data['price']);
         
         if ($stmt->execute()) {
+            auditLog($conn, (int)$_SESSION['user_id'], 'Create Service', 'services', (int)$conn->insert_id, [
+                'metadata' => ['category_id' => (int)$data['category_id'], 'service_name' => $data['service_name'], 'price' => (float)$data['price']]
+            ]);
             echo json_encode(["status" => "success", "message" => "Service created successfully."]);
         } else {
             echo json_encode(["status" => "error", "message" => "Database error: " . $conn->error]);
@@ -103,6 +107,9 @@ if ($method === 'POST') {
         $stmt->bind_param("isdi", $data['category_id'], $data['service_name'], $data['price'], $data['service_id']);
 
         if ($stmt->execute()) {
+            auditLog($conn, (int)$_SESSION['user_id'], 'Update Service', 'services', (int)$data['service_id'], [
+                'metadata' => ['category_id' => (int)$data['category_id'], 'service_name' => $data['service_name'], 'price' => (float)$data['price']]
+            ]);
             echo json_encode(["status" => "success", "message" => "Service updated."]);
         }
     }
@@ -121,6 +128,7 @@ if ($method === 'POST') {
         $stmt->bind_param("i", $data['service_id']);
 
         if ($stmt->execute()) {
+            auditLog($conn, (int)$_SESSION['user_id'], 'Archive Service', 'services', (int)$data['service_id']);
             echo json_encode(["status" => "success", "message" => "Service archived."]);
         }
     }

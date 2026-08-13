@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 if (!isset($_SESSION['user_id']) || !in_array((int)$_SESSION['role_id'], [1, 2, 4])) {
     echo json_encode(["status" => "error", "message" => "Access denied."]);
@@ -20,7 +21,10 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("iss", $pet_id, $treatment, $notes);
     
-    echo json_encode($stmt->execute() ? ["status"=>"success", "message"=>"Record saved"] : ["status"=>"error"]);
+    if ($stmt->execute()) {
+        auditLog($conn, (int)$_SESSION['user_id'], 'Create Medical Record', 'medical_records', (int)$conn->insert_id, ['metadata' => ['pet_id' => (int)$pet_id]]);
+        echo json_encode(["status"=>"success", "message"=>"Record saved"]);
+    } else echo json_encode(["status"=>"error"]);
 }
 
 // UPDATE
@@ -33,7 +37,10 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssi", $treatment, $notes, $id);
     
-    echo json_encode($stmt->execute() ? ["status"=>"success", "message"=>"Updated"] : ["status"=>"error"]);
+    if ($stmt->execute()) {
+        auditLog($conn, (int)$_SESSION['user_id'], 'Update Medical Record', 'medical_records', (int)$id);
+        echo json_encode(["status"=>"success", "message"=>"Updated"]);
+    } else echo json_encode(["status"=>"error"]);
 }
 
 // SOFT DELETE
@@ -44,7 +51,10 @@ if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
     
-    echo json_encode($stmt->execute() ? ["status"=>"success"] : ["status"=>"error"]);
+    if ($stmt->execute()) {
+        auditLog($conn, (int)$_SESSION['user_id'], 'Archive Medical Record', 'medical_records', (int)$id);
+        echo json_encode(["status"=>"success"]);
+    } else echo json_encode(["status"=>"error"]);
 }
 
 // GET SINGLE (For Edit Modal)

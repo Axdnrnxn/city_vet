@@ -3,6 +3,7 @@
 session_start();
 
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 if (isset($_SESSION['user_id'])) {
     $userId = (int)$_SESSION['user_id'];
@@ -10,12 +11,7 @@ if (isset($_SESSION['user_id'])) {
     $tableAffected = "sessions";
     $recordId = 0;
 
-    $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
-    if ($stmt) {
-        $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
-        $stmt->execute();
-        $stmt->close();
-    }
+    auditLog($conn, $userId, $action, $tableAffected, $recordId, ['event_type' => 'security']);
 }
 
 session_destroy();

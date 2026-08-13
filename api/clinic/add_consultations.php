@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 if (!isset($_SESSION['user_id']) || !in_array((int)$_SESSION['role_id'], [1, 2, 4])) {
     echo json_encode(["status" => "error", "message" => "Access denied."]);
@@ -25,6 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("iiissss", $owner_id, $pet_id, $vet_id, $subject, $description, $status, $date);
 
     if ($stmt->execute()) {
+        auditLog($conn, (int)$_SESSION['user_id'], 'Create Consultation', 'consultations', (int)$conn->insert_id, [
+            'metadata' => ['owner_id' => (int)$owner_id, 'pet_id' => (int)$pet_id, 'vet_id' => (int)$vet_id, 'status' => $status]
+        ]);
         echo json_encode(["status" => "success", "message" => "Consultation recorded!"]);
     } else {
         echo json_encode(["status" => "error", "message" => $stmt->error]);

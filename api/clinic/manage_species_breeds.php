@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once('../../config/db_connection.php');
+require_once '../system/audit_helper.php';
 header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
@@ -43,6 +44,7 @@ try {
         $stmt = $conn->prepare("INSERT INTO species (Species_Name, Status) VALUES (?, 'active')");
         $stmt->bind_param("s", $name);
         if ($stmt->execute()) {
+            auditLog($conn, (int)$_SESSION['user_id'], 'Create Species', 'species', (int)$conn->insert_id, ['metadata' => ['name' => $name]]);
             echo json_encode(["status" => "success"]);
         } else {
             throw new Exception($stmt->error);
@@ -56,6 +58,7 @@ try {
         $stmt = $conn->prepare("INSERT INTO breeds (Breed_Name, Species_ID, Status) VALUES (?, ?, 'active')");
         $stmt->bind_param("si", $name, $s_id);
         if ($stmt->execute()) {
+            auditLog($conn, (int)$_SESSION['user_id'], 'Create Breed', 'breeds', (int)$conn->insert_id, ['metadata' => ['name' => $name, 'species_id' => (int)$s_id]]);
             echo json_encode(["status" => "success"]);
         } else {
             throw new Exception($stmt->error);
@@ -68,6 +71,7 @@ try {
         $stmt = $conn->prepare("UPDATE species SET Status = 'inactive' WHERE Species_ID = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
+        auditLog($conn, (int)$_SESSION['user_id'], 'Archive Species', 'species', (int)$id);
         echo json_encode(["status" => "success"]);
     }
     elseif ($action == 'delete_breed') {
@@ -75,6 +79,7 @@ try {
         $stmt = $conn->prepare("UPDATE breeds SET Status = 'inactive' WHERE Breed_ID = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
+        auditLog($conn, (int)$_SESSION['user_id'], 'Archive Breed', 'breeds', (int)$id);
         echo json_encode(["status" => "success"]);
     }
 

@@ -3,6 +3,7 @@
 header("Content-Type: application/json; charset=UTF-8");
 require_once '../../config/db_connection.php';
 require_once '../notifications/notify.php';
+require_once '../system/audit_helper.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 if (is_null($data)) { $data = $_POST; }
@@ -76,6 +77,10 @@ try {
     $stmt2->execute();
 
     $conn->commit();
+    auditLog($conn, $new_user_id, 'Register Account', 'users', $new_user_id, [
+        'event_type' => 'security',
+        'metadata' => ['role_id' => $role_id, 'registration_type' => $isWalkIn ? 'walk_in' : 'self_service']
+    ]);
 
     $welcomeMessage = "Welcome to City Vet, {$data['fname']}! Your account has been registered. You may now log in and manage your pets and appointments.";
     $emailResult = sendResendEmail($data['email'], "Welcome to City Vet", $welcomeMessage);

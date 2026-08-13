@@ -11,13 +11,13 @@
     
     <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="bg-gray-50 h-screen flex overflow-hidden">
+<body class="bg-gray-50 min-h-screen lg:h-screen flex overflow-hidden">
 
     <div id="sidebar-container"></div>
     <script src="../../js/sidebar.js"></script>
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
-        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm z-10 border-b border-gray-100">
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen lg:h-screen overflow-hidden">
+        <header class="bg-white min-h-16 flex items-center justify-between gap-3 px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-teal-50 text-[#00796B] rounded-lg flex items-center justify-center">
                     <i class="fa-solid fa-clock-rotate-left text-sm"></i>
@@ -31,11 +31,19 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-8 bg-[#fbfcfd]">
+        <main class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#fbfcfd]">
             <div class="max-w-6xl mx-auto">
                 <div class="mb-8">
                     <h3 class="text-2xl font-black text-gray-800 tracking-tight">Database Activity</h3>
                     <p class="text-sm text-gray-500">Real-time monitoring of table modifications and user actions.</p>
+                </div>
+
+                <div class="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-5">
+                    <input id="filterActor" type="search" placeholder="Actor" class="rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                    <input id="filterAction" type="search" placeholder="Action" class="rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                    <input id="filterEntity" type="search" placeholder="Entity" class="rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                    <input id="filterFrom" type="date" aria-label="From date" class="rounded-xl border border-gray-200 px-3 py-2 text-sm">
+                    <div class="flex gap-2"><input id="filterTo" type="date" aria-label="To date" class="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm"><button onclick="applyFilters()" class="rounded-xl bg-[#00796B] px-4 text-xs font-bold text-white">Filter</button></div>
                 </div>
 
                 <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -55,11 +63,23 @@
                         </table>
                     </div>
                 </div>
+                <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+                    <button id="previousPage" onclick="changePage(-1)" class="rounded-lg border border-gray-200 px-3 py-2 disabled:opacity-40">Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextPage" onclick="changePage(1)" class="rounded-lg border border-gray-200 px-3 py-2 disabled:opacity-40">Next</button>
+                </div>
             </div>
         </main>
     </div>
 
     <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[char]));
+        }
+
         function renderTableMessage(message, colorClass = 'text-gray-400', isItalic = false) {
             const tbody = document.getElementById('logTableBody');
             tbody.innerHTML = `
@@ -86,20 +106,43 @@
             });
         }
 
+        function filters() {
+            const params = new URLSearchParams({ page: currentPage, limit: 50 });
+            [['actor', 'filterActor'], ['action', 'filterAction'], ['entity', 'filterEntity'], ['from', 'filterFrom'], ['to', 'filterTo']].forEach(([key, id]) => {
+                const value = document.getElementById(id).value.trim();
+                if (value) params.set(key, value);
+            });
+            return params;
+        }
+
+        function updatePager() {
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('previousPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
+        function applyFilters() { currentPage = 1; fetchLogs(); }
+        function changePage(delta) { currentPage = Math.min(Math.max(1, currentPage + delta), totalPages); fetchLogs(); }
+
         async function fetchLogs() {
             const tbody = document.getElementById('logTableBody');
             renderTableMessage('Loading audit logs...', 'text-gray-400', true);
 
             try {
-                const res = await fetch('../../api/system/get_logs.php');
-                const data = await res.json();
+                const res = await fetch(`../../api/system/get_logs.php?${filters()}`);
+                const payload = await res.json();
 
                 tbody.innerHTML = '';
 
-                if (!Array.isArray(data)) {
-                    renderTableMessage(data.message || 'Unable to load audit logs.', 'text-red-400');
+                if (!Array.isArray(payload.data)) {
+                    renderTableMessage(payload.message || 'Unable to load audit logs.', 'text-red-400');
                     return;
                 }
+
+                const data = payload.data;
+                totalPages = payload.pagination?.pages || 1;
+                currentPage = payload.pagination?.page || 1;
+                updatePager();
 
                 if (data.length === 0) {
                     renderTableMessage('No activity logs found in database.', 'text-gray-400', true);
@@ -110,21 +153,21 @@
                     const row = `
                         <tr class="hover:bg-teal-50/30 transition-colors">
                             <td class="px-6 py-4 font-medium text-gray-400 text-xs whitespace-nowrap">
-                                ${formatTimestamp(log.Timestamp)}
+                                ${escapeHtml(formatTimestamp(log.Timestamp))}
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-gray-900 font-bold uppercase text-[11px]">@${log.Username || 'Unknown'}</span>
+                                <span class="text-gray-900 font-bold uppercase text-[11px]">@${escapeHtml(log.Username || 'Unknown')}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="font-semibold text-gray-700">${log.Action || 'No action'}</span>
+                                <span class="font-semibold text-gray-700">${escapeHtml(log.Action || 'No action')}</span>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border border-gray-200">
-                                    ${log.Table_Affected || 'N/A'}
+                                    ${escapeHtml(log.Table_Affected || 'N/A')}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <span class="font-mono text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">#${log.Record_ID || 'N/A'}</span>
+                                <span class="font-mono text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">#${escapeHtml(log.Record_ID || 'N/A')}</span>
                             </td>
                         </tr>
                     `;

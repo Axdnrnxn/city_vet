@@ -5,14 +5,10 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // Adjust this path if your folder structure changed
 require_once '../../config/db_connection.php';
+require_once '../system/audit_helper.php';
 
 function writeAuditLog($conn, $userId, $action, $tableAffected, $recordId = 0) {
-    $stmt = $conn->prepare("INSERT INTO audit_logs (User_ID, Action, Table_Affected, Record_ID) VALUES (?, ?, ?, ?)");
-    if ($stmt) {
-        $stmt->bind_param("issi", $userId, $action, $tableAffected, $recordId);
-        $stmt->execute();
-        $stmt->close();
-    }
+    return auditLog($conn, $userId, $action, $tableAffected, $recordId, ['event_type' => 'security']);
 }
 
 $data = json_decode(file_get_contents("php://input"), true);
@@ -22,6 +18,7 @@ $email = $data['email'] ?? '';
 $password = $data['password'] ?? '';
 
 if (empty($email) || empty($password)) {
+    auditLog($conn, null, 'Login Failed', 'sessions', 0, ['event_type' => 'security', 'outcome' => 'failure', 'metadata' => ['reason' => 'missing_credentials']]);
     echo json_encode(["status" => "error", "message" => "Please provide both email and password."]);
     exit();
 }
@@ -60,9 +57,11 @@ if ($result->num_rows === 1) {
             "role" => $user['Role_ID']
         ]);
     } else {
+        auditLog($conn, (int)$user['User_ID'], 'Login Failed', 'sessions', 0, ['event_type' => 'security', 'outcome' => 'failure', 'metadata' => ['reason' => 'invalid_credentials']]);
         echo json_encode(["status" => "error", "message" => "Incorrect Password."]);
     }
 } else {
+    auditLog($conn, null, 'Login Failed', 'sessions', 0, ['event_type' => 'security', 'outcome' => 'failure', 'metadata' => ['reason' => 'invalid_credentials']]);
     echo json_encode(["status" => "error", "message" => "Account not found or inactive."]);
 }
 
