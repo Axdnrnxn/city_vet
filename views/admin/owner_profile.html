@@ -57,9 +57,34 @@
                         </button>
                     </div>
                     <div id="petsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <section id="archivedPetsSection" class="hidden bg-amber-50 rounded-xl border border-amber-200 p-4">
+                        <h3 class="text-lg font-bold text-amber-900"><i class="fa-solid fa-box-archive mr-2"></i>Archived Pets</h3>
+                        <p class="text-sm text-amber-800 mt-1 mb-4">Only administrators can view and restore these records.</p>
+                        <div id="archivedPetsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </section>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="editOwnerModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-[#00796B] px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg">Edit Owner Details</h3>
+                <button type="button" onclick="document.getElementById('editOwnerModal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editOwnerForm" class="p-6 space-y-4">
+                <input type="hidden" name="owner_id" id="edit_owner_id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">First Name</label><input required name="first_name" id="edit_owner_first_name" class="w-full border p-2 rounded"></div>
+                    <div><label class="text-xs font-bold text-gray-500 uppercase">Last Name</label><input required name="last_name" id="edit_owner_last_name" class="w-full border p-2 rounded"></div>
+                </div>
+                <div><label class="text-xs font-bold text-gray-500 uppercase">Contact Number</label><input required name="contact_number" id="edit_owner_contact" class="w-full border p-2 rounded"></div>
+                <div><label class="text-xs font-bold text-gray-500 uppercase">Email Address</label><input required type="email" name="email" id="edit_owner_email" class="w-full border p-2 rounded"></div>
+                <div><label class="text-xs font-bold text-gray-500 uppercase">Full Address</label><textarea required name="address" id="edit_owner_address" rows="3" class="w-full border p-2 rounded"></textarea></div>
+                <button type="submit" class="w-full bg-[#00796B] text-white font-bold py-3 rounded hover:bg-[#004D40] transition">Save Changes</button>
+            </form>
+        </div>
     </div>
 
     <div id="addPetModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -131,6 +156,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const ownerId = urlParams.get('id');
     let breedData = {}; 
+    let currentOwner = null;
 
     // 1. Updated Breed Loading Function to support both Modals
     function loadBreeds(mode = 'add') {
@@ -196,6 +222,7 @@
             if (data.status === 'error') { window.location.href = 'owners.html'; return; }
 
             const o = data.owner;
+            currentOwner = o;
             document.getElementById('ownerName').innerText = `${o.First_name} ${o.Last_name}`;
             document.getElementById('ownerIdDisplay').innerText = `ID: #${String(o.Owner_ID).padStart(4, '0')}`;
             document.getElementById('avatar').innerText = (o.First_name[0] + o.Last_name[0]).toUpperCase();
@@ -215,7 +242,7 @@
                     <div class="bg-white p-5 rounded-xl border border-gray-100 hover:shadow-md transition relative group">
                         <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                             <button onclick='openEditPetModal(${petJson})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-full"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="deletePet(${pet.Pet_ID})" class="p-2 text-red-600 hover:bg-red-50 rounded-full"><i class="fa-solid fa-trash text-xs"></i></button>
+                            <button onclick="archivePet(${pet.Pet_ID})" title="Archive pet" class="p-2 text-red-600 hover:bg-red-50 rounded-full"><i class="fa-solid fa-box-archive text-xs"></i></button>
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-xl text-[#00796B]"><i class="fa-solid ${icon}"></i></div>
@@ -223,6 +250,21 @@
                         </div>
                     </div>`;
             });
+
+            const archivedSection = document.getElementById('archivedPetsSection');
+            const archivedGrid = document.getElementById('archivedPetsGrid');
+            const archivedPets = data.archived_pets || [];
+            archivedSection.classList.toggle('hidden', archivedPets.length === 0);
+            archivedGrid.innerHTML = archivedPets.map(pet => `
+                <div class="bg-white p-4 rounded-xl border border-amber-200 flex items-center justify-between gap-3">
+                    <div>
+                        <h4 class="font-bold text-gray-800">${pet.Name}</h4>
+                        <p class="text-xs text-gray-500">${pet.Species_Name || 'Pet'}${pet.Breed_Name ? ` • ${pet.Breed_Name}` : ''}</p>
+                    </div>
+                    <button onclick="restorePet(${pet.Pet_ID})" class="shrink-0 rounded-lg bg-[#00796B] px-3 py-2 text-sm font-bold text-white hover:bg-[#004D40] transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Restore
+                    </button>
+                </div>`).join('');
         } catch (err) { console.error(err); }
     }
 
@@ -230,6 +272,17 @@
     function openAddPetModal() { 
         document.getElementById('addPetModal').classList.remove('hidden'); 
         loadBreeds('add'); 
+    }
+
+    function openEditOwnerModal() {
+        if (!currentOwner) return;
+        document.getElementById('edit_owner_id').value = ownerId;
+        document.getElementById('edit_owner_first_name').value = currentOwner.First_name || '';
+        document.getElementById('edit_owner_last_name').value = currentOwner.Last_name || '';
+        document.getElementById('edit_owner_contact').value = currentOwner.Contact_number || '';
+        document.getElementById('edit_owner_email').value = currentOwner.Email || '';
+        document.getElementById('edit_owner_address').value = currentOwner.Address || '';
+        document.getElementById('editOwnerModal').classList.remove('hidden');
     }
 
     function openEditPetModal(pet) {
@@ -246,15 +299,15 @@
         document.getElementById('editPetModal').classList.remove('hidden');
     }
 
-    // DELETE Function
-    async function deletePet(petId) {
+    // Archive keeps the pet record and removes it from active lists.
+    async function archivePet(petId) {
         const confirm = await Swal.fire({
-            title: 'Delete Pet?',
-            text: "This action cannot be undone.",
+            title: 'Archive Pet?',
+            text: "The pet record will be hidden from active lists and can be retained for history.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it'
+            confirmButtonText: 'Yes, archive it'
         });
 
         if (confirm.isConfirmed) {
@@ -262,11 +315,34 @@
                 const res = await fetch(`../../api/owner/delete_pet.php?id=${petId}`);
                 const result = await res.json();
                 if(result.status === 'success') {
-                    Swal.fire('Deleted', 'Pet record removed', 'success');
+                    Swal.fire('Archived', 'Pet record archived', 'success');
                     fetchOwnerProfile();
                 }
             } catch (err) { Swal.fire('Error', 'Deletion failed', 'error'); }
         }
+    }
+
+    async function restorePet(petId) {
+        const confirm = await Swal.fire({
+            title: 'Restore Pet?',
+            text: 'This pet will return to the active records list.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00796B',
+            confirmButtonText: 'Yes, restore it'
+        });
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('pet_id', petId);
+            const res = await fetch('../../api/records/restore_pet.php', { method: 'POST', body: formData });
+            const result = await res.json();
+            if (result.status === 'success') {
+                Swal.fire('Restored', result.message, 'success');
+                fetchOwnerProfile();
+            } else Swal.fire('Error', result.message || 'Unable to restore pet.', 'error');
+        } catch (err) { Swal.fire('Error', 'Restore failed.', 'error'); }
     }
 
     // Forms Submissions
@@ -284,6 +360,19 @@
                 fetchOwnerProfile();
             } else { Swal.fire('Error', result.message, 'error'); }
         } catch (err) { Swal.fire('Error', 'Connection failed', 'error'); }
+    });
+
+    document.getElementById('editOwnerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        try {
+            const res = await fetch('../../api/records/update_owner.php', { method: 'POST', body: new FormData(this) });
+            const result = await res.json();
+            if (result.status === 'success') {
+                document.getElementById('editOwnerModal').classList.add('hidden');
+                Swal.fire('Updated', result.message, 'success');
+                fetchOwnerProfile();
+            } else Swal.fire('Error', result.message || 'Unable to update owner details.', 'error');
+        } catch (err) { Swal.fire('Error', 'Update failed.', 'error'); }
     });
 
     document.getElementById('editPetForm').addEventListener('submit', async function(e) {

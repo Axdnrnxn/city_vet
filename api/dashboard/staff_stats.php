@@ -16,8 +16,10 @@ $response['stats']['today_appointments'] = $conn->query($count_sql)->fetch_assoc
 $sql = "SELECT COUNT(*) as count FROM pets WHERE Status = 'active'";
 $response['stats']['total_patients'] = $conn->query($sql)->fetch_assoc()['count'];
 
-$sql = "SELECT COUNT(*) as count FROM staff WHERE Status = 'active'";
-$response['stats']['staff_active'] = $conn->query($sql)->fetch_assoc()['count'];
+$sql = "SELECT COUNT(*) AS count FROM users
+        WHERE Status = 'active' AND Role_ID IN (1, 2, 4) AND Is_Online = 1
+          AND Last_Activity >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)";
+$response['stats']['active_staff'] = $conn->query($sql)->fetch_assoc()['count'];
 
 $sql = "
     SELECT 

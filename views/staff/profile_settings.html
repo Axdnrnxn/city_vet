@@ -123,6 +123,7 @@
                                         <input type="password" id="sec-new-pass" placeholder="New password" class="w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00796B] outline-none">
                                         <button type="button" onclick="togglePasswordVisibility('sec-new-pass', this)" class="absolute right-4 top-3.5 text-gray-400 hover:text-[#00796B]"><i class="fa-solid fa-eye"></i></button>
                                     </div>
+                                    <p id="sec-new-pass-hint" class="mt-1 text-xs text-gray-500"></p>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Repeat New Password</label>
@@ -145,6 +146,7 @@
         </main>
     </div>
 
+    <script src="../../js/password_strength.js"></script>
     <script>
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
@@ -200,7 +202,7 @@
             } catch (err) { console.error("Fetch failed:", err); }
         }
 
-        document.addEventListener('DOMContentLoaded', loadProfileData);
+        document.addEventListener('DOMContentLoaded', () => { CityVetPassword.bind('sec-new-pass', 'sec-new-pass-hint'); loadProfileData(); });
 
         async function saveGeneralInfo() {
             const newUsername = document.getElementById('edit-username').value.trim();
@@ -239,6 +241,7 @@
             if (newPass !== confirmPass) {
                 Swal.fire('Mismatch', 'The new passwords do not match.', 'error'); return;
             }
+            if (!CityVetPassword.valid(newPass)) { Swal.fire('Weak Password', CityVetPassword.message(newPass), 'error'); return; }
 
             Swal.fire({
                 title: 'Update Password?',

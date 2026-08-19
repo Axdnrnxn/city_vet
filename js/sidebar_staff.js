@@ -1,6 +1,11 @@
 function loadStaffSidebar() {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (!sidebarContainer) return;
+    if (!document.getElementById('cityvet-responsive-css')) {
+        const stylesheet = document.createElement('link');
+        stylesheet.id = 'cityvet-responsive-css'; stylesheet.rel = 'stylesheet'; stylesheet.href = '../../css/responsive.css';
+        document.head.appendChild(stylesheet);
+    }
 
     const currentPage = window.location.pathname.split("/").pop();
 
@@ -13,7 +18,6 @@ function loadStaffSidebar() {
 
     sidebarContainer.classList.add('lg:w-64', 'lg:flex-none');
     sidebarContainer.innerHTML = `
-    <button id="sidebar-toggle" type="button" aria-label="Open navigation" aria-expanded="false" class="lg:hidden fixed bottom-4 left-4 z-40 h-11 w-11 rounded-full bg-[#004D40] text-white shadow-lg"><i class="fa-solid fa-bars"></i></button>
     <div id="sidebar-overlay" class="lg:hidden fixed inset-0 z-40 hidden bg-slate-950/50"></div>
     <aside id="sidebar" class="bg-[#004D40] text-white w-64 h-screen flex flex-col shadow-2xl fixed inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 z-50 transition-transform duration-300 ease-in-out border-r border-[#00332B]">
         
@@ -73,13 +77,21 @@ function loadStaffSidebar() {
 }
 
 function initializeResponsiveSidebar(container) {
-    const sidebar = container.querySelector('#sidebar'), toggle = container.querySelector('#sidebar-toggle'), overlay = container.querySelector('#sidebar-overlay');
+    const sidebar = container.querySelector('#sidebar'), overlay = container.querySelector('#sidebar-overlay');
+    let toggle = document.querySelector('button[onclick*="toggleSidebar"]');
+    const usesPageToggle = Boolean(toggle);
+    if (!toggle) {
+        toggle = document.createElement('button'); toggle.type = 'button'; toggle.id = 'sidebar-toggle';
+        toggle.setAttribute('aria-label', 'Open navigation'); toggle.setAttribute('aria-expanded', 'false');
+        toggle.className = 'lg:hidden fixed top-3 left-3 z-30 h-10 w-10 rounded-lg bg-white text-[#004D40] shadow-sm border border-gray-200';
+        toggle.innerHTML = '<i class="fa-solid fa-bars"></i>'; document.body.appendChild(toggle);
+    }
     if (!sidebar || !toggle || !overlay) return;
     const syncLayout = () => { container.style.flex = window.innerWidth >= 1024 ? '0 0 16rem' : '0 0 0'; };
     syncLayout();
     const close = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); toggle.setAttribute('aria-expanded', 'false'); };
     const open = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); toggle.setAttribute('aria-expanded', 'true'); };
-    toggle.addEventListener('click', () => sidebar.classList.contains('-translate-x-full') ? open() : close()); overlay.addEventListener('click', close);
+    if (!usesPageToggle) toggle.addEventListener('click', () => sidebar.classList.contains('-translate-x-full') ? open() : close()); overlay.addEventListener('click', close);
     sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', close));
     window.addEventListener('resize', () => { syncLayout(); if (window.innerWidth >= 1024) { overlay.classList.add('hidden'); toggle.setAttribute('aria-expanded', 'false'); } });
 }

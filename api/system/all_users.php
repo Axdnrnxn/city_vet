@@ -129,12 +129,17 @@ if ($action === 'update_profile') {
         exit();
     }
 
-    $currentPasswordInput = $data->current_password ?? '';
-    $username = $data->username ?? '';
-    $email = $data->email ?? '';
-    $newPassword = $data->password ?? '';
+    $currentPasswordInput = (string)($data->current_password ?? '');
+    $username = trim((string)($data->username ?? ''));
+    $email = trim((string)($data->email ?? ''));
+    $newPassword = (string)($data->password ?? '');
 
-    $verify_stmt = $conn->prepare("SELECT Password_Hash FROM users WHERE User_ID = ?");
+    if ($username === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(["status" => "error", "message" => "Please provide a username and a valid email address."]);
+        exit();
+    }
+
+    $verify_stmt = $conn->prepare("SELECT Password_Hash, Email FROM users WHERE User_ID = ?");
     $verify_stmt->bind_param("i", $userId);
     $verify_stmt->execute();
     $result = $verify_stmt->get_result();
@@ -143,6 +148,27 @@ if ($action === 'update_profile') {
     if (!$user_data || !password_verify($currentPasswordInput, $user_data['Password_Hash'])) {
         echo json_encode(["status" => "error", "message" => "Verification failed. Incorrect current password."]);
         exit();
+    }
+
+    // An email address is unique for every account. Password verification above
+    // is required for all profile saves, including an email-address change.
+    $duplicate = $conn->prepare("SELECT User_ID FROM users WHERE Email = ? AND User_ID != ? LIMIT 1");
+    $duplicate->bind_param("si", $email, $userId);
+    $duplicate->execute();
+    if ($duplicate->get_result()->num_rows > 0) {
+        echo json_encode(["status" => "error", "message" => "That email address is already registered."]);
+        exit();
+    }
+
+    if ($newPassword !== '') {
+        $hasUpper = preg_match('/[A-Z]/', $newPassword);
+        $hasLower = preg_match('/[a-z]/', $newPassword);
+        $hasNumber = preg_match('/\d/', $newPassword);
+        $hasSpecial = preg_match('/[^A-Za-z0-9]/', $newPassword);
+        if (strlen($newPassword) < 8 || !$hasUpper || !$hasLower || !$hasNumber || !$hasSpecial) {
+            echo json_encode(["status" => "error", "message" => "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character."]);
+            exit();
+        }
     }
 
     if (!empty($newPassword)) {

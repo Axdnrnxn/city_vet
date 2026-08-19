@@ -7,6 +7,10 @@ require_once '../system/audit_helper.php';
 
 if (isset($_SESSION['user_id'])) {
     $userId = (int)$_SESSION['user_id'];
+    $presence = $conn->prepare("UPDATE users SET Is_Online = 0, Last_Activity = NULL WHERE User_ID = ?");
+    $presence->bind_param("i", $userId);
+    $presence->execute();
+    $presence->close();
     $action = "Logout";
     $tableAffected = "sessions";
     $recordId = 0;

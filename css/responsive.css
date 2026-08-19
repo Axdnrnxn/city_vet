@@ -1,0 +1,33 @@
+/* Shared mobile behavior for all portal sidebars and calendars. */
+html, body { max-width: 100%; }
+@media (max-width: 767px) {
+  body { min-height: 100dvh; overflow-x: hidden; }
+  #calendar-grid, #event-calendar-grid, [id$="-spay-grid"] {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: .35rem !important;
+    min-width: 0;
+  }
+  #calendar-grid > *, #event-calendar-grid > *, [id$="-spay-grid"] > * {
+    min-width: 0 !important;
+    min-height: 4.5rem;
+    height: auto !important;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  #calendar-grid span, #calendar-grid div, #event-calendar-grid span, #event-calendar-grid div,
+  [id$="-spay-grid"] span, [id$="-spay-grid"] div {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere;
+  }
+  #calendar-grid .text-\[9px\], #calendar-grid .text-\[10px\],
+  #event-calendar-grid .text-\[9px\], #event-calendar-grid .text-\[10px\],
+  [id$="-spay-grid"] .text-\[9px\], [id$="-spay-grid"] .text-\[10px\] { font-size: 8px !important; line-height: 1.05 !important; }
+
+  /* Pages that rely on the shared top navigation button retain clear title space. */
+  .cityvet-auto-nav > .flex-1 > header { padding-left: 3.75rem !important; }
+  .cityvet-auto-nav > .flex > main { padding-top: 4rem !important; }
+
+  /* Swipe tables rather than forcing the entire page wider. */
+  .overflow-x-auto > table { min-width: 42rem; }
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+}

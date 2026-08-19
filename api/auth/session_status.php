@@ -8,6 +8,11 @@ $shouldTouch = ($_GET['touch'] ?? '1') !== '0';
 
 if (isset($_SESSION['user_id'])) {
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeoutSeconds) {
+        require_once '../../config/db_connection.php';
+        $presence = $conn->prepare("UPDATE users SET Is_Online = 0, Last_Activity = NULL WHERE User_ID = ?");
+        $presence->bind_param("i", $_SESSION['user_id']);
+        $presence->execute();
+        $presence->close();
         session_unset();
         session_destroy();
         echo json_encode(["status" => "timeout", "message" => "Session expired due to inactivity."]);
@@ -16,6 +21,11 @@ if (isset($_SESSION['user_id'])) {
 
     if ($shouldTouch) {
         $_SESSION['last_activity'] = time();
+        require_once '../../config/db_connection.php';
+        $presence = $conn->prepare("UPDATE users SET Is_Online = 1, Last_Activity = NOW() WHERE User_ID = ?");
+        $presence->bind_param("i", $_SESSION['user_id']);
+        $presence->execute();
+        $presence->close();
     }
 
     echo json_encode([

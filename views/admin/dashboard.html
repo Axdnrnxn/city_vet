@@ -88,7 +88,7 @@
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Staff Active</p>
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Active Users</p>
                             <h3 id="stat-staff" class="text-3xl font-bold text-gray-800 mt-2">--</h3>
                         </div>
                         <div class="p-3 bg-purple-50 text-purple-600 rounded-lg"><i class="fa-solid fa-user-nurse text-xl"></i></div>
@@ -198,7 +198,7 @@
                 document.getElementById('stat-appointments').innerText = data.stats.today_appointments;
                 document.getElementById('stat-pending').innerText = data.stats.pending;
                 document.getElementById('stat-patients').innerText = data.stats.total_patients;
-                document.getElementById('stat-staff').innerText = data.stats.staff_active;
+                document.getElementById('stat-staff').innerText = data.stats.active_users;
 
                 // 2. Update Schedule Table
                 const scheduleBody = document.getElementById('schedule-table');
@@ -232,7 +232,7 @@
                     regList.innerHTML = `<p class="text-gray-400 text-sm italic">No recent registrations.</p>`;
                 } else {
                     data.registrations.forEach(reg => {
-                        const timeAgo = getTimeAgo(reg.Registration_Date);
+                        const timeAgo = getTimeAgo(reg.Registration_Seconds_Ago);
                         regList.innerHTML += `
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
@@ -253,10 +253,8 @@
         }
 
         // Helper: Time Ago
-        function getTimeAgo(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const seconds = Math.floor((now - date) / 1000);
+        function getTimeAgo(seconds) {
+            seconds = Math.max(0, Number(seconds) || 0);
             
             let interval = seconds / 31536000;
             if (interval > 1) return Math.floor(interval) + " years ago";

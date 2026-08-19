@@ -40,6 +40,12 @@ if ($result->num_rows === 1) {
         $_SESSION['logged_in'] = true;
         $_SESSION['last_activity'] = time();
 
+        // Live presence is separate from account status and audit history.
+        $presence = $conn->prepare("UPDATE users SET Is_Online = 1, Last_Activity = NOW() WHERE User_ID = ?");
+        $presence->bind_param("i", $user['User_ID']);
+        $presence->execute();
+        $presence->close();
+
         writeAuditLog($conn, (int)$user['User_ID'], "Login", "sessions", 0);
 
         // 3. Set Redirect URL based on Role

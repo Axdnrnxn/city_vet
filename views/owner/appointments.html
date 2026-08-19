@@ -31,13 +31,13 @@
         .calendar-day.disabled { background-color: #f9fafb; color: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
-<body class="bg-gray-100 h-screen flex overflow-hidden">
+<body class="bg-gray-100 min-h-screen lg:h-screen flex overflow-x-hidden">
     <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden backdrop-blur-sm"></div>
 
     <div id="sidebar-container"></div>
     <script src="../../js/sidebar_owner.js?v=20260801"></script>
 
-    <div class="flex-1 flex flex-col h-screen relative">
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen lg:h-screen relative">
         <header class="bg-white h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 border-b border-gray-100">
             <div class="flex items-center gap-4">
                 <button onclick="window.history.length > 1 ? history.back() : window.location.href='../../login.html'" class="text-gray-600 hover:text-[#00796B] text-xl focus:outline-none" title="Back">
@@ -236,16 +236,27 @@
                 const generalEvents = eventsOnDate.filter(e => e.Event_Type === 'General');
                 const hasEvents = eventsOnDate.length > 0;
                 const isFull = spayEvent && (spayEvent.Is_Full || parseInt(spayEvent.Remaining_Slots, 10) <= 0 || spayEvent.Status === 'Closed');
+                const allEventsClosed = hasEvents && eventsOnDate.every(e => isPast || e.Status === 'Closed');
 
                 let dayClass = 'border-gray-200';
                 let clickEvent = '';
                 let badgeHtml = '';
                 let eventTitle = '';
 
-                if (isWeekend) {
+                if (isPast) {
+                    // Past events remain visible as closed records, but cannot be booked.
+                    dayClass = hasEvents ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-pointer' : 'bg-gray-100 border-gray-200 text-gray-400 disabled';
+                    if (hasEvents) {
+                        eventTitle = eventsOnDate.map(e => e.Title).join(', ');
+                        badgeHtml = '<div class="mt-1 text-[9px] font-bold text-gray-600 bg-gray-200 rounded px-1 inline-block">Closed</div>';
+                        clickEvent = `onclick="showDateEvents('${dateStr}')"`;
+                    }
+                } else if (isWeekend) {
                     dayClass = 'bg-gray-100 border-gray-200 text-gray-400 disabled';
                 } else if (hasEvents) {
-                    if (spayEvent && generalEvents.length > 0) {
+                    if (allEventsClosed) {
+                        dayClass = 'bg-gray-100 border-gray-300 text-gray-500';
+                    } else if (spayEvent && generalEvents.length > 0) {
                         dayClass = 'bg-gradient-to-br from-teal-50 to-blue-50 border-teal-200';
                     } else if (spayEvent) {
                         dayClass = isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]';
@@ -255,7 +266,9 @@
 
                     eventTitle = eventsOnDate.map(e => e.Title).join(', ');
 
-                    if (spayEvent && !isFull) {
+                    if (allEventsClosed) {
+                        badgeHtml = '<div class="mt-1 text-[9px] font-bold text-gray-600 bg-gray-200 rounded px-1 inline-block">Closed</div>';
+                    } else if (spayEvent && !isFull) {
                         const remaining = parseInt(spayEvent.Remaining_Slots, 10);
                         badgeHtml = `<div class="mt-1 text-[9px] font-bold text-[#00796B] bg-white rounded px-1 inline-block">${remaining} slot${remaining !== 1 ? 's' : ''} left</div>`;
                     }
@@ -290,14 +303,18 @@
             const events = calendarEvents.filter(e => e.Event_Date === dateStr);
             if (events.length === 0) return;
 
+            const isPast = parseLocalDate(dateStr) < new Date(new Date().setHours(0, 0, 0, 0));
+
             const spayEvent = events.find(e => e.Event_Type === 'SpayNeuter');
             const generalEvents = events.filter(e => e.Event_Type === 'General');
-            const canBook = !!spayEvent && parseInt(spayEvent.Remaining_Slots, 10) > 0;
+            const canBook = !isPast && !!spayEvent && spayEvent.Status === 'Open' && parseInt(spayEvent.Remaining_Slots, 10) > 0;
 
             let message = '';
             if (spayEvent) {
                 const remaining = parseInt(spayEvent.Remaining_Slots, 10);
-                if (remaining > 0) {
+                if (isPast || spayEvent.Status === 'Closed') {
+                    message += `<strong>${spayEvent.Title}</strong> (Spay/Neuter)<br><span class="text-red-600 font-bold">Closed${isPast ? ' — event date has passed' : ''}</span><br><br>`;
+                } else if (remaining > 0) {
                     message += `<strong>${spayEvent.Title}</strong> (Spay/Neuter)<br>${remaining} slot${remaining !== 1 ? 's' : ''} left<br><br>`;
                 } else {
                     message += `<strong>${spayEvent.Title}</strong> (Spay/Neuter)<br>Fully booked<br><br>`;
@@ -305,6 +322,9 @@
             }
             generalEvents.forEach(e => {
                 message += `<strong>${e.Title}</strong> (General Event)`;
+                if (isPast || e.Status === 'Closed') {
+                    message += '<br><span class="text-red-600 font-bold">Closed' + (isPast ? ' — event date has passed' : '') + '</span>';
+                }
                 if (e.Content) {
                     message += `<br><em>${e.Content.substring(0, 150)}${e.Content.length > 150 ? '...' : ''}</em>`;
                 }
@@ -328,6 +348,10 @@
         function openBookingModal(eventId) {
             selectedEvent = calendarEvents.find(event => parseInt(event.Event_ID, 10) === parseInt(eventId, 10));
             if (!selectedEvent) return;
+            if (parseLocalDate(selectedEvent.Event_Date) < new Date(new Date().setHours(0, 0, 0, 0))) {
+                Swal.fire('Past Date', 'This event is no longer available for booking.', 'info');
+                return;
+            }
             if (selectedEvent.Event_Type !== 'SpayNeuter') {
                 Swal.fire('Not Available', 'This schedule does not accept slot bookings.', 'info');
                 return;

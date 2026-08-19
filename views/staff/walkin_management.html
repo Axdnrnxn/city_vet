@@ -48,24 +48,24 @@
         .modal-transition { transition: transform 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-100 h-screen flex overflow-hidden">
+<body class="bg-gray-100 min-h-screen lg:h-screen flex overflow-x-hidden">
 
     <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
 
     <div id="sidebar-container"></div>
     <script src="../../js/sidebar_staff.js"></script>
 
-    <div class="flex-1 flex flex-col h-screen relative">
+    <div class="flex-1 min-w-0 flex flex-col min-h-screen lg:h-screen relative">
         
-        <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm z-10">
+        <header class="bg-white min-h-16 flex items-center justify-between gap-3 px-4 lg:px-8 shadow-sm z-10">
             <div class="flex items-center gap-4">
                 <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-[#00796B] text-xl focus:outline-none">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <h2 class="text-xl font-bold text-gray-800">Walk-In Management</h2>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800">Walk-In Management</h2>
             </div>
-            <button onclick="openAddModal()" class="bg-[#00796B] hover:bg-[#004D40] text-white px-6 py-2.5 rounded-xl font-bold shadow-md transition flex items-center gap-2">
-                <i class="fa-solid fa-user-plus"></i> Register New User
+            <button onclick="openAddModal()" class="shrink-0 bg-[#00796B] hover:bg-[#004D40] text-white px-3 sm:px-6 py-2.5 rounded-xl font-bold shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i><span class="hidden sm:inline">Register New User</span>
             </button>
         </header>
 
@@ -81,7 +81,7 @@
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full min-w-[520px] text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-200 tracking-widest">
                                 <th class="px-6 py-4 font-bold">Client Name</th>
@@ -116,7 +116,7 @@
                     <div class="flex-1 overflow-y-auto p-6 space-y-6">
                         <p class="text-xs text-gray-500 italic">Enter the client's details to create their account instantly.</p>
                         <form id="addOwnerForm" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">First Name <span class="text-red-500">*</span></label>
                                     <input type="text" id="fname" required class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
@@ -143,7 +143,7 @@
                                     <input type="tel" id="phone" pattern="09[0-9]{9}" placeholder="Phone (09XXXXXXXXX) *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                     <input type="email" id="email" placeholder="Email Address *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                     <div class="space-y-2">
-                                        <div class="grid grid-cols-2 gap-4">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <input type="password" id="password" placeholder="Password *" oninput="updatePasswordStrength()" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                             <input type="password" id="confirm_password" placeholder="Confirm *" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none transition">
                                         </div>

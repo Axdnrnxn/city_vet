@@ -8,6 +8,12 @@
         return events.find(event => event.Event_Date === dateStr);
     }
 
+    function isPast(dateStr) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return new Date(`${dateStr}T00:00:00`) < today;
+    }
+
     function render() {
         const grid = document.getElementById(config.gridId);
         const monthLabel = document.getElementById(config.monthId);
@@ -28,13 +34,16 @@
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const event = eventByDate(dateStr);
-            const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || event.Status === 'Closed');
+            const isClosed = event && (event.Status === 'Closed' || isPast(event.Event_Date));
+            const isFull = event && (event.Is_Full || parseInt(event.Remaining_Slots, 10) <= 0 || isClosed);
             const canClick = event && typeof config.onEventClick === 'function';
             const cellClass = event
                 ? (isFull ? 'bg-red-50 border-red-100 text-red-700' : 'bg-teal-50 border-teal-200 text-[#00796B]')
                 : 'bg-white border-gray-200 text-gray-400';
             let badge = '';
-            if (event && !isFull) {
+            if (event && isClosed) {
+                badge = '<span class="mt-1 inline-block rounded px-2 py-1 text-[10px] font-bold bg-gray-200 text-gray-700">Closed</span>';
+            } else if (event && !isFull) {
                 const remaining = parseInt(event.Remaining_Slots, 10);
                 if (remaining > 0) {
                     badge = `<span class="mt-1 inline-block rounded px-2 py-1 text-[10px] font-bold bg-white text-[#00796B]">${remaining} slot${remaining !== 1 ? 's' : ''} left</span>`;
@@ -44,7 +53,7 @@
             html += `
                 <div class="h-20 rounded-lg border p-2 flex flex-col items-center justify-center ${cellClass} ${canClick ? 'cursor-pointer hover:shadow-sm transition' : ''}" ${canClick ? `onclick="CityVetSpayCalendar.openEvent(${event.Event_ID})"` : ''}>
                     <span class="text-sm font-black">${day}</span>
-                    ${event ? `<span class="mt-1 text-[10px] font-bold leading-tight">${event.Title}</span>` : ''}
+                    ${event ? `<span class="mt-1 w-full truncate text-[10px] font-bold leading-tight" title="${event.Title}">${event.Title}</span>` : ''}
                     ${badge}
                 </div>
             `;

@@ -20,6 +20,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeoutSeconds) {
+    require_once '../../config/db_connection.php';
+    $presence = $conn->prepare("UPDATE users SET Is_Online = 0, Last_Activity = NULL WHERE User_ID = ?");
+    $presence->bind_param("i", $_SESSION['user_id']);
+    $presence->execute();
+    $presence->close();
     session_unset();
     session_destroy();
     http_response_code(401);
@@ -28,6 +33,11 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
 }
 
 $_SESSION['last_activity'] = time();
+require_once '../../config/db_connection.php';
+$presence = $conn->prepare("UPDATE users SET Is_Online = 1, Last_Activity = NOW() WHERE User_ID = ?");
+$presence->bind_param("i", $_SESSION['user_id']);
+$presence->execute();
+$presence->close();
 
 // 2. Dynamic Dashboard Security (The Magic Part)
 // We look at the URL of the dashboard making the request

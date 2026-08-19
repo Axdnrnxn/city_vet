@@ -1,7 +1,15 @@
 <?php
 // File: api/records/get_owner.php
+session_start();
 header("Content-Type: application/json");
 require_once '../../config/db_connection.php';
+
+// Archived records are an administrator-only recovery feature.
+if (!isset($_SESSION['user_id']) || (int)($_SESSION['role_id'] ?? 0) !== 1) {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Administrator access required"]);
+    exit();
+}
 
 if (!isset($_GET['id'])) {
     echo json_encode(["status" => "error", "message" => "No ID provided"]);
@@ -43,10 +51,26 @@ while ($pet = $pets_result->fetch_assoc()) {
     $pets_data[] = $pet;
 }
 
+// Keep archived pets separate so they cannot be mistaken for active records.
+$archived_stmt = $conn->prepare("SELECT p.*, s.Species_Name, b.Breed_Name
+    FROM pets p
+    LEFT JOIN species s ON p.Species_ID = s.Species_ID
+    LEFT JOIN breeds b ON p.Breed_ID = b.Breed_ID
+    WHERE p.Owner_ID = ? AND p.Status = 'archived'
+    ORDER BY p.Pet_ID DESC");
+$archived_stmt->bind_param("i", $owner_id);
+$archived_stmt->execute();
+$archived_result = $archived_stmt->get_result();
+$archived_pets = [];
+while ($pet = $archived_result->fetch_assoc()) {
+    $archived_pets[] = $pet;
+}
+
 // 3. Return Combined Data
 echo json_encode([
     "status" => "success",
     "owner" => $owner_data,
-    "pets" => $pets_data
+    "pets" => $pets_data,
+    "archived_pets" => $archived_pets
 ]);
 ?>

@@ -256,6 +256,9 @@ if ($action === 'book_event') {
         if (!$event || $event['Status'] !== 'Open') {
             throw new Exception("This Spay/Neuter event is not available for booking.");
         }
+        if ($event['Event_Date'] < date('Y-m-d')) {
+            throw new Exception("This event date has already passed and can no longer be booked.");
+        }
 
         $usedSlots = approvedPetCount($conn, $eventId);
         if ($usedSlots >= (int)$event['Max_Slots']) {
@@ -336,13 +339,16 @@ if ($action === 'delete_event') {
 
     $conn->begin_transaction();
     try {
-        $checkStmt = $conn->prepare("SELECT Event_ID, Title FROM calendar_events WHERE Event_ID = ? FOR UPDATE");
+        $checkStmt = $conn->prepare("SELECT Event_ID, Title, Event_Date FROM calendar_events WHERE Event_ID = ? FOR UPDATE");
         $checkStmt->bind_param("i", $eventId);
         $checkStmt->execute();
         $event = $checkStmt->get_result()->fetch_assoc();
 
         if (!$event) {
             throw new Exception("Event not found.");
+        }
+        if ($event['Event_Date'] < date('Y-m-d')) {
+            throw new Exception("Past events are retained as closed records and cannot be deleted.");
         }
 
         $appointmentStmt = $conn->prepare("SELECT Appointment_ID FROM appointments WHERE Event_ID = ?");
@@ -380,6 +386,25 @@ if ($action === 'delete_event') {
         $conn->rollback();
         jsonResponse(["status" => "error", "message" => $e->getMessage()], 400);
     }
+}
+
+if ($action === 'close_event') {
+    requireRole([1, 4]);
+
+    $eventId = (int)($input['event_id'] ?? 0);
+    if (!$eventId) {
+        jsonResponse(["status" => "error", "message" => "Missing event ID."], 422);
+    }
+
+    $stmt = $conn->prepare("UPDATE calendar_events SET Status = 'Closed' WHERE Event_ID = ? AND Status = 'Open' AND Event_Date < CURDATE()");
+    $stmt->bind_param("i", $eventId);
+    $stmt->execute();
+    if ($stmt->affected_rows !== 1) {
+        jsonResponse(["status" => "error", "message" => "Only an open past event can be marked as closed."], 422);
+    }
+
+    writeAuditLog($conn, (int)$_SESSION['user_id'], "Close Calendar Event", "calendar_events", $eventId);
+    jsonResponse(["status" => "success", "message" => "Event marked as closed."]);
 }
 
 if ($action === 'confirm_booking') {

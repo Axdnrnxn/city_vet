@@ -43,7 +43,7 @@
         <div id="sidebar-container"></div>
         <script src="../../js/sidebar.js"></script>
 
-        <main class="flex-1 min-w-0 p-4 lg:p-8">
+        <main class="flex-1 min-w-0 p-4 pt-16 lg:p-8">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800">Pet Masterlist</h2>
@@ -62,7 +62,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
                     <div class="bg-gray-100 p-4 font-bold text-gray-700 border-b">Species List (Filter)</div>
-                    <table class="w-full text-left">
+                    <div class="overflow-x-auto"><table class="w-full min-w-[320px] text-left">
                         <thead class="bg-gray-50 text-xs uppercase text-gray-500">
                             <tr>
                                 <th class="p-4 border-b">Name</th>
@@ -71,15 +71,15 @@
                         </thead>
                         <tbody id="speciesTableBody" class="divide-y divide-gray-100">
                             </tbody>
-                    </table>
+                    </table></div>
                 </div>
 
                 <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
-                    <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
+                    <div class="bg-gray-100 p-4 flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center border-b">
                         <span id="registryTitle" class="font-bold text-gray-700">All Breeds Registry</span>
-                        <input type="text" id="breedSearch" onkeyup="filterBreeds()" placeholder="Search breeds..." class="text-sm p-1 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796B]">
+                        <input type="text" id="breedSearch" onkeyup="filterBreeds()" placeholder="Search breeds..." class="w-full sm:w-auto text-sm p-2 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00796B]">
                     </div>
-                    <table class="w-full text-left">
+                    <div class="overflow-x-auto"><table class="w-full min-w-[480px] text-left">
                         <thead class="bg-gray-50 text-xs uppercase text-gray-500">
                             <tr>
                                 <th class="p-4 border-b">Breed Name</th>
@@ -89,7 +89,7 @@
                         </thead>
                         <tbody id="breedTableBody" class="divide-y divide-gray-100">
                             </tbody>
-                    </table>
+                    </table></div>
                 </div>
             </div>
         </main>
